@@ -10,18 +10,18 @@ RxLens is an enterprise-grade medical AI system designed to digitize messy handw
 - **Accessibility Suite**: Generates professional **Audio Summaries** (TTS) and structured **Tabular PDF Reports**.
 - **Modern UI**: A sleek, glassmorphic dashboard with a fluid **Dark Mode** toggle and responsive design.
 
+## 📋 Prerequisites
+Before you begin, ensure you have the following installed:
+*   **Python 3.9+**
+*   **Node.js 18+** & **npm**
+*   **Google Gemini API Key** (Obtain from [Google AI Studio](https://aistudio.google.com/))
+
 ## 📂 Project Structure
 ```
 RxLens/
 ├── backend/            # FastAPI REST Server
 ├── frontend/           # React (Vite) User Interface
 ├── src/                # Core AI Engines
-│   ├── vision.py       # Gemini VLM & Chatbot Logic
-│   ├── validation.py   # NIH API & Safety Checks
-│   ├── pdf_generator.py# Tabular Report Generation
-│   ├── database.py     # SQLite Persistence
-│   ├── audio.py        # Text-to-Speech Summaries
-│   └── utils.py        # Formatting Utilities
 ├── data/               # Static Medical Databases
 └── archive/            # Legacy Experiments & Old Code
 ```
