@@ -1,0 +1,40 @@
+{
+    "drugs": [
+        {
+            "name": "Paracetamol",
+            "max_dosage_mg": 4000,
+            "typical_dosage": "500mg",
+            "common_names": ["Crocin", "Dolo", "Panadol", "Tylenol"]
+        },
+        {
+            "name": "Amoxicillin",
+            "max_dosage_mg": 3000,
+            "typical_dosage": "500mg",
+            "common_names": ["Amoxil", "Moxatag"]
+        },
+        {
+            "name": "Ibuprofen",
+            "max_dosage_mg": 3200,
+            "typical_dosage": "400mg",
+            "common_names": ["Advil", "Motrin", "Brufen"]
+        },
+        {
+            "name": "Azithromycin",
+            "max_dosage_mg": 500,
+            "typical_dosage": "500mg",
+            "common_names": ["Zithromax", "Azithral", "Azee"]
+        },
+        {
+            "name": "Omeprazole",
+            "max_dosage_mg": 40,
+            "typical_dosage": "20mg",
+            "common_names": ["Prilosec", "Omez"]
+        },
+        {
+            "name": "Cetirizine",
+            "max_dosage_mg": 10,
+            "typical_dosage": "10mg",
+            "common_names": ["Zyrtec", "Cetzine"]
+        }
+    ]
+}

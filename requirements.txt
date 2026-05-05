@@ -1,0 +1,13 @@
+streamlit
+opencv-python-headless
+easyocr
+spacy
+fuzzywuzzy
+python-Levenshtein
+Pillow
+numpy
+pandas
+google-generativeai
+python-dotenv
+gTTS
+reportlab
