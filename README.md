@@ -47,6 +47,10 @@ npm install
 npm run dev
 ```
 
+### 3. Access the Dashboard
+Once both are running, open your browser and navigate to:
+**http://localhost:5173**
+
 ## 🛡️ Security & Privacy
 RxLens is designed with privacy in mind. API keys are managed via environment variables and are never committed to version control. The application uses a local SQLite database for history persistence.
 
