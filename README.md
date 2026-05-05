@@ -1,59 +1,54 @@
-# RxLens v2 – Premium Clinical Handwriting Intelligence
+# RxLens – Clinical Handwriting Intelligence Hub
 
-RxLens is an enterprise-grade intelligent system designed to digitize messy handwritten prescriptions with **100% accuracy**. By leveraging State-of-the-Art Vision-Language Models (Google Gemini), it effortlessly bypasses letterhead noise and illegible cursive to extract exact medical information.
+RxLens is an enterprise-grade medical AI system designed to digitize messy handwritten prescriptions with high precision. By leveraging **Vision-Language Models (Google Gemini)** and **OpenCV image preprocessing**, it bypasses letterhead noise and illegible cursive to extract structured medical data.
 
-## 🌟 Premium Features
-- **Flawless VLM OCR Engine**: Utilizes Gemini 1.5 Flash for perfect digitization of extreme doctor shorthand.
-- **Clinical Safety Engine**: Validates extracted drugs against medical databases, checks daily dosage limits, and flags severe drug interactions.
-- **Live Camera Integration**: Snap pictures directly from your mobile phone or laptop webcam.
-- **Audio Accessibility (TTS)**: Automatically synthesizes a spoken summary of the prescription for elderly or visually impaired patients.
-- **PDF Report Generation**: Exports a clean, formatted clinical report of the digitized prescription for hospital records.
-- **Enterprise UI**: A pristine, whitespace-heavy "Clinical Hub" dashboard built on Streamlit with custom CSS.
+## 🌟 Key Features
+- **High-Accuracy VLM OCR Engine**: Uses Gemini 2.0 Flash with multi-stage refinement and image sharpening for perfect digitization.
+*   **AI Clinical Assistant**: A context-aware chatbot ("Ask RxLens") that answers questions about medications, side effects, and timing.
+- **Clinical Safety Engine**: Integrates with the **NIH RxNav API** to check for severe drug-drug interactions and validate dosage limits.
+- **Insights Dashboard**: Real-time analytics using **Recharts** to track medication frequency and scanning trends over time.
+- **Accessibility Suite**: Generates professional **Audio Summaries** (TTS) and structured **Tabular PDF Reports**.
+- **Modern UI**: A sleek, glassmorphic dashboard with a fluid **Dark Mode** toggle and responsive design.
 
 ## 📂 Project Structure
 ```
 RxLens/
-├── .env                       # Secure API Keys (Must create this!)
-├── data/
-│   └── mock_drug_db.json      # Validation database
-├── src/
-│   ├── vision.py              # Gemini VLM Core Engine
-│   ├── audio.py               # gTTS Audio Synthesis
-│   ├── pdf_generator.py       # ReportLab PDF Export
-│   ├── validation.py          # Dosage safety, spell correction, interactions
-│   ├── nlp.py                 # (Legacy) Fallback NLP
-│   ├── ocr.py                 # (Legacy) Fallback OCR
-│   ├── image_processing.py    # Preprocessing
-│   └── utils.py               # Summary generation
-├── app/
-│   └── streamlit_app.py       # Main User Interface
-├── README.md                  # Project documentation
-└── requirements.txt           # Dependencies
+├── backend/            # FastAPI REST Server
+├── frontend/           # React (Vite) User Interface
+├── src/                # Core AI Engines
+│   ├── vision.py       # Gemini VLM & Chatbot Logic
+│   ├── validation.py   # NIH API & Safety Checks
+│   ├── pdf_generator.py# Tabular Report Generation
+│   ├── database.py     # SQLite Persistence
+│   ├── audio.py        # Text-to-Speech Summaries
+│   └── utils.py        # Formatting Utilities
+├── data/               # Static Medical Databases
+└── archive/            # Legacy Experiments & Old Code
 ```
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
-1. **Install Requirements**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 1. Backend Setup
+```bash
+# Install dependencies
+pip install -r requirements.txt
 
-2. **Configure API Key**
-   - Copy the `.env.example` file to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - Open `.env` and add your Google Gemini API Key:
-     ```
-     GEMINI_API_KEY=your_real_key_here
-     ```
+# Configure your .env
+echo "GEMINI_API_KEY=your_key_here" > .env
 
-3. **Run the Application**
-   ```bash
-   streamlit run app/streamlit_app.py
-   ```
+# Run the server
+uvicorn backend.main:app --reload
+```
 
-4. **Usage**
-   - Open the dashboard in your browser.
-   - Choose to **Upload a File** or **Take a Photo** using your webcam.
-   - The system will process the image, validate the clinical data, provide audio playback, and allow you to download a PDF report!
+### 2. Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## 🛡️ Security & Privacy
+RxLens is designed with privacy in mind. API keys are managed via environment variables and are never committed to version control. The application uses a local SQLite database for history persistence.
+
+## ⚖️ Disclaimer
+This application is for educational and demonstrative purposes only. Always consult a licensed healthcare professional before making any medical decisions.
