@@ -1,58 +1,143 @@
-# RxLens – Clinical Handwriting Intelligence Hub
+# RxLens 🩺 – AI-Powered Clinical Prescription Assistant
 
-RxLens is an enterprise-grade medical AI system designed to digitize messy handwritten prescriptions with high precision. By leveraging **Vision-Language Models (Google Gemini)** and **OpenCV image preprocessing**, it bypasses letterhead noise and illegible cursive to extract structured medical data.
+RxLens is an enterprise-grade medical AI platform that digitizes handwritten prescriptions, generates **interactive treatment schedules**, provides **bilingual audio guidance** (English & Hindi), and flags clinical safety alerts — all in real time.
+
+Built with **Google Gemini Vision**, **FastAPI**, and **React (Vite)**.
+
+---
 
 ## 🌟 Key Features
-- **High-Accuracy VLM OCR Engine**: Uses Gemini 2.0 Flash with multi-stage refinement and image sharpening for perfect digitization.
-*   **AI Clinical Assistant**: A context-aware chatbot ("Ask RxLens") that answers questions about medications, side effects, and timing.
-- **Clinical Safety Engine**: Integrates with the **NIH RxNav API** to check for severe drug-drug interactions and validate dosage limits.
-- **Insights Dashboard**: Real-time analytics using **Recharts** to track medication frequency and scanning trends over time.
-- **Accessibility Suite**: Generates professional **Audio Summaries** (TTS) and structured **Tabular PDF Reports**.
-- **Modern UI**: A sleek, glassmorphic dashboard with a fluid **Dark Mode** toggle and responsive design.
+
+| Feature | Description |
+|---|---|
+| 🔍 **VLM OCR Engine** | Gemini 2.0 Flash + OpenCV preprocessing for high-accuracy prescription digitization |
+| 🗓️ **Interactive Treatment Schedule** | AI parses dosage frequency and generates a visual Morning/Afternoon/Evening/Night timeline |
+| 🛡️ **Clinical Safety Guard** | Cross-references medications against patient allergies & age in real time |
+| 🤖 **AI Clinical Assistant** | Context-aware chatbot ("Ask RxLens") for medication Q&A |
+| 🌍 **Bilingual Support** | Full English & Hindi UI with professional text-to-speech audio summaries |
+| 📊 **Insights Dashboard** | Analytics via Recharts for medication trends |
+| 📄 **PDF Export** | Structured tabular prescription reports |
+| 🌙 **Dark Mode** | Glassmorphic, responsive UI with smooth animations |
+
+---
 
 ## 📋 Prerequisites
-Before you begin, ensure you have the following installed:
-*   **Python 3.9+**
-*   **Node.js 18+** & **npm**
-*   **Google Gemini API Key** (Obtain from [Google AI Studio](https://aistudio.google.com/))
+
+Before you begin, make sure you have the following installed:
+
+- **Python 3.9+**
+- **Node.js 18+** & **npm**
+- **Google Gemini API Key** → [Get one free at Google AI Studio](https://aistudio.google.com/)
+
+---
 
 ## 📂 Project Structure
+
 ```
 RxLens/
-├── backend/            # FastAPI REST Server
+├── backend/            # FastAPI REST Server (main.py)
 ├── frontend/           # React (Vite) User Interface
+│   └── src/
+│       ├── App.jsx     # Main UI & state management
+│       └── index.css   # Glassmorphic design system
 ├── src/                # Core AI Engines
-├── data/               # Static Medical Databases
-└── archive/            # Legacy Experiments & Old Code
+│   ├── vision.py       # Gemini VLM prompting & extraction
+│   ├── audio.py        # Bilingual Text-to-Speech engine
+│   └── pdf_generator.py
+├── requirements.txt
+└── .env                # Your API key goes here (never commit this!)
 ```
+
+---
 
 ## 🚀 Quick Start
 
-### 1. Backend Setup
+### Step 1 — Clone & Configure
+
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+git clone https://github.com/sameekshajangra/RxLens.git
+cd RxLens
 
-# Configure your .env
+# Add your Gemini API Key
 echo "GEMINI_API_KEY=your_key_here" > .env
-
-# Run the server
-uvicorn backend.main:app --reload
 ```
 
-### 2. Frontend Setup
+### Step 2 — Backend Setup
+
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Run the FastAPI server FROM the backend directory
+cd backend
+python -m uvicorn main:app --reload
+```
+
+> The backend will start at **http://localhost:8000**
+
+### Step 3 — Frontend Setup
+
+Open a **new terminal tab**, then:
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### 3. Access the Dashboard
-Once both are running, open your browser and navigate to:
-**http://localhost:5173**
+> The frontend will start at **http://localhost:5173**
 
-## 🛡️ Security & Privacy
-RxLens is designed with privacy in mind. API keys are managed via environment variables and are never committed to version control. The application uses a local SQLite database for history persistence.
+### Step 4 — Open the App
+
+Navigate to **[http://localhost:5173](http://localhost:5173)** in your browser. That's it! 🎉
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file in the **root** of the project:
+
+```env
+GEMINI_API_KEY=your_google_gemini_api_key_here
+```
+
+> ⚠️ Never commit your `.env` file. It's already in `.gitignore`.
+
+---
+
+## 📦 Key Dependencies
+
+**Python (backend)**
+```
+fastapi
+uvicorn
+google-generativeai
+opencv-python
+Pillow
+gTTS
+python-dotenv
+reportlab
+```
+
+**Node (frontend)**
+```
+react + vite
+recharts
+```
+
+---
+
+## 🛡️ Privacy & Security
+
+- API keys are managed via environment variables and never committed to version control.
+- All prescription data is processed locally and never stored on external servers.
+
+---
 
 ## ⚖️ Disclaimer
-This application is for educational and demonstrative purposes only. Always consult a licensed healthcare professional before making any medical decisions.
+
+This application is for **educational and demonstrative purposes only**. Always consult a licensed healthcare professional before making any medical decisions.
+
+---
+
+*Made with ❤️ by Sameeksha Jangra*

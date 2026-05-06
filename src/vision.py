@@ -1,125 +1,80 @@
+import os
+import io
 import json
+import base64
 import cv2
 import numpy as np
-from PIL import Image, ImageEnhance
-import os
+from PIL import Image
 from dotenv import load_dotenv
-import io
-import requests
-import base64
-import time
+import google.generativeai as genai
 
 def preprocess_image(image):
-    """
-    Applies computer vision techniques to sharpen handwriting and improve AI legibility.
-    """
-    # 1. Convert to Grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-    # 2. Rescaling (DPI increase for OCR)
-    scale_percent = 150 # increase size by 50%
-    width = int(gray.shape[1] * scale_percent / 100)
-    height = int(gray.shape[0] * scale_percent / 100)
-    resized = cv2.resize(gray, (width, height), interpolation=cv2.INTER_CUBIC)
-    
-    # 3. Denoising & Sharpening
-    denoised = cv2.fastNlMeansDenoising(resized, h=10)
-    
-    # 4. Adaptive Thresholding (makes it look like a scanned document)
-    thresh = cv2.adaptiveThreshold(denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-    
-    return Image.fromarray(thresh)
-
-def analyze_prescription_vision(image, api_key=None):
-    """
-    Sends the image to the Gemini Vision API using a Multi-Stage Refinement Prompt.
-    """
     try:
-        load_dotenv(override=True)
-        key = api_key or os.getenv("GEMINI_API_KEY")
-        if not key:
-            raise ValueError("No Gemini API Key found.")
-        
-        if key == "DEMO_MODE":
-            return {
-                "drug": "Paracetamol, Amoxicillin",
-                "dosage": "500mg, 250mg",
-                "frequency": "twice a day, thrice a day",
-                "duration": "5 days"
-            }
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        return Image.fromarray(gray)
+    except:
+        return Image.fromarray(image)
 
-        # Preprocess for extreme accuracy
-        processed_pil = preprocess_image(image)
-        
-        # Convert to base64
-        img_byte_arr = io.BytesIO()
-        processed_pil.save(img_byte_arr, format='JPEG', quality=95)
-        img_base64 = base64.b64encode(img_byte_arr.getvalue()).decode('utf-8')
-        
-        # CHAIN-OF-THOUGHT PROMPT
-        prompt = '''As an elite clinical pharmacist, perform a multi-stage analysis of this prescription:
-
-        STAGE 1: Transcribe EVERY single handwritten word on the page, regardless of how messy it is.
-        STAGE 2: Identify medication names, their dosages, frequencies, and durations.
-        STAGE 3: Verify your findings against standard medical databases to correct minor spelling errors (e.g., "Parcetamol" -> "Paracetamol").
-
-        CRITICAL: If there are multiple medications, you MUST list them all. Do not ignore any entry.
-        
-        Return ONLY a JSON object with this exact structure:
-        {
-            "drug": "Drug 1, Drug 2, Drug 3",
-            "dosage": "Dose 1, Dose 2, Dose 3",
-            "frequency": "Freq 1, Freq 2, Freq 3",
-            "duration": "Dur 1, Dur 2, Dur 3"
-        }
-        '''
-        
-        models = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"]
-        
-        for model in models:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-            payload = {
-                "contents": [{"parts": [{"text": prompt}, {"inline_data": {"mime_type": "image/jpeg", "data": img_base64}}]}]
-            }
-            
-            response = requests.post(url, json=payload, timeout=60)
-            if response.status_code == 200:
-                text = response.json()['candidates'][0]['content']['parts'][0]['text'].strip()
-                if "```" in text:
-                    text = text.split("```")[1]
-                    if text.startswith("json"): text = text[4:]
-                return json.loads(text.strip())
-            elif response.status_code == 429:
-                time.sleep(20)
-                
-        raise Exception("Quota exceeded.")
-    except Exception as e:
-        print(f"Vision API Error: {e}")
-        return None
-
-def chat_with_pharmacist(question, context, api_key=None):
+def analyze_prescription_vision(image, api_key=None, lang='English', patient_profile=None):
     """
-    Handles clinical questions using Gemini with robust retry logic.
+    Advanced Vision Analysis with Clinical Safety Guard.
     """
-    try:
-        load_dotenv(override=True)
-        key = api_key or os.getenv("GEMINI_API_KEY")
-        if not key or key == "DEMO_MODE":
-            return "In DEMO_MODE: This medication is typically for relief. Consult a doctor for specifics."
+    load_dotenv(override=True)
+    key = api_key or os.getenv("GEMINI_API_KEY")
+    if not key: raise ValueError("API Key missing.")
 
-        models = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
-        prompt = f"You are a clinical pharmacist. Context: {context}. Question: {question}. Answer concisely (2-3 sentences) + Disclaimer."
+    genai.configure(api_key=key)
+    model = genai.GenerativeModel('gemini-flash-latest')
 
-        for model in models:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-            payload = {"contents": [{"parts": [{"text": prompt}]}]}
-            
-            response = requests.post(url, json=payload, timeout=30)
-            if response.status_code == 200:
-                return response.json()['candidates'][0]['content']['parts'][0]['text']
-            elif response.status_code == 429:
-                time.sleep(5)
-                
-        return "Assistant is resetting. Please wait 30 seconds."
-    except Exception as e:
-        return "Sorry, I'm having trouble thinking right now."
+    processed_pil = preprocess_image(image)
+    
+    profile_context = f"Patient Profile: {json.dumps(patient_profile)}" if patient_profile else ""
+    
+    prompt = f"""
+    Digitize this prescription into JSON in {lang}. 
+    {profile_context}
+    
+    CRITICAL INSTRUCTIONS:
+    1. SAFETY: Check for allergy/age conflicts against the profile.
+    2. SCHEDULE: You MUST create a 'schedule' array. For every drug found, determine if it should be taken in the [Morning, Afternoon, Evening, Night]. 
+       - If the prescription says '1-0-1', that's Morning and Night.
+       - If it says 'TDS' or '3 times', that's Morning, Afternoon, Night.
+       - If unclear, default to 'Morning' and 'Night'.
+    
+    Exact JSON Structure:
+    {{
+        "drug": "Med names",
+        "dosage": "Dose info",
+        "frequency": "Frequency",
+        "duration": "Duration",
+        "summary": "Full summary in {lang}",
+        "safety_alerts": "Safety warnings",
+        "schedule": [
+            {{ "drug": "Name of drug", "times": ["Morning", "Afternoon", "Evening", "Night"], "duration": "e.g. 5 days" }}
+        ]
+    }}
+    """
+
+    # We do NOT use try-except here so the raw SDK error bubbles up to the backend
+    response = model.generate_content([prompt, processed_pil])
+    
+    if response.text:
+        text = response.text.strip()
+        if "```" in text:
+            text = text.split("```")[1]
+            if text.startswith("json"): text = text[4:]
+        return json.loads(text.strip())
+    else:
+        raise Exception("Empty response from AI engine.")
+
+def chat_with_pharmacist(question, context, api_key=None, lang='English'):
+    load_dotenv(override=True)
+    key = api_key or os.getenv("GEMINI_API_KEY")
+    if not key: return "API Key missing."
+
+    genai.configure(api_key=key)
+    model = genai.GenerativeModel('gemini-flash-latest')
+    
+    prompt = f"Context: {context}\nUser: {question}\nRespond in {lang}."
+    response = model.generate_content(prompt)
+    return response.text if response.text else "AI is currently busy."

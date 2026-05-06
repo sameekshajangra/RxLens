@@ -1,39 +1,39 @@
 from gtts import gTTS
 import os
-import base64
+import uuid
 
 def generate_audio(text, lang='en'):
     """
-    Generates speech from text and saves it as an MP3 file.
-    Returns the file path.
+    Generates an audio file from text in the specified language.
+    Returns the path to the generated file.
     """
-    if not text:
-        return None
-        
     try:
-        tts = gTTS(text=text, lang=lang, slow=False)
-        output_path = "/tmp/prescription_audio.mp3"
-        tts.save(output_path)
-        return output_path
-    except Exception as e:
-        print(f"Audio Generation Error: {e}")
-        return None
+        # Create audio directory if not exists
+        audio_dir = "audio_summaries"
+        if not os.path.exists(audio_dir):
+            os.makedirs(audio_dir)
+            
+        # Clean up old audio files
+        for f in os.listdir(audio_dir):
+            try:
+                os.remove(os.path.join(audio_dir, f))
+            except:
+                pass
 
-def get_audio_html(file_path):
-    """
-    Converts audio file to base64 encoded HTML audio player.
-    """
-    if not file_path or not os.path.exists(file_path):
-        return ""
+        filename = f"{uuid.uuid4()}.mp3"
+        filepath = os.path.join(audio_dir, filename)
         
-    with open(file_path, "rb") as f:
-        data = f.read()
-        b64 = base64.b64encode(data).decode()
+        # Determine language code for gTTS
+        # Robust check for Hindi/English
+        lang_input = str(lang).lower()
+        lang_code = 'hi' if lang_input in ['hindi', 'hi'] else 'en'
         
-    audio_html = f"""
-        <audio controls autoplay>
-        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-        Your browser does not support the audio element.
-        </audio>
-    """
-    return audio_html
+        # Clean text to prevent gTTS glitches
+        clean_text = text.strip().replace('*', '').replace('#', '')
+
+        tts = gTTS(text=clean_text, lang=lang_code, slow=False)
+        tts.save(filepath)
+        return filepath
+    except Exception as e:
+        print(f"Audio Error: {e}")
+        return None
