@@ -7,8 +7,12 @@ import os
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'mock_drug_db.json')
 
 def load_db():
-    with open(DB_PATH, 'r') as f:
-        return json.load(f)
+    try:
+        with open(DB_PATH, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Warning: Mock drug database not found at {DB_PATH}. Validation will be limited.")
+        return {}
 
 DRUG_DB = load_db()
 

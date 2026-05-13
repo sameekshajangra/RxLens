@@ -9,7 +9,7 @@ def generate_audio(text, lang='en'):
     """
     try:
         # Create audio directory if not exists
-        audio_dir = "audio_summaries"
+        audio_dir = os.path.join(os.path.dirname(__file__), '..', 'backend', 'audio_summaries')
         if not os.path.exists(audio_dir):
             os.makedirs(audio_dir)
             

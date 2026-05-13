@@ -6,10 +6,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { 
-  Upload, Camera, FileText, Activity, ShieldCheck, 
-  Download, PlayCircle, Loader2, AlertTriangle, 
+  Upload, Camera, FileText, Activity, ShieldCheck, ShieldAlert,
+  Download, PlayCircle, Loader2, AlertTriangle, Info,
   CheckCircle2, Settings, Key, Globe, History, 
-  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck
+  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge
 } from 'lucide-react';
 import './index.css';
 
@@ -29,7 +29,7 @@ function App() {
   const [audioUrl, setAudioUrl] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
   const [history, setHistory] = useState([]);
-  const [patientProfile, setPatientProfile] = useState({ name: '', age: '', weight: '', allergies: '' });
+  const [patientProfile, setPatientProfile] = useState({ name: '', age: '', weight: '', allergies: '', conditions: '' });
   const [showProfile, setShowProfile] = useState(false);
   
   // Rate Limit Countdown
@@ -40,6 +40,19 @@ function App() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
+
+  // Explainability State
+  const [expandedReasons, setExpandedReasons] = useState({});
+
+  const toggleReason = (idx) => {
+    setExpandedReasons(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const getConfidenceLevel = (score) => {
+    if (score >= 0.8) return 'high';
+    if (score >= 0.6) return 'medium';
+    return 'low';
+  };
 
   const translations = {
     English: {
@@ -71,12 +84,18 @@ function App() {
       guard_active: 'Safety Guard Active: AI is monitoring conflicts.',
       ask_meds: 'Ask about your meds...',
       safety_warning: 'Safety Alert Found',
+      safety_intel: 'Clinical Safety Intelligence',
+      severity_critical: 'CRITICAL',
+      severity_warning: 'WARNING',
+      severity_info: 'INFO',
       schedule_title: 'Treatment Schedule',
       morning: 'Morning',
       afternoon: 'Afternoon',
       evening: 'Evening',
       night: 'Night',
-      today: 'Today'
+      today: 'Today',
+      conditions: 'Medical Conditions',
+      conditions_placeholder: 'e.g. Asthma, Diabetes, Pregnancy'
     },
     Hindi: {
       scanner: 'स्कैनर',
@@ -107,12 +126,18 @@ function App() {
       guard_active: 'सुरक्षा गार्ड सक्रिय: AI खतरों की निगरानी कर रहा है।',
       ask_meds: 'अपनी दवाओं के बारे में पूछें...',
       safety_warning: 'सुरक्षा चेतावनी मिली',
+      safety_intel: 'क्लिनिकल सुरक्षा इंटेलिजेंस',
+      severity_critical: 'गंभीर',
+      severity_warning: 'चेतावनी',
+      severity_info: 'जानकारी',
       schedule_title: 'उपचार की समय सारणी',
       morning: 'सुबह',
       afternoon: 'दोपहर',
       evening: 'शाम',
       night: 'रात',
-      today: 'आज'
+      today: 'आज',
+      conditions: 'चिकित्सा स्थितियां',
+      conditions_placeholder: 'जैसे अस्थमा, मधुमेह, गर्भावस्था'
     }
   };
 
@@ -212,7 +237,7 @@ function App() {
     setRetryCountdown(0);
   };
 
-  const processImage = async () => {
+  const processImage = useCallback(async () => {
     if (!imageFile) return;
     setLoading(true);
     setError('');
@@ -221,7 +246,6 @@ function App() {
     formData.append('file', imageFile);
     formData.append('lang', language);
     formData.append('patient_profile', JSON.stringify(patientProfile));
-    if (apiKey) formData.append('api_key', apiKey);
 
     try {
       const res = await axios.post('/api/extract', formData, { timeout: 120000 });
@@ -245,21 +269,20 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [imageFile, language, patient_profile]);
 
-  const handleChatSend = async () => {
+  const handleChatSend = useCallback(async () => {
     if (!chatMessage.trim()) return;
     const userMsg = chatMessage;
     setChatMessage('');
     setChatHistory(prev => [...prev, { role: 'user', text: userMsg }]);
     setChatLoading(true);
 
-    const context = result ? `Drug: ${result.data.drug}, Dosage: ${result.data.dosage}` : "No prescription scanned yet.";
+    const context = result?.data ? `Drug: ${result.data.drug}, Dosage: ${result.data.dosage}` : "No prescription scanned yet.";
     const formData = new FormData();
     formData.append('question', userMsg);
     formData.append('context', context);
     formData.append('lang', language);
-    if (apiKey) formData.append('api_key', apiKey);
 
     try {
       const res = await axios.post('/api/chat', formData);
@@ -269,9 +292,9 @@ function App() {
     } finally {
       setChatLoading(false);
     }
-  };
+  }, [chatMessage, result, language]);
 
-  const downloadPDF = async (data = result?.data, summaryText = result?.summary) => {
+  const downloadPDF = useCallback(async (data = result?.data, summaryText = result?.summary) => {
     if (!data) return;
     const pdfForm = new FormData();
     pdfForm.append('drug', data.drug || data.drug_name || '');
@@ -279,6 +302,7 @@ function App() {
     pdfForm.append('frequency', data.frequency || '');
     pdfForm.append('duration', data.duration || '');
     pdfForm.append('summary', summaryText || data.summary || '');
+    pdfForm.append('safety_alerts', JSON.stringify(data.safety_alerts || []));
     try {
       const res = await axios.post('/api/pdf', pdfForm, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -287,7 +311,7 @@ function App() {
       link.setAttribute('download', 'Clinical_Report.pdf');
       link.click();
     } catch (err) { console.error(err); }
-  };
+  }, [result]);
 
   const isEngineReady = isApiKeySetInEnv || apiKey.length > 10 || apiKey === "DEMO_MODE";
 
@@ -334,70 +358,80 @@ function App() {
         </div>
       </div>
 
-      {showProfile && (
-        <motion.div 
-          initial={{ opacity: 0, height: 0 }} 
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          style={{ padding: '0 2rem 2.5rem', overflow: 'hidden' }}
-        >
-          <div className="glass-card" style={{ padding: '2.5rem', border: '1px solid var(--primary)', background: 'rgba(99, 102, 241, 0.05)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.25rem', fontWeight: 700 }}>
-                <ShieldCheck size={24} color="var(--primary)" /> {t.clinical_profile}
-              </h3>
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setPatientProfile({ name: '', age: '', weight: '', allergies: '' })}
-                style={{ padding: '6px 12px', fontSize: '0.75rem', opacity: 0.7 }}
-              >
-                {t.reset_profile}
-              </button>
+      <AnimatePresence>
+        {showProfile && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ padding: '0 2rem 2.5rem', overflow: 'hidden' }}
+          >
+            <div className="glass-card" style={{ padding: '2.5rem', border: '1px solid var(--primary)', background: 'rgba(99, 102, 241, 0.05)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.25rem', fontWeight: 700 }}>
+                  <ShieldCheck size={24} color="var(--primary)" /> {t.clinical_profile}
+                </h3>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setPatientProfile({ name: '', age: '', weight: '', allergies: '', conditions: '' })}
+                  style={{ padding: '6px 12px', fontSize: '0.75rem', opacity: 0.7 }}
+                >
+                  {t.reset_profile}
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '25px' }}>
+                <div className="form-group">
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.full_name}</label>
+                  <div className="profile-input-wrapper">
+                    <User className="input-icon" size={18} />
+                    <input type="text" className="input-field" placeholder="e.g. John Doe" value={patientProfile.name} onChange={(e)=>setPatientProfile({...patientProfile, name: e.target.value})} />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.age}</label>
+                  <div className="profile-input-wrapper">
+                    <Calendar className="input-icon" size={18} />
+                    <input type="number" className="input-field" placeholder="Years" value={patientProfile.age} onChange={(e)=>setPatientProfile({...patientProfile, age: e.target.value})} />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.weight}</label>
+                  <div className="profile-input-wrapper">
+                    <Activity className="input-icon" size={18} />
+                    <input type="number" className="input-field" placeholder="kg" value={patientProfile.weight} onChange={(e)=>setPatientProfile({...patientProfile, weight: e.target.value})} />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.allergies}</label>
+                  <div className="profile-input-wrapper">
+                    <AlertTriangle className="input-icon" size={18} />
+                    <input type="text" className="input-field" placeholder="e.g. Penicillin, Peanuts" value={patientProfile.allergies} onChange={(e)=>setPatientProfile({...patientProfile, allergies: e.target.value})} />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.conditions}</label>
+                  <div className="profile-input-wrapper">
+                    <Stethoscope className="input-icon" size={18} />
+                    <input type="text" className="input-field" placeholder={t.conditions_placeholder} value={patientProfile.conditions} onChange={(e)=>setPatientProfile({...patientProfile, conditions: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '20px', padding: '12px 20px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.1)', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+                <div className="pulse-dot"></div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 500 }}>
+                  {t.guard_active}
+                </p>
+              </div>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '25px' }}>
-              <div className="form-group">
-                <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.full_name}</label>
-                <div className="profile-input-wrapper">
-                  <User className="input-icon" size={18} />
-                  <input type="text" className="input-field" placeholder="e.g. John Doe" value={patientProfile.name} onChange={(e)=>setPatientProfile({...patientProfile, name: e.target.value})} />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.age}</label>
-                <div className="profile-input-wrapper">
-                  <Calendar className="input-icon" size={18} />
-                  <input type="number" className="input-field" placeholder="Years" value={patientProfile.age} onChange={(e)=>setPatientProfile({...patientProfile, age: e.target.value})} />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.weight}</label>
-                <div className="profile-input-wrapper">
-                  <Activity className="input-icon" size={18} />
-                  <input type="number" className="input-field" placeholder="kg" value={patientProfile.weight} onChange={(e)=>setPatientProfile({...patientProfile, weight: e.target.value})} />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.allergies}</label>
-                <div className="profile-input-wrapper">
-                  <AlertTriangle className="input-icon" size={18} />
-                  <input type="text" className="input-field" placeholder="e.g. Penicillin, Peanuts" value={patientProfile.allergies} onChange={(e)=>setPatientProfile({...patientProfile, allergies: e.target.value})} />
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '20px', padding: '12px 20px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.1)', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-              <div className="pulse-dot"></div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 500 }}>
-                {t.guard_active}
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {activeTab === 'scanner' && (
@@ -458,33 +492,152 @@ function App() {
                 </div>
               ) : result ? (
                 <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
-                  {result.data.safety_alerts && (
-                    <div className="glass-card" style={{marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444', borderLeftWidth: '5px'}}>
-                      <h3 style={{color: '#ef4444', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', fontSize: '1rem'}}>
-                        <AlertTriangle size={18} /> {t.safety_warning}
-                      </h3>
-                      <p style={{fontSize: '0.9rem', color: 'var(--text)', fontWeight: 500}}>{result.data.safety_alerts}</p>
+                  {/* Structured Clinical Safety Intelligence */}
+                  {(result.data.safety_alerts && result.data.safety_alerts.length > 0) && (
+                    <div className={`glass-card safety-section ${result.data.safety_alerts.some(a => a.severity === 'Critical') ? 'safety-section-critical' : 'safety-section-warning'}`} style={{ padding: '1.5rem' }}>
+                      <div className="safety-header">
+                        <div className="safety-header-left">
+                          <ShieldAlert size={24} color="var(--danger)" />
+                          <h3 style={{ color: result.data.safety_alerts.some(a => a.severity === 'Critical') ? 'var(--danger)' : 'var(--warning)' }}>{t.safety_intel}</h3>
+                        </div>
+                        <span className={`safety-count-badge ${result.data.safety_alerts.some(a => a.severity === 'Critical') ? 'critical' : 'warning'}`}>
+                          {result.data.safety_alerts.length} {result.data.safety_alerts.length === 1 ? 'Alert' : 'Alerts'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {result.data.safety_alerts.map((alert, idx) => (
+                          <motion.div 
+                            key={idx} 
+                            className={`safety-alert-card ${(alert.severity || 'info').toLowerCase()}`}
+                            initial={{ opacity: 0, x: -15 }} 
+                            animate={{ opacity: 1, x: 0 }} 
+                            transition={{ delay: idx * 0.08, type: 'spring', stiffness: 200 }}
+                          >
+                            <div className="safety-alert-top">
+                              <span className={`severity-badge ${(alert.severity || 'info').toLowerCase()}`}>
+                                {alert.severity === 'Critical' ? t.severity_critical : alert.severity === 'Warning' ? t.severity_warning : t.severity_info}
+                              </span>
+                              <span className="alert-type-label">
+                                {alert.type === 'Drug-Drug Interaction' && <HeartPulse size={12} />}
+                                {alert.type === 'Allergy Conflict' && <AlertTriangle size={12} />}
+                                {alert.type === 'Contraindication' && <ShieldAlert size={12} />}
+                                {alert.type === 'Duplicate Medication' && <Pill size={12} />}
+                                {alert.type}
+                              </span>
+                            </div>
+                            <p className="alert-message">{alert.message}</p>
+                            {alert.involved_drugs && (
+                              <div className="alert-drugs">
+                                {alert.involved_drugs.map((d, i) => (
+                                  <span key={i} className="alert-drug-tag">{d}</span>
+                                ))}
+                              </div>
+                            )}
+                            {alert.reason && (
+                              <div>
+                                <span className="alert-reason-toggle" onClick={() => toggleReason(idx)}>
+                                  {expandedReasons[idx] ? <EyeOff size={11} /> : <Eye size={11} />}
+                                  {expandedReasons[idx] ? 'Hide' : 'Why this alert?'}
+                                </span>
+                                {expandedReasons[idx] && (
+                                  <div className="alert-reason-text">{alert.reason}</div>
+                                )}
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI Confidence & Explainability */}
+                  {result.data.confidence && Object.keys(result.data.confidence).length > 0 && (
+                    <div className="glass-card confidence-section" style={{ marginBottom: '1.5rem' }}>
+                      <div className="confidence-header">
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: 700 }}>
+                          <Gauge size={20} color="var(--primary)" /> AI Confidence Score
+                        </h3>
+                        {result.data.overall_confidence != null && (
+                          <div className="confidence-overall">
+                            <div 
+                              className={`confidence-ring ${getConfidenceLevel(result.data.overall_confidence)}`}
+                              style={{ '--ring-pct': `${result.data.overall_confidence * 100}%` }}
+                            >
+                              {Math.round(result.data.overall_confidence * 100)}%
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="confidence-bar-group">
+                        {Object.entries(result.data.confidence).map(([field, score]) => {
+                          const s = typeof score === 'object' ? score.score : score;
+                          const level = getConfidenceLevel(s);
+                          return (
+                            <div key={field} className="confidence-bar-item">
+                              <span className="confidence-bar-label">{field}</span>
+                              <div className="confidence-bar-track">
+                                <motion.div 
+                                  className={`confidence-bar-fill ${level}`}
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${s * 100}%` }}
+                                  transition={{ duration: 1, delay: 0.2 }}
+                                />
+                              </div>
+                              <span className={`confidence-bar-score`} style={{ color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)' }}>
+                                {Math.round(s * 100)}%
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Uncertainty Warnings */}
+                      {result.data.uncertainty_warnings && result.data.uncertainty_warnings.length > 0 && (
+                        <div className="uncertainty-warnings">
+                          {result.data.uncertainty_warnings.map((w, i) => (
+                            <div key={i} className={`uncertainty-chip ${w.level}`}>
+                              <AlertTriangle size={14} className="unc-icon" />
+                              <span>{w.message}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* AI Safety Observations */}
+                  {result.data.ai_safety_observations && (
+                    <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(99, 102, 241, 0.05)', borderLeft: '4px solid var(--primary)' }}>
+                       <h4 style={{ fontSize: '0.85rem', color: 'var(--primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                         <Activity size={16} /> AI Observation
+                       </h4>
+                       <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{result.data.ai_safety_observations}</p>
                     </div>
                   )}
                   <div className="glass-card" style={{marginBottom: '1.5rem'}}>
                     <h2 className="card-title"><Activity size={20} style={{color: 'var(--primary)'}}/> {t.clinical_extraction}</h2>
                     <div className="metrics-grid">
-                      <div className="metric-box">
-                        <div className="metric-label">{t.medication}</div>
-                        <div className="metric-value" style={{fontSize: '1.2rem'}}>{result.data.drug}</div>
-                      </div>
-                      <div className="metric-box">
-                        <div className="metric-label">{t.dosage}</div>
-                        <div className="metric-value">{result.data.dosage}</div>
-                      </div>
-                      <div className="metric-box">
-                        <div className="metric-label">{t.frequency}</div>
-                        <div className="metric-value">{result.data.frequency || 'As directed'}</div>
-                      </div>
-                      <div className="metric-box">
-                        <div className="metric-label">{t.duration}</div>
-                        <div className="metric-value">{result.data.duration || 'N/A'}</div>
-                      </div>
+                      {['drug', 'dosage', 'frequency', 'duration'].map((field) => {
+                        const isUncertain = (result.data.uncertain_fields || []).includes(field) || 
+                          (result.data.confidence && result.data.confidence[field] != null && 
+                           (typeof result.data.confidence[field] === 'number' ? result.data.confidence[field] : result.data.confidence[field]?.score) < 0.7);
+                        const labels = { drug: t.medication, dosage: t.dosage, frequency: t.frequency, duration: t.duration };
+                        const values = { 
+                          drug: result.data.drug, 
+                          dosage: result.data.dosage, 
+                          frequency: result.data.frequency || 'As directed', 
+                          duration: result.data.duration || 'N/A' 
+                        };
+                        return (
+                          <div key={field} className={`metric-box ${isUncertain ? 'field-uncertain' : ''}`}>
+                            <div className="metric-label">
+                              {labels[field]}
+                              {isUncertain && <span className="uncertain-badge"><AlertTriangle size={9} /> Verify</span>}
+                            </div>
+                            <div className="metric-value" style={field === 'drug' ? {fontSize: '1.2rem'} : {}}>{values[field]}</div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -597,13 +750,27 @@ function App() {
               <div className="stat-card">
                 <div className="stat-icon" style={{background:'rgba(239, 68, 68, 0.1)', color:'var(--danger)'}}><AlertTriangle size={24}/></div>
                 <div className="stat-value" style={{color: 'var(--danger)'}}>
-                  {history.filter(h => h.summary && (h.summary.includes('Warning') || h.summary.includes('interaction'))).length}
+                  {history.reduce((sum, h) => sum + (h.safety_alert_count || 0), 0)}
                 </div>
                 <div className="stat-label">Safety Alerts</div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon" style={{background:'rgba(34, 197, 94, 0.1)', color:'var(--success)'}}><Calendar size={24}/></div>
-                <div className="stat-value">5.2</div>
+                <div className="stat-value">
+                  {history.length > 0
+                    ? (() => {
+                        const allDurations = history.flatMap(h =>
+                          typeof h.duration === 'string'
+                            ? (h.duration.match(/\d+/) || [])
+                            : []
+                        ).map(Number).filter(n => n > 0);
+                        return allDurations.length > 0
+                          ? (allDurations.reduce((a, b) => a + b, 0) / allDurations.length).toFixed(1)
+                          : '—';
+                      })()
+                    : '—'
+                  }
+                </div>
                 <div className="stat-label">Avg. Days</div>
               </div>
             </div>
@@ -672,7 +839,7 @@ function App() {
                 placeholder={language === 'Hindi' ? "अपनी दवाओं के बारे में पूछें..." : "Ask about your meds..."} 
                 value={chatMessage} 
                 onChange={(e) => setChatMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleChatSend()}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleChatSend()}
                 disabled={retryCountdown > 0}
               />
               <button className="btn" style={{padding:'0.5rem'}} onClick={handleChatSend} disabled={chatLoading || retryCountdown > 0}>

@@ -2,7 +2,9 @@ import os
 import sys
 import json
 import cv2
+import uuid
 import numpy as np
+from datetime import datetime
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -15,6 +17,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.vision import analyze_prescription_vision, chat_with_pharmacist
 from src.audio import generate_audio
 from src.pdf_generator import generate_pdf_report
+from src.database import save_prescription, get_all_prescriptions
 
 app = FastAPI()
 
@@ -26,8 +29,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory history for demo purposes
-prescription_history = []
+# In-memory history for demo purposes, initialized from database
+prescription_history = get_all_prescriptions()
 
 @app.get("/")
 def read_root():
@@ -43,7 +46,7 @@ def get_config():
 
 @app.get("/api/history")
 def get_history():
-    return prescription_history
+    return get_all_prescriptions()
 
 @app.post("/api/extract")
 async def extract_prescription(
@@ -78,15 +81,26 @@ async def extract_prescription(
         # Create localized summary
         summary_text = parsed_data.get("summary", "No summary available.")
         
+        # Count safety alerts for history
+        safety_alerts = parsed_data.get("safety_alerts", [])
+        alert_count = len(safety_alerts)
+        critical_count = len([a for a in safety_alerts if a.get("severity") == "Critical"])
+        
         # Save to history
         record = {
             "drug_name": parsed_data.get("drug", "Unknown"),
             "dosage": parsed_data.get("dosage", "N/A"),
-            "date": "Just now",
+            "frequency": parsed_data.get("frequency", "As directed"),
+            "duration": parsed_data.get("duration", "N/A"),
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "summary": summary_text,
-            "schedule": parsed_data.get("schedule", [])
+            "schedule": parsed_data.get("schedule", []),
+            "safety_alert_count": alert_count,
+            "critical_alert_count": critical_count,
+            "safety_alerts": safety_alerts
         }
         prescription_history.insert(0, record)
+        save_prescription(record)
 
         return {
             "success": True,
@@ -116,18 +130,27 @@ async def get_pdf(
     dosage: str = Form(""),
     frequency: str = Form(""),
     duration: str = Form(""),
-    summary: str = Form("")
+    summary: str = Form(""),
+    safety_alerts: str = Form("[]")
 ):
     try:
+        # Parse safety alerts from JSON string
+        try:
+            alerts_data = json.loads(safety_alerts)
+        except:
+            alerts_data = []
+        
         data = {
             "drug": drug,
             "dosage": dosage,
             "frequency": frequency,
             "duration": duration,
-            "summary": summary
+            "summary": summary,
+            "safety_alerts": alerts_data
         }
-        # Use /tmp for lambda/serverless compatibility or local artifacts directory
-        output_path = "clinical_report.pdf"
+        # Use a unique filename for each user to avoid race conditions
+        unique_filename = f"report_{uuid.uuid4().hex}.pdf"
+        output_path = os.path.join("/tmp", unique_filename) if os.path.exists("/tmp") else unique_filename
         pdf_path = generate_pdf_report(data, output_path)
         return FileResponse(pdf_path, media_type="application/pdf", filename="RxLens_Report.pdf")
     except Exception as e:
