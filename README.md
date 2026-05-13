@@ -31,34 +31,71 @@ RxLens utilizes a modern, decoupled client-server architecture. The Vision Langu
 
 ```mermaid
 graph TD
-    subgraph Frontend [React / Vite Client]
+    %% Deployment Layer Enclosures
+    subgraph Vercel ["⚡ Vercel (Frontend Hosting)"]
+        direction TB
         UI[Glassmorphic UI]
         Cam[Webcam Scanner]
-        Access[Elderly Mode & A11y]
         Dash[Adherence Dashboard]
-        UI <--> Cam
-        UI <--> Access
-        UI <--> Dash
+        LS[(Browser localStorage)]
     end
 
-    subgraph Backend [FastAPI Server]
-        API[REST API Router]
-        VLM[Gemini Vision Engine]
-        CEngine[Clinical Safety Engine]
-        DB[(Clinical Database)]
-        PDF[ReportLab Generator]
-        TTS[Bilingual Audio Engine]
+    subgraph Render ["🚀 Render (Backend Hosting)"]
+        direction TB
+        API[FastAPI REST Router]
         
-        API <--> VLM
-        API <--> CEngine
-        CEngine <--> DB
-        API <--> PDF
-        API <--> TTS
+        subgraph TrustBoundary ["🛡️ Deterministic Validation Zone"]
+            CEngine[Clinical Safety Engine]
+            DB[(Clinical Database)]
+        end
+
+        subgraph AIBoundary ["🧠 AI-Generated Zone"]
+            VLM[Gemini Vision Engine]
+        end
+
+        PDF[ReportLab PDF Engine]
+        TTS[Bilingual Audio Engine]
     end
 
-    Frontend -- Multipart form-data --> API
-    API -- JSON / Blobs --> Frontend
-    VLM -- Cloud API --> Google[Google Gemini API]
+    subgraph GoogleCloud ["☁️ Google Cloud"]
+        GeminiAPI[Gemini 2.0 Flash API]
+    end
+
+    %% Data Flow Routing (Frontend)
+    Cam -- "1. Image Upload (Multipart)" --> API
+    API -- "6. Parsed JSON + Intelligence" --> UI
+    UI -- "7. Save / Read History" --> LS
+    Dash -- "8. Read Taken/Missed Logs" --> LS
+
+    %% Internal Backend Routing
+    API -- "2. Image Blob" --> VLM
+    VLM -- "3. Unstructured OCR to JSON" --> API
+    API -- "4. Extracted Drugs & Doses" --> CEngine
+    CEngine -- "5. Safety Alerts & Eco-Scores" --> API
+    
+    %% AI Boundary Routing
+    VLM -- "API Request" --> GeminiAPI
+    GeminiAPI -- "JSON Payload" --> VLM
+    
+    %% Deterministic Routing
+    CEngine -. "Cross-reference rules" .-> DB
+
+    %% Auxiliary Routing
+    API -- "Generate Report" --> PDF
+    API -- "Generate Audio" --> TTS
+
+    %% Styling & Color Hierarchy
+    classDef frontend fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff;
+    classDef backend fill:#8b5cf6,stroke:#6d28d9,stroke-width:2px,color:#fff;
+    classDef ai fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff;
+    classDef safety fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff;
+    classDef storage fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff;
+
+    class UI,Cam,Dash frontend;
+    class API,PDF,TTS backend;
+    class VLM,GeminiAPI ai;
+    class CEngine safety;
+    class DB,LS storage;
 ```
 
 ---
