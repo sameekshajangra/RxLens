@@ -13,9 +13,18 @@
 
 <br />
 
+<p align="center">
+  <img src="assets/demo.gif" width="80%" alt="RxLens Demo" />
+</p>
+
+> [!WARNING]  
+> **Disclaimer:** Educational healthcare AI prototype for research and demonstration purposes only. Not a substitute for licensed medical advice.
+
+<br />
+
 ## 🌍 Why It Matters
 
-Medication misinterpretation and poor adherence remain major contributors to preventable healthcare complications worldwide. RxLens was built to explore how multimodal AI can solve these global challenges—from elderly patients struggling with complex polypharmacy and cognitive overload, to non-native speakers unable to read local prescription instructions. By synthesizing Vision-Language Models (VLMs) with strict, deterministic clinical safety protocols, RxLens ensures that healthcare intelligence is both universally accessible and rigorously safe.
+Medication misinterpretation and poor adherence remain major contributors to preventable healthcare complications worldwide. RxLens was built to explore how multimodal AI can solve these global challenges—from elderly patients struggling with complex polypharmacy and cognitive overload, to non-native speakers unable to read local prescription instructions. By combining Vision-Language Models (VLMs) with deterministic clinical safety protocols, RxLens ensures that healthcare intelligence is both universally accessible and rigorously safe.
 
 ---
 
