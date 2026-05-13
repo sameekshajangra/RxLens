@@ -9,7 +9,7 @@
   
   <br />
   <a href="https://youtu.be/your_demo_video_link" target="_blank">View Demo Video</a> · 
-  <a href="https://rxlens.vercel.app" target="_blank">Live App</a>
+  <a href="#live-deployment">Live App (Pending Deployment)</a>
 </div>
 
 <br />
