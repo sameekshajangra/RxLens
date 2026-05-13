@@ -1,143 +1,136 @@
-# RxLens 🩺 – AI-Powered Clinical Prescription Assistant
+# RxLens 🩺 – Longitudinal Medication Intelligence Platform
 
-RxLens is an enterprise-grade medical AI platform that digitizes handwritten prescriptions, generates **interactive treatment schedules**, provides **bilingual audio guidance** (English & Hindi), and flags clinical safety alerts — all in real time.
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)]()
+[![Google Gemini](https://img.shields.io/badge/AI_Engine-Gemini_2.0_Flash-blueviolet.svg)]()
+[![React](https://img.shields.io/badge/Frontend-React_18-cyan.svg)]()
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)]()
 
-Built with **Google Gemini Vision**, **FastAPI**, and **React (Vite)**.
+RxLens is an enterprise-grade medical AI platform that transcends traditional OCR. It digitizes handwritten and printed prescriptions, cross-references medications against a custom clinical database, and generates **proactive clinical intelligence** including treatment schedules, Polypharmacy De-prescribing notes, and Environmental Impact scores. 
+
+Built for global healthcare accessibility, it provides **bilingual audio guidance** (English & Hindi) and features a dedicated **A+ Elderly Accessibility Mode**.
 
 ---
 
-## 🌟 Key Features
+## 🏗️ System Architecture
+
+RxLens utilizes a modern, decoupled client-server architecture. The Vision Language Model (VLM) handles unstructured optical extraction, while a deterministic, rule-based clinical engine handles all safety protocols to prevent AI hallucinations in medical data.
+
+```mermaid
+graph TD
+    subgraph Frontend [React / Vite Client]
+        UI[Glassmorphic UI]
+        Cam[Webcam Scanner]
+        Access[Elderly Mode & A11y]
+        Dash[Adherence Dashboard]
+        UI <--> Cam
+        UI <--> Access
+        UI <--> Dash
+    end
+
+    subgraph Backend [FastAPI Server]
+        API[REST API Router]
+        VLM[Gemini Vision Engine]
+        CEngine[Clinical Safety Engine]
+        DB[(Clinical Database)]
+        PDF[ReportLab Generator]
+        TTS[Bilingual Audio Engine]
+        
+        API <--> VLM
+        API <--> CEngine
+        CEngine <--> DB
+        API <--> PDF
+        API <--> TTS
+    end
+
+    Frontend -- Multipart form-data --> API
+    API -- JSON / Blobs --> Frontend
+    VLM -- Cloud API --> Google[Google Gemini API]
+```
+
+---
+
+## 🌟 Core Clinical Features
 
 | Feature | Description |
 |---|---|
-| 🔍 **VLM OCR Engine** | Gemini 2.0 Flash + OpenCV preprocessing for high-accuracy prescription digitization |
-| 🗓️ **Interactive Treatment Schedule** | AI parses dosage frequency and generates a visual Morning/Afternoon/Evening/Night timeline |
-| 🛡️ **Clinical Safety Guard** | Cross-references medications against patient allergies & age in real time |
-| 🤖 **AI Clinical Assistant** | Context-aware chatbot ("Ask RxLens") for medication Q&A |
-| 🌍 **Bilingual Support** | Full English & Hindi UI with professional text-to-speech audio summaries |
-| 📊 **Insights Dashboard** | Analytics via Recharts for medication trends |
-| 📄 **PDF Export** | Structured tabular prescription reports |
-| 🌙 **Dark Mode** | Glassmorphic, responsive UI with smooth animations |
+| 🔍 **Zero-Shot VLM Engine** | Replaces brittle OCR with Gemini 2.0 Flash to simultaneously transcribe and structure messy handwriting into strict JSON. |
+| 🛡️ **Polypharmacy Assistant** | Generates clinician-facing "De-prescribing Notes", flagging excessive medication burdens, duplicate therapies, and dangerous sedative loads in elderly patients. |
+| 🌍 **Green Pharmacy Score** | Calculates the environmental footprint of the prescription (e.g., flagging inhalers for greenhouse gases or endocrine disruptors) and provides eco-disposal instructions. |
+| 🗓️ **Adherence Tracking** | Auto-generates a visual treatment timeline. Logs taken/missed doses locally to calculate an ongoing "Adherence Score." |
+| 🚨 **Hallucination Safeguards** | Explicitly warns users of AI involvement. Triggers "Pharmacist Consultation" alerts for any uncertain OCR extractions. |
+| 🎙️ **Bilingual Accessibility** | Generates professional Text-to-Speech audio summaries in English and Hindi for illiterate or visually impaired patients. |
+| 📄 **PDF Export Engine** | Generates highly structured, clinic-ready tabular reports containing all AI intelligence and safety alerts. |
 
 ---
 
-## 📋 Prerequisites
+## 🚀 Live Deployment Guide
 
-Before you begin, make sure you have the following installed:
+RxLens is configured for immediate cloud deployment.
 
+### 1. Backend (Render)
+The repository includes a `render.yaml` file for 1-click infrastructure deployment.
+1. Connect this GitHub repo to your Render dashboard.
+2. Render will automatically detect `render.yaml` and deploy the FastAPI server.
+3. *Don't forget to add your `GEMINI_API_KEY` to the Render environment variables!*
+
+### 2. Frontend (Vercel)
+The repository includes a `vercel.json` file to handle React router configuration and proxy API requests.
+1. Connect this repo to Vercel.
+2. Set the Root Directory to `frontend`.
+3. Vercel will automatically build and deploy the UI.
+
+---
+
+## 💻 Local Development Setup
+
+### Prerequisites
 - **Python 3.9+**
 - **Node.js 18+** & **npm**
-- **Google Gemini API Key** → [Get one free at Google AI Studio](https://aistudio.google.com/)
+- **Google Gemini API Key** → [Get one free here](https://aistudio.google.com/)
 
----
-
-## 📂 Project Structure
-
-```
-RxLens/
-├── backend/            # FastAPI REST Server (main.py)
-├── frontend/           # React (Vite) User Interface
-│   └── src/
-│       ├── App.jsx     # Main UI & state management
-│       └── index.css   # Glassmorphic design system
-├── src/                # Core AI Engines
-│   ├── vision.py       # Gemini VLM prompting & extraction
-│   ├── audio.py        # Bilingual Text-to-Speech engine
-│   └── pdf_generator.py
-├── requirements.txt
-└── .env                # Your API key goes here (never commit this!)
-```
-
----
-
-## 🚀 Quick Start
-
-### Step 1 — Clone & Configure
-
+### Step 1 — Backend Setup
 ```bash
-git clone https://github.com/sameekshajangra/RxLens.git
+git clone https://github.com/your-username/RxLens.git
 cd RxLens
 
 # Add your Gemini API Key
 echo "GEMINI_API_KEY=your_key_here" > .env
-```
 
-### Step 2 — Backend Setup
-
-```bash
-# Install Python dependencies
+# Install dependencies and run
 pip install -r requirements.txt
-
-# Run the FastAPI server FROM the backend directory
 cd backend
 python -m uvicorn main:app --reload
 ```
+*Backend runs on `http://localhost:8000`*
 
-> The backend will start at **http://localhost:8000**
-
-### Step 3 — Frontend Setup
-
-Open a **new terminal tab**, then:
-
+### Step 2 — Frontend Setup
+Open a new terminal tab:
 ```bash
-cd frontend
+cd RxLens/frontend
 npm install
 npm run dev
 ```
-
-> The frontend will start at **http://localhost:5173**
-
-### Step 4 — Open the App
-
-Navigate to **[http://localhost:5173](http://localhost:5173)** in your browser. That's it! 🎉
+*Frontend runs on `http://localhost:5173`*
 
 ---
 
-## 🔑 Environment Variables
+## ⚖️ Ethical Considerations & Limitations
 
-Create a `.env` file in the **root** of the project:
-
-```env
-GEMINI_API_KEY=your_google_gemini_api_key_here
-```
-
-> ⚠️ Never commit your `.env` file. It's already in `.gitignore`.
+Developing AI for healthcare requires immense responsibility. RxLens is designed with the following ethical boundaries:
+1. **No Direct Diagnoses:** RxLens never tells a patient to stop taking a medication. The Polypharmacy Assistant specifically outputs "Discussion Notes for Healthcare Providers."
+2. **AI Hallucination Transparency:** A persistent UI and PDF banner warns users that the data is AI-generated and must be verified by a licensed pharmacist.
+3. **Deterministic Safety:** The Drug-Drug Interaction engine (`src/safety_engine.py`) is *not* AI-driven. It relies on a hardcoded, deterministic database (`src/safety_db.py`) to guarantee that critical alerts (like Aspirin + Warfarin) are never missed due to LLM variance.
+4. **Data Privacy:** In the current build, all patient profiles and adherence logs are stored exclusively via local browser storage (`localStorage`). No patient data is saved to the cloud.
 
 ---
 
-## 📦 Key Dependencies
+## 🗺️ Future Roadmap
 
-**Python (backend)**
-```
-fastapi
-uvicorn
-google-generativeai
-opencv-python
-Pillow
-gTTS
-python-dotenv
-reportlab
-```
-
-**Node (frontend)**
-```
-react + vite
-recharts
-```
+- **EHR Integration:** Implement FHIR (Fast Healthcare Interoperability Resources) standards to allow pushing generated reports directly to hospital Epic/Cerner systems.
+- **Computer Vision Pill Identification:** Allow patients to scan the physical pill bottle to verify against counterfeit packaging or incorrect pharmacy dispensing.
+- **Advanced Predictive ML:** Implement a small localized neural network to predict the statistical likelihood of a patient abandoning their treatment based on the drug's side-effect profile.
 
 ---
 
-## 🛡️ Privacy & Security
-
-- API keys are managed via environment variables and never committed to version control.
-- All prescription data is processed locally and never stored on external servers.
-
----
-
-## ⚖️ Disclaimer
-
-This application is for **educational and demonstrative purposes only**. Always consult a licensed healthcare professional before making any medical decisions.
-
----
-
-*Made with ❤️ by Sameeksha Jangra*
+*Built for the future of global medical accessibility. Designed for demonstration.*
