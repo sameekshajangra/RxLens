@@ -10,6 +10,10 @@
   <br />
   <a href="https://youtu.be/your_demo_video_link" target="_blank">View Demo Video</a> · 
   <a href="#live-deployment">Live App (Pending Deployment)</a>
+
+  <br /><br />
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/sameekshajangra/RxLens/tree/main/frontend"><img src="https://vercel.com/button" alt="Deploy with Vercel"/></a>
+  <a href="https://render.com/deploy?repo=https://github.com/sameekshajangra/RxLens"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render"/></a>
 </div>
 
 <br />
