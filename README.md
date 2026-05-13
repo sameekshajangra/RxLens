@@ -8,8 +8,7 @@
   [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)]()
   
   <br />
-  <a href="https://youtu.be/your_demo_video_link" target="_blank">View Demo Video</a> · 
-  <a href="#-deployment--local-setup">Live App (Pending Deployment)</a>
+  <a href="https://youtu.be/your_demo_video_link" target="_blank">View Demo Video</a>
 </div>
 
 <br />
@@ -72,18 +71,20 @@ graph LR
 
 ## 📸 Screenshots & Demo
 
-<p align="center">
-  <img src="assets/clinical_intelligence.png" width="49%" />
-  <img src="assets/schedule_summary.png" width="49%" />
-</p>
-<p align="center">
-  <img src="assets/adherence_dashboard.png" width="49%" />
-  <img src="assets/pdf_report.png" width="49%" />
-</p>
-<p align="center">
-  <img src="assets/history_dark_mode.png" width="49%" />
-  <img src="assets/audio_consultation.png" width="49%" />
-</p>
+<table align="center" style="border-collapse: collapse; border: none;">
+  <tr>
+    <td align="center" style="border: none;"><b>Clinical Intelligence & Polypharmacy Review</b><br><br><img src="assets/clinical_intelligence.png" width="100%" /></td>
+    <td align="center" style="border: none;"><b>Treatment Schedule & Clinical Summary</b><br><br><img src="assets/schedule_summary.png" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center" style="border: none;"><b>Patient Adherence Dashboard</b><br><br><img src="assets/adherence_dashboard.png" width="100%" /></td>
+    <td align="center" style="border: none;"><b>Generated PDF Report</b><br><br><img src="assets/pdf_report.png" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center" style="border: none;"><b>Patient History (Dark Mode)</b><br><br><img src="assets/history_dark_mode.png" width="100%" /></td>
+    <td align="center" style="border: none;"><b>Audio Guide & Warnings</b><br><br><img src="assets/audio_consultation.png" width="100%" /></td>
+  </tr>
+</table>
 
 ---
 
