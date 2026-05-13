@@ -72,7 +72,17 @@ graph LR
 
 ## 📸 Screenshots & Demo
 
-*(Images and GIFs to be added here)*
+<p align="center">
+  <img src="assets/clinical_intelligence.png" width="48%" alt="Clinical Intelligence & Polypharmacy Review" />
+  <img src="assets/schedule_summary.png" width="48%" alt="Treatment Schedule & Clinical Summary" />
+</p>
+<p align="center">
+  <img src="assets/adherence_dashboard.png" width="48%" alt="Patient Adherence Dashboard" />
+  <img src="assets/pdf_report.png" width="48%" alt="Generated PDF Report" />
+</p>
+<p align="center">
+  <img src="assets/audio_consultation.png" width="48%" alt="Audio Guide and Pharmacist Warnings" />
+</p>
 
 ---
 
