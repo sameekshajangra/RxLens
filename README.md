@@ -6,9 +6,22 @@
 [![React](https://img.shields.io/badge/Frontend-React_18-cyan.svg)]()
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)]()
 
-RxLens is an enterprise-grade medical AI platform that transcends traditional OCR. It digitizes handwritten and printed prescriptions, cross-references medications against a custom clinical database, and generates **proactive clinical intelligence** including treatment schedules, Polypharmacy De-prescribing notes, and Environmental Impact scores. 
+RxLens is an AI-powered clinical decision-support and prescription intelligence platform that extends beyond traditional OCR pipelines. It digitizes handwritten and printed prescriptions, cross-references medications against a custom clinical database, and generates **proactive clinical intelligence** including treatment schedules, Polypharmacy De-prescribing notes, and Environmental Impact scores. 
 
 Built for global healthcare accessibility, it provides **bilingual audio guidance** (English & Hindi) and features a dedicated **A+ Elderly Accessibility Mode**.
+
+---
+
+## 🌍 Real-World Relevance & Clinical Impact
+
+Medication misinterpretation and poor adherence remain major contributors to preventable healthcare complications worldwide, particularly among elderly and multilingual populations. RxLens was designed to explore how multimodal AI systems can improve medication accessibility, safety, and patient understanding through responsible clinical intelligence tools.
+
+- **Prescription Misinterpretation:** Unclear or complex drug regimens frequently lead to dangerous dosing errors at home.
+- **Elderly Patient Adherence:** Aging populations often struggle with cognitive overload when managing multiple overlapping prescriptions.
+- **Polypharmacy Risks:** Older adults taking multiple medications face significantly increased risks of adverse drug events (ADEs), duplicate therapies, and dangerous sedative loads.
+- **Multilingual Accessibility Gaps:** Non-native speakers often cannot read the localized language on printed medication instructions, leading to non-compliance.
+
+RxLens addresses these exact pain points through a synthesis of Vision-Language Models (VLMs) and deterministic, rule-based clinical safety protocols.
 
 ---
 
