@@ -5,11 +5,11 @@ import uuid
 def generate_audio(text, lang='en'):
     """
     Generates an audio file from text in the specified language.
-    Returns the path to the generated file.
+    Returns the filename (not full path) of the generated file.
     """
     try:
         # Create audio directory if not exists
-        audio_dir = os.path.join(os.path.dirname(__file__), '..', 'backend', 'audio_summaries')
+        audio_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'audio_summaries'))
         if not os.path.exists(audio_dir):
             os.makedirs(audio_dir)
             
@@ -24,7 +24,6 @@ def generate_audio(text, lang='en'):
         filepath = os.path.join(audio_dir, filename)
         
         # Determine language code for gTTS
-        # Robust check for Hindi/English
         lang_input = str(lang).lower()
         lang_code = 'hi' if lang_input in ['hindi', 'hi'] else 'en'
         
@@ -33,7 +32,7 @@ def generate_audio(text, lang='en'):
 
         tts = gTTS(text=clean_text, lang=lang_code, slow=False)
         tts.save(filepath)
-        return filepath
+        return filename
     except Exception as e:
         print(f"Audio Error: {e}")
         return None

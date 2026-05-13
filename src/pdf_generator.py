@@ -3,220 +3,323 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from datetime import datetime
 
 def generate_pdf_report(parsed_data, output_path="/tmp/clinical_report.pdf"):
     """
-    Generates a professional tabular PDF report with one row per drug.
-    Now includes Clinical Safety Alerts section.
+    Generates a professionally formatted clinical PDF report.
+    Includes AI Hallucination Safeguards with disclaimer and pharmacist consultation prompts.
     """
     try:
         doc = SimpleDocTemplate(
             output_path, 
             pagesize=letter,
-            rightMargin=0.75*inch,
-            leftMargin=0.75*inch,
-            topMargin=1*inch,
-            bottomMargin=0.75*inch
+            rightMargin=0.6*inch,
+            leftMargin=0.6*inch,
+            topMargin=0.6*inch,
+            bottomMargin=0.5*inch
         )
         elements = []
         styles = getSampleStyleSheet()
+        page_width = letter[0] - 1.2*inch  # Available width
 
         # ── Custom Styles ─────────────────────────────────────
         title_style = ParagraphStyle(
-            'Title', parent=styles['Normal'],
-            fontSize=28, fontName='Helvetica-Bold',
+            'RxTitle', parent=styles['Normal'],
+            fontSize=24, fontName='Helvetica-Bold',
             textColor=colors.HexColor("#6366f1"),
-            leading=32,
-            spaceAfter=12
+            leading=28, spaceAfter=4
         )
         subtitle_style = ParagraphStyle(
-            'Subtitle', parent=styles['Normal'],
-            fontSize=12, textColor=colors.HexColor("#64748b"),
-            leading=14,
-            spaceAfter=25
+            'RxSubtitle', parent=styles['Normal'],
+            fontSize=10, textColor=colors.HexColor("#64748b"),
+            leading=13, spaceAfter=16
         )
         section_style = ParagraphStyle(
-            'Section', parent=styles['Normal'],
-            fontSize=13, fontName='Helvetica-Bold',
+            'RxSection', parent=styles['Normal'],
+            fontSize=12, fontName='Helvetica-Bold',
             textColor=colors.HexColor("#1e293b"),
-            spaceBefore=20, spaceAfter=8
+            spaceBefore=16, spaceAfter=8
         )
-        footer_style = ParagraphStyle(
-            'Footer', parent=styles['Normal'],
-            fontSize=9, textColor=colors.HexColor("#94a3b8"),
-            spaceAfter=4
+        body_style = ParagraphStyle(
+            'RxBody', parent=styles['Normal'],
+            fontSize=9.5, leading=13,
+            textColor=colors.HexColor("#334155")
         )
         cell_style = ParagraphStyle(
-            'Cell', parent=styles['Normal'],
-            fontSize=11, leading=14
+            'RxCell', parent=styles['Normal'],
+            fontSize=9, leading=12,
+            textColor=colors.HexColor("#334155")
         )
-        alert_cell_style = ParagraphStyle(
-            'AlertCell', parent=styles['Normal'],
-            fontSize=10, leading=13
+        alert_cell = ParagraphStyle(
+            'RxAlertCell', parent=styles['Normal'],
+            fontSize=8.5, leading=11,
+            textColor=colors.HexColor("#334155")
+        )
+        disclaimer_style = ParagraphStyle(
+            'RxDisclaimer', parent=styles['Normal'],
+            fontSize=8, leading=11,
+            textColor=colors.HexColor("#dc2626"),
+            fontName='Helvetica-BoldOblique'
+        )
+        footer_style = ParagraphStyle(
+            'RxFooter', parent=styles['Normal'],
+            fontSize=7.5, textColor=colors.HexColor("#94a3b8"),
+            leading=10, spaceAfter=2
         )
 
         # ── Header ────────────────────────────────────────────
-        elements.append(Paragraph("🩺 RxLens", title_style))
+        header_data = [[
+            Paragraph("RxLens", title_style),
+            Paragraph(datetime.now().strftime("%d %B %Y, %I:%M %p"), ParagraphStyle(
+                'DateRight', parent=styles['Normal'], fontSize=9,
+                textColor=colors.HexColor("#64748b"), alignment=TA_RIGHT
+            ))
+        ]]
+        header_table = Table(header_data, colWidths=[page_width*0.6, page_width*0.4])
+        header_table.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
+        ]))
+        elements.append(header_table)
         elements.append(Paragraph("AI-Powered Clinical Prescription Report", subtitle_style))
-        elements.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#6366f1")))
-        elements.append(Spacer(1, 16))
+        elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor("#6366f1")))
+        elements.append(Spacer(1, 12))
+
+        # ── AI Hallucination Safeguard Banner ─────────────────
+        safeguard_data = [[Paragraph(
+            '<b>AI HALLUCINATION SAFEGUARD:</b> This report was generated by an AI vision model. '
+            'AI outputs may contain inaccuracies. All medication details MUST be verified by a '
+            'licensed pharmacist or physician before use. Do not self-medicate based on this report alone.',
+            disclaimer_style
+        )]]
+        safeguard_table = Table(safeguard_data, colWidths=[page_width])
+        safeguard_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#fef2f2")),
+            ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor("#ef4444")),
+            ('TOPPADDING', (0,0), (-1,-1), 10),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+            ('LEFTPADDING', (0,0), (-1,-1), 12),
+            ('RIGHTPADDING', (0,0), (-1,-1), 12),
+        ]))
+        elements.append(safeguard_table)
+        elements.append(Spacer(1, 14))
 
         # ── Report Metadata ───────────────────────────────────
-        now = datetime.now().strftime("%d %B %Y, %I:%M %p")
         meta_data = [
-            ['Report Generated:', now],
-            ['AI Engine:', 'Google Gemini 2.0 Flash (Vision Language Model)'],
-            ['Report Type:', 'Prescription Digitization & Clinical Safety Report'],
+            [Paragraph('<b>AI Engine:</b>', cell_style), Paragraph('Google Gemini Flash (Vision Language Model)', cell_style)],
+            [Paragraph('<b>Report Type:</b>', cell_style), Paragraph('Prescription Digitization & Clinical Safety', cell_style)],
+            [Paragraph('<b>Confidence:</b>', cell_style), Paragraph('Source grounding via multi-step pharmacist AI prompt', cell_style)],
         ]
-        meta_table = Table(meta_data, colWidths=[2*inch, 4.5*inch])
+        meta_table = Table(meta_data, colWidths=[page_width*0.25, page_width*0.75])
         meta_table.setStyle(TableStyle([
-            ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0,0), (-1,-1), 10),
-            ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor("#6366f1")),
-            ('TEXTCOLOR', (1,0), (1,-1), colors.HexColor("#1e293b")),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+            ('TOPPADDING', (0,0), (-1,-1), 4),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+            ('LEFTPADDING', (0,0), (-1,-1), 6),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('LINEBELOW', (0,0), (-1,-2), 0.5, colors.HexColor("#e2e8f0")),
         ]))
         elements.append(meta_table)
-        elements.append(Spacer(1, 20))
+        elements.append(Spacer(1, 16))
 
         # ── Safety Alerts Section ─────────────────────────────
         safety_alerts = parsed_data.get("safety_alerts", [])
         if safety_alerts:
-            elements.append(Paragraph("⚠ Clinical Safety Alerts", section_style))
+            elements.append(Paragraph("Clinical Safety Alerts", section_style))
             
-            # Alert table header
-            alert_table_data = [['Severity', 'Type', 'Alert Details', 'Drugs Involved']]
+            alert_header = [
+                Paragraph('<b>Severity</b>', ParagraphStyle('AH', parent=cell_style, textColor=colors.white, fontSize=8.5)),
+                Paragraph('<b>Type</b>', ParagraphStyle('AH2', parent=cell_style, textColor=colors.white, fontSize=8.5)),
+                Paragraph('<b>Alert Details</b>', ParagraphStyle('AH3', parent=cell_style, textColor=colors.white, fontSize=8.5)),
+                Paragraph('<b>Drugs</b>', ParagraphStyle('AH4', parent=cell_style, textColor=colors.white, fontSize=8.5)),
+            ]
+            alert_table_data = [alert_header]
             
             for alert in safety_alerts:
-                severity = alert.get("severity", "Info")
-                alert_type = alert.get("type", "Unknown")
-                message = alert.get("message", "")
-                involved = ", ".join(alert.get("involved_drugs", []))
-                
                 alert_table_data.append([
-                    severity.upper(),
-                    Paragraph(alert_type, alert_cell_style),
-                    Paragraph(message, alert_cell_style),
-                    Paragraph(involved, alert_cell_style)
+                    Paragraph(alert.get("severity", "Info").upper(), alert_cell),
+                    Paragraph(alert.get("type", "Unknown"), alert_cell),
+                    Paragraph(alert.get("message", ""), alert_cell),
+                    Paragraph(", ".join(alert.get("involved_drugs", [])), alert_cell),
                 ])
             
-            alert_table = Table(alert_table_data, colWidths=[0.8*inch, 1.3*inch, 3.0*inch, 1.4*inch])
+            col_w = [page_width*0.12, page_width*0.18, page_width*0.48, page_width*0.22]
+            alert_table = Table(alert_table_data, colWidths=col_w)
             
-            # Build row-specific styles
-            alert_style_commands = [
-                # Header row
+            cmds = [
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#1e293b")),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0,0), (-1,0), 10),
-                ('ALIGN', (0,0), (-1,0), 'CENTER'),
-                ('BOTTOMPADDING', (0,0), (-1,0), 10),
-                ('TOPPADDING', (0,0), (-1,0), 10),
-                # Data rows
-                ('FONTSIZE', (0,1), (-1,-1), 9),
-                ('FONTNAME', (0,1), (0,-1), 'Helvetica-Bold'),
-                ('ALIGN', (0,1), (0,-1), 'CENTER'),
+                ('FONTSIZE', (0,0), (-1,0), 8.5),
+                ('ALIGN', (0,0), (0,-1), 'CENTER'),
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                ('TOPPADDING', (0,1), (-1,-1), 8),
-                ('BOTTOMPADDING', (0,1), (-1,-1), 8),
-                ('LEFTPADDING', (0,0), (-1,-1), 8),
-                ('RIGHTPADDING', (0,0), (-1,-1), 8),
+                ('TOPPADDING', (0,0), (-1,-1), 7),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 7),
+                ('LEFTPADDING', (0,0), (-1,-1), 6),
+                ('RIGHTPADDING', (0,0), (-1,-1), 6),
                 ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
-                ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor("#ef4444")),
+                ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#ef4444")),
             ]
-            
-            # Color-code severity cells
-            for i, alert in enumerate(safety_alerts):
-                row_idx = i + 1
-                severity = alert.get("severity", "Info")
-                if severity == "Critical":
-                    alert_style_commands.append(('BACKGROUND', (0, row_idx), (0, row_idx), colors.HexColor("#ef4444")))
-                    alert_style_commands.append(('TEXTCOLOR', (0, row_idx), (0, row_idx), colors.white))
-                    alert_style_commands.append(('BACKGROUND', (1, row_idx), (-1, row_idx), colors.HexColor("#fef2f2")))
-                elif severity == "Warning":
-                    alert_style_commands.append(('BACKGROUND', (0, row_idx), (0, row_idx), colors.HexColor("#f59e0b")))
-                    alert_style_commands.append(('TEXTCOLOR', (0, row_idx), (0, row_idx), colors.white))
-                    alert_style_commands.append(('BACKGROUND', (1, row_idx), (-1, row_idx), colors.HexColor("#fffbeb")))
+            for i, a in enumerate(safety_alerts):
+                r = i + 1
+                sev = a.get("severity", "Info")
+                if sev == "Critical":
+                    cmds.append(('BACKGROUND', (0,r), (0,r), colors.HexColor("#ef4444")))
+                    cmds.append(('TEXTCOLOR', (0,r), (0,r), colors.white))
+                    cmds.append(('BACKGROUND', (1,r), (-1,r), colors.HexColor("#fef2f2")))
+                elif sev == "Warning":
+                    cmds.append(('BACKGROUND', (0,r), (0,r), colors.HexColor("#f59e0b")))
+                    cmds.append(('TEXTCOLOR', (0,r), (0,r), colors.white))
+                    cmds.append(('BACKGROUND', (1,r), (-1,r), colors.HexColor("#fffbeb")))
                 else:
-                    alert_style_commands.append(('BACKGROUND', (0, row_idx), (0, row_idx), colors.HexColor("#3b82f6")))
-                    alert_style_commands.append(('TEXTCOLOR', (0, row_idx), (0, row_idx), colors.white))
+                    cmds.append(('BACKGROUND', (0,r), (0,r), colors.HexColor("#3b82f6")))
+                    cmds.append(('TEXTCOLOR', (0,r), (0,r), colors.white))
             
-            alert_table.setStyle(TableStyle(alert_style_commands))
+            alert_table.setStyle(TableStyle(cmds))
             elements.append(alert_table)
-            elements.append(Spacer(1, 24))
+            elements.append(Spacer(1, 16))
 
         # ── Medication Table ──────────────────────────────────
         elements.append(Paragraph("Prescribed Medication Regimen", section_style))
 
-        # Parse comma-separated fields into individual drug rows
         drugs = [d.strip().title() for d in parsed_data.get("drug", "N/A").split(",") if d.strip()]
         dosages = [d.strip() for d in parsed_data.get("dosage", "N/A").split(",")]
         frequencies = [f.strip().title() for f in parsed_data.get("frequency", "N/A").split(",")]
         durations = [d.strip() for d in parsed_data.get("duration", "N/A").split(",")]
 
-        # Build table header
-        table_data = [['#', 'Drug / Medication', 'Dosage', 'Frequency', 'Duration']]
+        med_header = [
+            Paragraph('<b>#</b>', ParagraphStyle('MH1', parent=cell_style, textColor=colors.white, alignment=TA_CENTER)),
+            Paragraph('<b>Drug / Medication</b>', ParagraphStyle('MH2', parent=cell_style, textColor=colors.white)),
+            Paragraph('<b>Dosage</b>', ParagraphStyle('MH3', parent=cell_style, textColor=colors.white)),
+            Paragraph('<b>Frequency</b>', ParagraphStyle('MH4', parent=cell_style, textColor=colors.white)),
+            Paragraph('<b>Duration</b>', ParagraphStyle('MH5', parent=cell_style, textColor=colors.white)),
+        ]
+        table_data = [med_header]
 
-        # One row per drug
         for i, drug in enumerate(drugs):
             table_data.append([
-                str(i + 1),
+                Paragraph(str(i+1), ParagraphStyle('Num', parent=cell_style, alignment=TA_CENTER)),
                 Paragraph(drug, cell_style),
-                dosages[i] if i < len(dosages) else dosages[-1] if dosages else "N/A",
-                frequencies[i] if i < len(frequencies) else frequencies[-1] if frequencies else "N/A",
-                durations[i] if i < len(durations) else durations[-1] if durations else "N/A",
+                Paragraph(dosages[i] if i < len(dosages) else dosages[-1] if dosages else "N/A", cell_style),
+                Paragraph(frequencies[i] if i < len(frequencies) else frequencies[-1] if frequencies else "N/A", cell_style),
+                Paragraph(durations[i] if i < len(durations) else durations[-1] if durations else "N/A", cell_style),
             ])
 
-        med_table = Table(table_data, colWidths=[0.4*inch, 2.1*inch, 1.1*inch, 1.5*inch, 1.4*inch])
+        col_w = [page_width*0.06, page_width*0.32, page_width*0.18, page_width*0.24, page_width*0.20]
+        med_table = Table(table_data, colWidths=col_w)
         med_table.setStyle(TableStyle([
-            # Header row
             ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#6366f1")),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0,0), (-1,0), 11),
-            ('ALIGN', (0,0), (-1,0), 'CENTER'),
-            ('BOTTOMPADDING', (0,0), (-1,0), 10),
-            ('TOPPADDING', (0,0), (-1,0), 10),
-            # Data rows
-            ('FONTSIZE', (0,1), (-1,-1), 10),
-            ('ALIGN', (0,1), (0,-1), 'CENTER'),
+            ('FONTSIZE', (0,0), (-1,0), 9),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('TOPPADDING', (0,1), (-1,-1), 9),
-            ('BOTTOMPADDING', (0,1), (-1,-1), 9),
-            ('LEFTPADDING', (0,0), (-1,-1), 10),
-            ('RIGHTPADDING', (0,0), (-1,-1), 10),
-            # Alternating row colors
+            ('TOPPADDING', (0,0), (-1,-1), 8),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+            ('LEFTPADDING', (0,0), (-1,-1), 8),
+            ('RIGHTPADDING', (0,0), (-1,-1), 8),
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor("#f8fafc"), colors.white]),
-            # Grid
             ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
             ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#6366f1")),
         ]))
         elements.append(med_table)
-        elements.append(Spacer(1, 24))
+        elements.append(Spacer(1, 16))
+
+        # ── Polypharmacy Review (Provider Notes) ──────────────
+        polypharmacy_notes = parsed_data.get("polypharmacy_notes", [])
+        if polypharmacy_notes:
+            elements.append(Paragraph("Polypharmacy Review (Provider Notes)", section_style))
+            for note in polypharmacy_notes:
+                p_data = [
+                    [Paragraph(f"<b>{note.get('topic', '')}</b>", ParagraphStyle('PT', parent=body_style, textColor=colors.HexColor("#6d28d9")))],
+                    [Paragraph(note.get("note", ""), body_style)]
+                ]
+                p_table = Table(p_data, colWidths=[page_width])
+                p_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f5f3ff")),
+                    ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#8b5cf6")),
+                    ('TOPPADDING', (0,0), (-1,-1), 6),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+                    ('LEFTPADDING', (0,0), (-1,-1), 12),
+                    ('RIGHTPADDING', (0,0), (-1,-1), 12),
+                ]))
+                elements.append(p_table)
+                elements.append(Spacer(1, 8))
+            elements.append(Spacer(1, 8))
+
+        # ── Green Pharmacy Impact ─────────────────────────────
+        environmental = parsed_data.get("environmental", {})
+        drug_impacts = environmental.get("drug_impacts", [])
+        if drug_impacts:
+            elements.append(Paragraph(f"Green Pharmacy Impact (Overall: {environmental.get('overall_impact', 'Low')})", section_style))
+            for env in drug_impacts:
+                env_color = colors.HexColor("#ef4444") if env.get("impact") == "Critical" else colors.HexColor("#f97316") if env.get("impact") == "High" else colors.HexColor("#22c55e")
+                e_data = [
+                    [Paragraph(f"<b>{env.get('drug', '')}</b>", ParagraphStyle('ED', parent=body_style, textColor=colors.HexColor("#15803d"))), 
+                     Paragraph(f"<b>{env.get('impact', '')}</b>", ParagraphStyle('EI', parent=body_style, alignment=TA_RIGHT, textColor=env_color))],
+                    [Paragraph(env.get("reason", ""), body_style), ''],
+                    [Paragraph(f"<i>Disposal:</i> {env.get('disposal', '')}", ParagraphStyle('EDisp', parent=body_style, textColor=colors.HexColor("#166534"))), '']
+                ]
+                e_table = Table(e_data, colWidths=[page_width*0.8, page_width*0.2])
+                e_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f0fdf4")),
+                    ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#22c55e")),
+                    ('TOPPADDING', (0,0), (-1,-1), 4),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+                    ('LEFTPADDING', (0,0), (-1,-1), 12),
+                    ('RIGHTPADDING', (0,1), (-1,-1), 12),
+                    ('SPAN', (0,1), (1,1)),
+                    ('SPAN', (0,2), (1,2)),
+                ]))
+                elements.append(e_table)
+                elements.append(Spacer(1, 8))
+            elements.append(Spacer(1, 8))
 
         # ── Clinical Summary ──────────────────────────────────
-        if parsed_data.get("summary"):
+        summary = parsed_data.get("summary", "")
+        if summary:
             elements.append(Paragraph("Clinical Summary", section_style))
-            summary_data = [['', parsed_data["summary"]]]
-            sum_table = Table(summary_data, colWidths=[0.1*inch, 6.4*inch])
+            sum_data = [[Paragraph(summary, body_style)]]
+            sum_table = Table(sum_data, colWidths=[page_width])
             sum_table.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#eef2ff")),
-                ('FONTSIZE', (0,0), (-1,-1), 10),
-                ('TOPPADDING', (0,0), (-1,-1), 12),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 12),
-                ('LEFTPADDING', (1,0), (1,-1), 12),
+                ('TOPPADDING', (0,0), (-1,-1), 10),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+                ('LEFTPADDING', (0,0), (-1,-1), 14),
+                ('RIGHTPADDING', (0,0), (-1,-1), 14),
                 ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#6366f1")),
-                ('LINEAFTER', (0,0), (0,-1), 3, colors.HexColor("#6366f1")),
+                ('LINEBEFORE', (0,0), (0,-1), 4, colors.HexColor("#6366f1")),
             ]))
             elements.append(sum_table)
-            elements.append(Spacer(1, 24))
+            elements.append(Spacer(1, 16))
+
+        # ── Pharmacist Consultation Prompt ────────────────────
+        consult_data = [[Paragraph(
+            '<b>PHARMACIST CONSULTATION RECOMMENDED:</b> Please consult a licensed pharmacist '
+            'to verify drug interactions, correct dosages for your age/weight, and any contraindications '
+            'with your existing conditions or allergies before starting this medication regimen.',
+            ParagraphStyle('Consult', parent=body_style, textColor=colors.HexColor("#1e40af"), fontSize=8.5, leading=12)
+        )]]
+        consult_table = Table(consult_data, colWidths=[page_width])
+        consult_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#eff6ff")),
+            ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor("#3b82f6")),
+            ('TOPPADDING', (0,0), (-1,-1), 10),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+            ('LEFTPADDING', (0,0), (-1,-1), 12),
+            ('RIGHTPADDING', (0,0), (-1,-1), 12),
+        ]))
+        elements.append(consult_table)
+        elements.append(Spacer(1, 16))
 
         # ── Footer ────────────────────────────────────────────
         elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0")))
-        elements.append(Spacer(1, 8))
-        elements.append(Paragraph("⚕ This report was automatically generated by RxLens Clinical Intelligence using Google Gemini Vision AI.", footer_style))
-        elements.append(Paragraph("DISCLAIMER: Always verify prescription details with a licensed healthcare professional before administering any medication.", footer_style))
+        elements.append(Spacer(1, 6))
+        elements.append(Paragraph(
+            "This report was generated by RxLens Clinical Intelligence using Google Gemini Vision AI. "
+            "AI-generated content may contain hallucinations or inaccuracies.", footer_style))
+        elements.append(Paragraph(
+            "DISCLAIMER: Always verify prescription details with a licensed healthcare professional. "
+            "This tool is for educational and assistive purposes only.", footer_style))
+        elements.append(Spacer(1, 4))
+        elements.append(Paragraph(
+            f"Report ID: RXL-{datetime.now().strftime('%Y%m%d%H%M%S')} | RxLens v2.0", 
+            ParagraphStyle('RID', parent=footer_style, alignment=TA_RIGHT)))
 
         doc.build(elements)
         return output_path

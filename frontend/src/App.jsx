@@ -9,13 +9,14 @@ import {
   Upload, Camera, FileText, Activity, ShieldCheck, ShieldAlert,
   Download, PlayCircle, Loader2, AlertTriangle, Info,
   CheckCircle2, Settings, Key, Globe, History, 
-  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge
+  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle
 } from 'lucide-react';
 import './index.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('scanner');
   const [darkMode, setDarkMode] = useState(localStorage.getItem('darkMode') === 'true');
+  const [elderlyMode, setElderlyMode] = useState(localStorage.getItem('rxlens_elderly_mode') === 'true');
   const [language, setLanguage] = useState('English');
   const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
   const [isApiKeySetInEnv, setIsApiKeySetInEnv] = useState(false);
@@ -29,8 +30,22 @@ function App() {
   const [audioUrl, setAudioUrl] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
   const [history, setHistory] = useState([]);
-  const [patientProfile, setPatientProfile] = useState({ name: '', age: '', weight: '', allergies: '', conditions: '' });
+  const [patientProfile, setPatientProfile] = useState(() => {
+    const saved = localStorage.getItem('rxlens_patient_profile');
+    return saved ? JSON.parse(saved) : { name: '', age: '', weight: '', allergies: '', conditions: '' };
+  });
   const [showProfile, setShowProfile] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  // Adherence System State
+  const [reminders, setReminders] = useState(() => {
+    const saved = localStorage.getItem('rxlens_reminders');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [adherenceLog, setAdherenceLog] = useState(() => {
+    const saved = localStorage.getItem('rxlens_adherence_log');
+    return saved ? JSON.parse(saved) : [];
+  });
   
   // Rate Limit Countdown
   const [retryCountdown, setRetryCountdown] = useState(0);
@@ -177,6 +192,11 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
+    document.documentElement.classList.toggle('elderly-mode', elderlyMode);
+    localStorage.setItem('rxlens_elderly_mode', elderlyMode);
+  }, [elderlyMode]);
+
+  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
@@ -250,13 +270,25 @@ function App() {
     try {
       const res = await axios.post('/api/extract', formData, { timeout: 120000 });
       setResult(res.data);
-      if (res.data.summary) {
-        setLoadingStatus(`Synthesizing ${language} audio...`);
-        const audioForm = new FormData();
-        audioForm.append('text', res.data.summary);
-        audioForm.append('lang', language);
-        const audioRes = await axios.post('/api/audio', audioForm, { responseType: 'blob' });
-        setAudioUrl(URL.createObjectURL(audioRes.data));
+      if (res.data.audio_url) {
+        setAudioUrl(`/api/audio/${res.data.audio_url}`);
+      }
+
+      // Auto-generate reminders from schedule
+      if (res.data.data?.schedule) {
+        const newReminders = res.data.data.schedule.map((item, idx) => ({
+          id: Date.now() + idx,
+          time: item.time,
+          task: item.task || item.drug,
+          drug: res.data.data.drug,
+          enabled: true,
+          createdAt: new Date().toISOString()
+        }));
+        setReminders(prev => {
+          const updated = [...prev, ...newReminders];
+          localStorage.setItem('rxlens_reminders', JSON.stringify(updated));
+          return updated;
+        });
       }
       fetchHistory();
     } catch (err) {
@@ -269,7 +301,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [imageFile, language, patient_profile]);
+  }, [imageFile, language, patientProfile]);
 
   const handleChatSend = useCallback(async () => {
     if (!chatMessage.trim()) return;
@@ -330,20 +362,25 @@ function App() {
               <User size={16} /> {patientProfile.name || t.patient_profile}
             </button>
             <div className="settings-toggle">
-            <div className={`status-dot ${isEngineReady ? 'active' : ''}`}></div>
-            <select 
-              value={language} 
-              onChange={(e) => setLanguage(e.target.value)}
-              style={{background: 'none', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer', fontWeight: 600}}
-            >
-              <option value="English">English</option>
-              <option value="Hindi">Hindi</option>
-            </select>
+              <div className={`status-dot ${isEngineReady ? 'active' : ''}`}></div>
+              <select 
+                value={language} 
+                onChange={(e) => setLanguage(e.target.value)}
+                style={{background: 'none', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer', fontWeight: 600}}
+              >
+                <option value="English">English</option>
+                <option value="Hindi">Hindi</option>
+              </select>
+            </div>
+            <div style={{display: 'flex', gap: '10px'}}>
+              <div className="theme-toggle" onClick={() => setElderlyMode(!elderlyMode)} title="Elderly Accessibility Mode">
+                <span style={{ fontSize: '1.2rem', fontWeight: elderlyMode ? 'bold' : 'normal', color: elderlyMode ? 'var(--primary)' : 'inherit' }}>A+</span>
+              </div>
+              <div className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </div>
+            </div>
           </div>
-          <div className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </div>
-        </div>
       </motion.header>
 
       <div className="nav-bar">
@@ -355,6 +392,9 @@ function App() {
         </div>
         <div className={`nav-item ${activeTab === 'insights' ? 'active' : ''}`} onClick={() => setActiveTab('insights')}>
           <TrendingUp size={18} /> {t.insights}
+        </div>
+        <div className={`nav-item ${activeTab === 'adherence' ? 'active' : ''}`} onClick={() => setActiveTab('adherence')}>
+          <BellRing size={18} /> Adherence
         </div>
       </div>
 
@@ -371,13 +411,30 @@ function App() {
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.25rem', fontWeight: 700 }}>
                   <ShieldCheck size={24} color="var(--primary)" /> {t.clinical_profile}
                 </h3>
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => setPatientProfile({ name: '', age: '', weight: '', allergies: '', conditions: '' })}
-                  style={{ padding: '6px 12px', fontSize: '0.75rem', opacity: 0.7 }}
-                >
-                  {t.reset_profile}
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    className="btn" 
+                    onClick={() => {
+                      localStorage.setItem('rxlens_patient_profile', JSON.stringify(patientProfile));
+                      setProfileSaved(true);
+                      setTimeout(() => setProfileSaved(false), 2000);
+                    }}
+                    style={{ padding: '8px 18px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    {profileSaved ? <><Check size={14} /> Saved!</> : <><Save size={14} /> Save Profile</>}
+                  </button>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => {
+                      const empty = { name: '', age: '', weight: '', allergies: '', conditions: '' };
+                      setPatientProfile(empty);
+                      localStorage.removeItem('rxlens_patient_profile');
+                    }}
+                    style={{ padding: '6px 12px', fontSize: '0.75rem', opacity: 0.7 }}
+                  >
+                    {t.reset_profile}
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '25px' }}>
@@ -471,9 +528,19 @@ function App() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{textAlign: 'center', position: 'relative', overflow: 'hidden', borderRadius: '16px'}}>
-                    {loading && <div className="scanning-line"></div>}
-                    <img src={imagePreview} className="img-preview" />
+                  <div style={{textAlign: 'center'}}>
+                    <div className="scanner-frame" style={{position: 'relative', overflow: 'hidden', borderRadius: '16px', border: loading ? '2px solid var(--primary)' : '2px solid rgba(99,102,241,0.15)', transition: 'border-color 0.3s'}}>
+                      {loading && <div className="scanning-line"></div>}
+                      {loading && (
+                        <>
+                          <div className="scanner-corner top-left"></div>
+                          <div className="scanner-corner top-right"></div>
+                          <div className="scanner-corner bottom-left"></div>
+                          <div className="scanner-corner bottom-right"></div>
+                        </>
+                      )}
+                      <img src={imagePreview} className="img-preview" style={{display:'block', width:'100%', maxHeight:'400px', objectFit:'contain', borderRadius:'14px'}} />
+                    </div>
                     <div style={{display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '25px'}}>
                       <button className="btn btn-secondary" onClick={() => { setImagePreview(null); setImageFile(null); resetState(); }}>Clear</button>
                       <button className="btn" onClick={processImage} disabled={loading}>{loading ? t.analyzing : t.digitize}</button>
@@ -492,6 +559,16 @@ function App() {
                 </div>
               ) : result ? (
                 <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
+                  {/* AI Hallucination Safeguard Banner */}
+                  <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.05)', borderLeft: '4px solid var(--danger)' }}>
+                    <h4 style={{ fontSize: '0.85rem', color: 'var(--danger)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase' }}>
+                      <AlertTriangle size={16} /> AI Hallucination Safeguard
+                    </h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                      This report was generated by an AI vision model. AI outputs may contain inaccuracies. All medication details <strong>MUST</strong> be verified by a licensed pharmacist or physician before use.
+                    </p>
+                  </div>
+                  
                   {/* Structured Clinical Safety Intelligence */}
                   {(result.data.safety_alerts && result.data.safety_alerts.length > 0) && (
                     <div className={`glass-card safety-section ${result.data.safety_alerts.some(a => a.severity === 'Critical') ? 'safety-section-critical' : 'safety-section-warning'}`} style={{ padding: '1.5rem' }}>
@@ -545,6 +622,54 @@ function App() {
                               </div>
                             )}
                           </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Polypharmacy De-prescribing Assistant */}
+                  {(result.data.polypharmacy_notes && result.data.polypharmacy_notes.length > 0) && (
+                    <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(139, 92, 246, 0.05)', borderLeft: '4px solid #8b5cf6' }}>
+                      <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: 700, color: '#8b5cf6', marginBottom: '12px' }}>
+                        <BriefcaseMedical size={20} /> Polypharmacy Review (Provider Notes)
+                      </h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {result.data.polypharmacy_notes.map((note, idx) => (
+                          <div key={idx} style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.5)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#6d28d9', marginBottom: '4px' }}>{note.topic}</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>{note.note}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Green Pharmacy Environmental Impact */}
+                  {(result.data.environmental && result.data.environmental.drug_impacts && result.data.environmental.drug_impacts.length > 0) && (
+                    <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(34, 197, 94, 0.05)', borderLeft: '4px solid #22c55e' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: 700, color: '#16a34a', margin: 0 }}>
+                          <Leaf size={20} /> Green Pharmacy Impact
+                        </h3>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '4px 8px', borderRadius: '12px', 
+                          background: result.data.environmental.overall_impact === 'Critical' ? '#fee2e2' : result.data.environmental.overall_impact === 'High' ? '#ffedd5' : '#dcfce3',
+                          color: result.data.environmental.overall_impact === 'Critical' ? '#ef4444' : result.data.environmental.overall_impact === 'High' ? '#f97316' : '#22c55e'
+                        }}>
+                          {result.data.environmental.overall_impact} Impact
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {result.data.environmental.drug_impacts.map((env, idx) => (
+                          <div key={idx} style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.5)', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                              <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#15803d' }}>{env.drug}</span>
+                              <span style={{ fontSize: '0.75rem', color: env.impact === 'Critical' ? '#ef4444' : env.impact === 'High' ? '#f97316' : '#22c55e', fontWeight: 600 }}>{env.impact}</span>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-main)', marginBottom: '6px' }}>{env.reason}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#166534', display: 'flex', alignItems: 'flex-start', gap: '4px', background: '#f0fdf4', padding: '6px', borderRadius: '4px' }}>
+                              <Recycle size={12} style={{ marginTop: '2px', flexShrink: 0 }} /> {env.disposal}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -641,39 +766,51 @@ function App() {
                     </div>
                   </div>
 
-                  {result.data.schedule && (
-                    <div className="glass-card" style={{marginBottom: '1.5rem'}}>
+                  {result.data.schedule && result.data.schedule.length > 0 && (
+                    <div className="glass-card" style={{marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.04), rgba(168,85,247,0.04))'}}>
                       <h2 className="card-title"><CalendarCheck size={20} style={{color: 'var(--primary)'}}/> {t.schedule_title}</h2>
-                      <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
+                      <div style={{display:'flex', flexDirection:'column', gap:'0', position:'relative', paddingLeft:'30px'}}>
+                        <div style={{position:'absolute', left:'14px', top:'8px', bottom:'8px', width:'2px', background:'linear-gradient(180deg, var(--primary), rgba(168,85,247,0.3))', borderRadius:'2px'}}></div>
                         {result.data.schedule.map((item, idx) => (
-                          <div key={idx} style={{background: 'rgba(255,255,255,0.03)', borderRadius: '15px', padding: '15px', border: '1px solid var(--border)'}}>
-                            <div style={{fontWeight: 600, color: 'var(--primary)', marginBottom: '10px', fontSize: '0.95rem'}}>{item.drug}</div>
-                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px'}}>
-                              {['Morning', 'Afternoon', 'Evening', 'Night'].map(time => {
-                                const isActive = item.times?.includes(time);
-                                const localizedTime = t[time.toLowerCase()];
-                                return (
-                                  <div key={time} style={{
-                                    textAlign: 'center', 
-                                    padding: '8px', 
-                                    borderRadius: '10px', 
-                                    background: isActive ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                                    color: isActive ? 'white' : 'var(--text-muted)',
-                                    fontSize: '0.75rem',
-                                    fontWeight: isActive ? 600 : 400,
-                                    border: isActive ? 'none' : '1px solid var(--border)',
-                                    opacity: isActive ? 1 : 0.4
-                                  }}>
-                                    <Clock size={12} style={{marginBottom: '4px'}} />
-                                    <div>{localizedTime}</div>
-                                  </div>
-                                );
-                              })}
+                          <motion.div 
+                            key={idx}
+                            initial={{opacity:0, x:-20}} 
+                            animate={{opacity:1, x:0}} 
+                            transition={{delay: idx * 0.1}}
+                            style={{
+                              display:'flex', alignItems:'center', gap:'16px', 
+                              padding:'14px 18px', margin:'4px 0',
+                              background:'rgba(255,255,255,0.03)', 
+                              borderRadius:'12px',
+                              border:'1px solid rgba(99,102,241,0.08)',
+                              position:'relative',
+                              transition:'all 0.3s ease'
+                            }}
+                            whileHover={{x: 4, backgroundColor: 'rgba(99,102,241,0.06)'}}
+                          >
+                            <div style={{
+                              position:'absolute', left:'-24px',
+                              width:'12px', height:'12px', borderRadius:'50%',
+                              background:'var(--primary)', 
+                              boxShadow:'0 0 12px rgba(99,102,241,0.4)',
+                              border:'2px solid var(--bg-main)'
+                            }}></div>
+                            <div style={{
+                              minWidth:'90px', fontWeight:700, fontSize:'0.95rem',
+                              color:'var(--primary)', 
+                              display:'flex', alignItems:'center', gap:'6px'
+                            }}>
+                              <Clock size={14}/> {item.time || item.times?.join(', ') || '—'}
                             </div>
-                            <div style={{marginTop: '10px', fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px'}}>
-                              <Timer size={12} /> {item.duration}
+                            <div style={{flex:1, fontSize:'0.9rem', color:'var(--text-main)', fontWeight:500}}>
+                              {item.task || item.drug || '—'}
                             </div>
-                          </div>
+                            {item.duration && (
+                              <div style={{fontSize:'0.75rem', color:'var(--text-muted)', display:'flex', alignItems:'center', gap:'4px'}}>
+                                <Timer size={12}/> {item.duration}
+                              </div>
+                            )}
+                          </motion.div>
                         ))}
                       </div>
                     </div>
@@ -693,7 +830,17 @@ function App() {
                     )}
                   </div>
 
-                  <div style={{display: 'flex', gap: '15px'}}>
+                  {/* Pharmacist Consultation Prompt */}
+                  <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '4px solid #3b82f6' }}>
+                    <h4 style={{ fontSize: '0.85rem', color: '#3b82f6', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase' }}>
+                      <Stethoscope size={16} /> Pharmacist Consultation Recommended
+                    </h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                      Please consult a licensed pharmacist to verify drug interactions, correct dosages for your age/weight, and any contraindications with your existing conditions or allergies.
+                    </p>
+                  </div>
+
+                  <div style={{display: 'flex', gap: '15px', marginTop: '20px'}}>
                     <button className="btn" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}} onClick={() => downloadPDF()}>
                       <Download size={18} /> {t.download_report}
                     </button>
@@ -807,6 +954,108 @@ function App() {
             </div>
           </motion.div>
         )}
+
+        {activeTab === 'adherence' && (
+          <motion.div key="adherence" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+            <div className="stats-row" style={{marginBottom: '25px'}}>
+              <div className="stat-card">
+                <div className="stat-icon" style={{background:'rgba(99,102,241,0.1)'}}><Bell size={24} color="var(--primary)"/></div>
+                <div className="stat-value">{reminders.filter(r => r.enabled).length}</div>
+                <div className="stat-label">Active Reminders</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon" style={{background:'rgba(34,197,94,0.1)',color:'var(--success)'}}><Check size={24}/></div>
+                <div className="stat-value" style={{color:'var(--success)'}}>{adherenceLog.filter(l => l.taken).length}</div>
+                <div className="stat-label">Doses Taken</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon" style={{background:'rgba(239,68,68,0.1)',color:'var(--danger)'}}><X size={24}/></div>
+                <div className="stat-value" style={{color:'var(--danger)'}}>{adherenceLog.filter(l => !l.taken).length}</div>
+                <div className="stat-label">Doses Missed</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon" style={{background:'rgba(245,158,11,0.1)',color:'var(--warning)'}}><Target size={24}/></div>
+                <div className="stat-value">{adherenceLog.length > 0 ? Math.round((adherenceLog.filter(l => l.taken).length / adherenceLog.length) * 100) : 0}%</div>
+                <div className="stat-label">Adherence Score</div>
+              </div>
+            </div>
+
+            <div className="glass-card" style={{marginBottom:'20px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}}>
+                <h2 className="card-title" style={{margin:0}}><BellRing size={20}/> Medication Reminders</h2>
+                <button className="btn btn-secondary" style={{padding:'6px 14px',fontSize:'0.8rem'}} onClick={() => {setReminders([]); localStorage.removeItem('rxlens_reminders');}}>Clear All</button>
+              </div>
+              {reminders.length === 0 ? (
+                <div style={{textAlign:'center',padding:'3rem',opacity:0.5}}>
+                  <Bell size={48} style={{margin:'0 auto 1rem'}}/>
+                  <p>Scan a prescription to auto-generate reminders</p>
+                </div>
+              ) : (
+                <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                  {reminders.map((rem) => (
+                    <motion.div key={rem.id} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}}
+                      style={{display:'flex',alignItems:'center',gap:'15px',padding:'16px 20px',
+                        background:rem.enabled?'rgba(99,102,241,0.06)':'rgba(255,255,255,0.02)',
+                        border:`1px solid ${rem.enabled?'rgba(99,102,241,0.2)':'var(--border)'}`,
+                        borderRadius:'14px',transition:'all 0.3s ease'}}>
+                      <div onClick={() => {setReminders(prev => {const u=prev.map(r=>r.id===rem.id?{...r,enabled:!r.enabled}:r); localStorage.setItem('rxlens_reminders',JSON.stringify(u)); return u;});}} style={{cursor:'pointer'}}>
+                        {rem.enabled ? <BellRing size={22} color="var(--primary)"/> : <Bell size={22} color="var(--text-muted)" style={{opacity:0.4}}/>}
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:600,fontSize:'0.95rem'}}>{rem.task}</div>
+                        <div style={{fontSize:'0.8rem',color:'var(--text-muted)',marginTop:'3px'}}>{rem.drug}</div>
+                      </div>
+                      <div style={{fontWeight:700,color:'var(--primary)',fontSize:'0.95rem',minWidth:'80px',textAlign:'right'}}>{rem.time}</div>
+                      <div style={{display:'flex',gap:'6px'}}>
+                        <button className="btn" style={{padding:'6px 12px',fontSize:'0.75rem',background:'var(--success)',borderColor:'var(--success)'}}
+                          onClick={() => {const e={id:Date.now(),reminderId:rem.id,taken:true,timestamp:new Date().toISOString(),drug:rem.drug}; setAdherenceLog(p=>{const u=[...p,e];localStorage.setItem('rxlens_adherence_log',JSON.stringify(u));return u;});}}><Check size={14}/> Taken</button>
+                        <button className="btn btn-secondary" style={{padding:'6px 12px',fontSize:'0.75rem',color:'var(--danger)',borderColor:'var(--danger)'}}
+                          onClick={() => {const e={id:Date.now(),reminderId:rem.id,taken:false,timestamp:new Date().toISOString(),drug:rem.drug}; setAdherenceLog(p=>{const u=[...p,e];localStorage.setItem('rxlens_adherence_log',JSON.stringify(u));return u;});}}><X size={14}/> Missed</button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="glass-card" style={{marginBottom:'20px'}}>
+              <h2 className="card-title"><Activity size={20}/> Dose History</h2>
+              {adherenceLog.length === 0 ? (
+                <p style={{textAlign:'center',padding:'2rem',opacity:0.5}}>No doses logged yet</p>
+              ) : (
+                <div style={{display:'flex',flexDirection:'column',gap:'8px',maxHeight:'300px',overflowY:'auto'}}>
+                  {[...adherenceLog].reverse().slice(0,20).map((log) => (
+                    <div key={log.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'10px 16px',
+                      background:log.taken?'rgba(34,197,94,0.06)':'rgba(239,68,68,0.06)',
+                      border:`1px solid ${log.taken?'rgba(34,197,94,0.2)':'rgba(239,68,68,0.2)'}`,
+                      borderRadius:'10px',fontSize:'0.85rem'}}>
+                      {log.taken ? <CheckCircle2 size={16} color="var(--success)"/> : <AlertTriangle size={16} color="var(--danger)"/>}
+                      <span style={{flex:1,fontWeight:500}}>{log.drug}</span>
+                      <span style={{color:log.taken?'var(--success)':'var(--danger)',fontWeight:600,fontSize:'0.8rem'}}>{log.taken?'TAKEN':'MISSED'}</span>
+                      <span style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>{new Date(log.timestamp).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="glass-card">
+              <h2 className="card-title"><Share2 size={20}/> Caregiver Notification</h2>
+              <p style={{fontSize:'0.9rem',color:'var(--text-muted)',marginBottom:'15px'}}>Share your adherence report with a caregiver or family member.</p>
+              <button className="btn" style={{display:'flex',alignItems:'center',gap:'8px'}} onClick={() => {
+                const sc=adherenceLog.length>0?Math.round((adherenceLog.filter(l=>l.taken).length/adherenceLog.length)*100):0;
+                const msg=`RxLens Adherence Report for ${patientProfile.name||'Patient'}:
+Adherence Score: ${sc}%
+Doses Taken: ${adherenceLog.filter(l=>l.taken).length}
+Doses Missed: ${adherenceLog.filter(l=>!l.taken).length}
+Generated: ${new Date().toLocaleString()}`;
+                if(navigator.share){navigator.share({title:'RxLens Adherence Report',text:msg});}
+                else{navigator.clipboard.writeText(msg);alert('Report copied to clipboard!');}
+              }}><Share2 size={16}/> Share Report</button>
+            </div>
+          </motion.div>
+        )}
+
       </AnimatePresence>
 
       <div className="chat-fab" onClick={() => setShowChat(!showChat)}>

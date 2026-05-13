@@ -5,6 +5,7 @@ import cv2
 import uuid
 import numpy as np
 from datetime import datetime
+from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -18,6 +19,10 @@ from src.vision import analyze_prescription_vision, chat_with_pharmacist
 from src.audio import generate_audio
 from src.pdf_generator import generate_pdf_report
 from src.database import save_prescription, get_all_prescriptions
+from src.utils import generate_human_readable_summary
+
+# Load environment variables from .env
+load_dotenv()
 
 app = FastAPI()
 
@@ -79,7 +84,10 @@ async def extract_prescription(
             raise HTTPException(status_code=500, detail="Failed to parse prescription")
 
         # Create localized summary
-        summary_text = parsed_data.get("summary", "No summary available.")
+        summary_text = generate_human_readable_summary(parsed_data)
+        
+        # Generate audio summary
+        audio_file = generate_audio(summary_text, lang)
         
         # Count safety alerts for history
         safety_alerts = parsed_data.get("safety_alerts", [])
@@ -105,7 +113,8 @@ async def extract_prescription(
         return {
             "success": True,
             "data": parsed_data,
-            "summary": summary_text
+            "summary": summary_text,
+            "audio_url": audio_file
         }
 
     except Exception as e:
@@ -114,15 +123,16 @@ async def extract_prescription(
             raise HTTPException(status_code=429, detail="AI is recharging! Daily limit reached. Please wait 30s.")
         raise HTTPException(status_code=500, detail=f"AI Engine Error: {err_msg}")
 
-@app.post("/api/audio")
-async def get_audio(text: str = Form(...), lang: str = Form("English")):
-    try:
-        audio_path = generate_audio(text, lang=lang)
-        if not audio_path or not os.path.exists(audio_path):
-            raise HTTPException(status_code=500, detail="Audio generation failed")
-        return FileResponse(audio_path, media_type="audio/mpeg", filename="guide.mp3")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/audio/{filename}")
+def serve_audio(filename: str):
+    audio_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "audio_summaries"))
+    file_path = os.path.join(audio_dir, filename)
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="audio/mpeg")
+    raise HTTPException(status_code=404, detail="Audio not found")
 
 @app.post("/api/pdf")
 async def get_pdf(

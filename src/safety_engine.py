@@ -1,7 +1,8 @@
 import re
 from src.safety_db import (
     DRUG_INTERACTIONS, CONTRAINDICATIONS, DRUG_CLASSES,
-    AGE_WARNINGS, ALLERGY_MAP, DOSAGE_LIMITS, BRAND_TO_GENERIC
+    AGE_WARNINGS, ALLERGY_MAP, DOSAGE_LIMITS, BRAND_TO_GENERIC,
+    SEDATIVE_DRUGS, ANTICHOLINERGIC_DRUGS, ENVIRONMENTAL_IMPACT
 )
 
 
@@ -212,8 +213,72 @@ class ClinicalSafetyEngine:
                     "reason": f"Alert triggered because {dose_val}{limit['unit']} is above 80% of the maximum single dose ({max_single}{limit['unit']}). While not exceeding the limit, this leaves little margin for error."
                 })
 
+    def analyze_polypharmacy(self):
+        """
+        Generates 'Discussion Notes for Healthcare Provider'
+        regarding excessive medication burden and sedative loads.
+        """
+        notes = []
+        
+        # Check Total Pill Burden
+        if len(self.all_drug_names) >= 5:
+            notes.append({
+                "topic": "Excessive Medication Burden (Polypharmacy)",
+                "note": f"Patient is prescribed {len(self.all_drug_names)} medications concurrently. This meets the clinical definition of polypharmacy, which is associated with decreased adherence, increased risk of adverse drug events (ADEs), and cognitive impairment in older adults. Consider reviewing the regimen for potential de-prescribing opportunities."
+            })
+            
+        # Check Sedative Load
+        sedatives_found = [d for d in self.all_drug_names if any(s.lower() == d.lower() for s in SEDATIVE_DRUGS)]
+        if len(sedatives_found) >= 2:
+            notes.append({
+                "topic": "Cumulative Sedative Load Warning",
+                "note": f"Patient is receiving multiple medications with sedative properties ({', '.join(sedatives_found)}). This significantly increases the risk of falls, confusion, and respiratory depression, particularly in elderly patients. Consider dose reductions or alternative therapies."
+            })
+            
+        # Check Anticholinergic Burden
+        anticholinergic_found = [d for d in self.all_drug_names if any(a.lower() == d.lower() for a in ANTICHOLINERGIC_DRUGS)]
+        if len(anticholinergic_found) >= 2:
+            notes.append({
+                "topic": "High Anticholinergic Burden",
+                "note": f"Identified multiple drugs with anticholinergic effects ({', '.join(anticholinergic_found)}). High burden is linked to cognitive decline, dry mouth, urinary retention, and constipation. Consider minimizing anticholinergic load."
+            })
+
+        return notes
+
+    def analyze_environmental_impact(self):
+        """
+        Generates Green Pharmacy environmental scores.
+        """
+        impacts = []
+        critical_count = 0
+        high_count = 0
+        
+        for drug in self.all_drug_names:
+            # Check generic name against DB
+            for env_drug, details in ENVIRONMENTAL_IMPACT.items():
+                if env_drug.lower() == drug.lower():
+                    impacts.append({
+                        "drug": drug,
+                        "impact": details["impact"],
+                        "reason": details["reason"],
+                        "disposal": details["disposal"]
+                    })
+                    if details["impact"] == "Critical": critical_count += 1
+                    if details["impact"] == "High": high_count += 1
+                    
+        overall_score = "Low"
+        if impacts:
+            if critical_count > 0: overall_score = "Critical"
+            elif high_count > 0: overall_score = "High"
+            else: overall_score = "Medium"
+            
+        return {
+            "overall_impact": overall_score,
+            "drug_impacts": impacts
+        }
+
     def run_all_checks(self, dosage_info=None):
-        """Run all safety checks and return list of alerts."""
+        """Run all safety checks and return structured intelligence dictionary."""
         self.check_interactions()
         self.check_allergy_conflicts()
         self.check_contraindications()
@@ -225,7 +290,14 @@ class ClinicalSafetyEngine:
         severity_order = {"Critical": 0, "Warning": 1, "Info": 2}
         self.alerts.sort(key=lambda a: severity_order.get(a.get("severity", "Info"), 3))
 
-        return self.alerts
+        polypharmacy_notes = self.analyze_polypharmacy()
+        environmental_data = self.analyze_environmental_impact()
+
+        return {
+            "alerts": self.alerts,
+            "polypharmacy_notes": polypharmacy_notes,
+            "environmental": environmental_data
+        }
 
 
 def analyze_safety(drugs, profile=None, dosage_info=None):
@@ -234,7 +306,7 @@ def analyze_safety(drugs, profile=None, dosage_info=None):
     :param drugs: List of drug name strings
     :param profile: Patient profile dict (age, allergies, conditions)
     :param dosage_info: Optional dict mapping drug names to dosage strings
-    :returns: List of alert dicts
+    :returns: Dictionary with alerts, polypharmacy, and environmental data
     """
     engine = ClinicalSafetyEngine(drugs, profile)
     return engine.run_all_checks(dosage_info)

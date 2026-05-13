@@ -7,18 +7,31 @@ def format_to_json(data):
 
 def generate_human_readable_summary(data):
     """Generates a professional, clinical-sounding summary from the structured data."""
-    drug = data.get("drug", "N/A")
+    drug_str = data.get("drug", "")
+    drugs_list = data.get("drugs_list", [])
     dosage = data.get("dosage", "as directed")
     frequency = data.get("frequency", "as required")
     duration = data.get("duration", "specified period")
     
-    if drug == "N/A" or not drug:
-        return "The prescription details could not be clearly identified."
-        
-    summary = f"Patient is prescribed {drug.title()}. "
-    summary += f"The dosage is {dosage}, to be taken {frequency.lower()} "
-    summary += f"for a total duration of {duration}."
+    # Handle multiple drugs
+    main_drugs = drug_str if drug_str else (", ".join(drugs_list) if drugs_list else "N/A")
     
+    if main_drugs == "N/A" or not main_drugs:
+        return "The prescription details could not be clearly identified. Please ensure the image is clear and contains a valid prescription."
+        
+    summary = f"This prescription contains {main_drugs}. "
+    summary += f"The typical dosage is {dosage}, to be taken {frequency.lower()} "
+    summary += f"for a total duration of {duration}. "
+    
+    if data.get("instructions"):
+        summary += f"Special instructions: {data.get('instructions')}. "
+        
+    schedule = data.get("schedule", [])
+    if schedule:
+        summary += "Here is your treatment schedule. "
+        for item in schedule:
+            summary += f"At {item.get('time')}, {item.get('task')}. "
+            
     return summary
 
 def calculate_cer(pred, true):

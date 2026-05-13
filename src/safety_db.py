@@ -389,3 +389,65 @@ BRAND_TO_GENERIC = {
     "septran": "Sulfamethoxazole",
     "bactrim": "Sulfamethoxazole",
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# POLYPHARMACY / SEDATIVE LOAD DB
+# ──────────────────────────────────────────────────────────────────────────────
+SEDATIVE_DRUGS = {
+    "Diazepam", "Alprazolam", "Clonazepam", "Lorazepam", "Zolpidem",
+    "Tramadol", "Codeine", "Morphine", "Oxycodone", "Fentanyl",
+    "Amitriptyline", "Diphenhydramine", "Chlorpheniramine", "Promethazine",
+    "Gabapentin", "Pregabalin", "Quetiapine", "Olanzapine"
+}
+
+ANTICHOLINERGIC_DRUGS = {
+    "Amitriptyline", "Diphenhydramine", "Oxybutynin", "Tolterodine",
+    "Promethazine", "Chlorpheniramine", "Paroxetine"
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# GREEN PHARMACY / ENVIRONMENTAL IMPACT DB
+# Format: "GenericName": {"impact": "High/Medium/Low", "reason": "...", "disposal": "..."}
+# ──────────────────────────────────────────────────────────────────────────────
+ENVIRONMENTAL_IMPACT = {
+    "Salbutamol": {
+        "impact": "High",
+        "reason": "Metered-dose inhalers (MDIs) contain hydrofluoroalkane (HFA) propellants, which are potent greenhouse gases.",
+        "disposal": "Return empty or expired inhalers to a pharmacy for specialized disposal. Do not puncture or throw in household trash."
+    },
+    "Budesonide": {
+        "impact": "High",
+        "reason": "MDI inhalers contain potent greenhouse gas propellants.",
+        "disposal": "Return to pharmacy. Consider discussing Dry Powder Inhaler (DPI) alternatives with your provider."
+    },
+    "Diclofenac": {
+        "impact": "High",
+        "reason": "Highly toxic to avian scavengers and aquatic life. Trace amounts in water systems severely impact local ecosystems.",
+        "disposal": "Never flush down the toilet. Use official drug take-back programs."
+    },
+    "Ibuprofen": {
+        "impact": "Medium",
+        "reason": "Found in high concentrations in wastewater; can affect aquatic plant and fish reproduction.",
+        "disposal": "Do not flush. Dispose via pharmacy take-back."
+    },
+    "Fluoxetine": {
+        "impact": "High",
+        "reason": "Persistent in the environment. Acts as an endocrine disruptor in aquatic species, altering fish behavior and reproduction.",
+        "disposal": "Do not flush under any circumstances. Return to pharmacy."
+    },
+    "Ethinylestradiol": {
+        "impact": "Critical",
+        "reason": "Potent endocrine disruptor. Extremely low concentrations in waterways cause feminization of male fish populations.",
+        "disposal": "Never flush. Utilize specialized pharmaceutical disposal services."
+    },
+    "Amoxicillin": {
+        "impact": "Medium",
+        "reason": "Contributes to environmental antimicrobial resistance (AMR) if improperly disposed.",
+        "disposal": "Complete the full course. Return any unused suspension or capsules to the pharmacy."
+    },
+    "Azithromycin": {
+        "impact": "Medium",
+        "reason": "Contributes to environmental antimicrobial resistance (AMR).",
+        "disposal": "Complete the full course. Return unused medication to pharmacy."
+    }
+}
