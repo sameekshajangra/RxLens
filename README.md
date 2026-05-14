@@ -8,7 +8,7 @@
   [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)]()
   
   <br />
-  <a href="https://youtu.be/your_demo_video_link" target="_blank">View Demo Video</a>
+  <a href="https://www.youtube.com/watch?v=FxkaYcQW2ek" target="_blank">View Demo Video</a>
 </div>
 
 <br />
@@ -79,6 +79,14 @@ graph LR
 ---
 
 ## 📸 Screenshots & Demo
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=FxkaYcQW2ek" target="_blank">
+    <img src="https://img.shields.io/badge/Watch%20Demo-YouTube-red?style=for-the-badge&logo=youtube" alt="Watch Demo Video" />
+  </a>
+</p>
+
+<br />
 
 <table align="center" style="border-collapse: collapse; border: none;">
   <tr>
