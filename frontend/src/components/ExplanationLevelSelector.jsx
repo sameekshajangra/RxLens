@@ -3,7 +3,7 @@ import React from 'react';
 export default function ExplanationLevelSelector({ value, onChange }) {
   return (
     <div className="explanation-level-selector glass-card" style={{ marginBottom: '1.5rem' }}>
-      <label style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>Explanation Level</label>
+      <label style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>{t.explanation_level || "Explanation Level"}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -18,9 +18,9 @@ export default function ExplanationLevelSelector({ value, onChange }) {
           color: 'var(--text)',
         }}
       >
-        <option value="simple">Simple (low literacy / elderly)</option>
-        <option value="standard">Standard (regular patients)</option>
-        <option value="detailed">Detailed (medically curious)</option>
+        <option value="simple">{t.mode_simple || "Simple"} (low literacy / elderly)</option>
+        <option value="standard">{t.mode_standard || "Standard"} (regular patients)</option>
+        <option value="detailed">{t.mode_detailed || "Detailed"} (medically curious)</option>
       </select>
     </div>
   );
