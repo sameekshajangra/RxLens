@@ -337,8 +337,8 @@ function App() {
         return updated;
       });
 
-      if (safeResult.audio_url) {
-        setAudioUrl(`/api/audio/${safeResult.audio_url}`);
+      if (safeResult.audio_base64) {
+        setAudioUrl(`data:audio/mpeg;base64,${safeResult.audio_base64}`);
       }
 
       // Auto-generate reminders from schedule
@@ -668,7 +668,7 @@ function App() {
                 <ErrorBoundary>
                 <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
                   {/* Uncertainty Handling Banner */}
-                  {result?.data?.is_uncertain && (
+                  {(userMode === 'worker' || explanationLevel === 'detailed') && result?.data?.is_uncertain && (
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.08)', border: '2px solid var(--danger)', borderRadius: '24px', padding: '2rem', textAlign: 'center' }}>
                       <AlertTriangle size={48} color="var(--danger)" style={{ margin: '0 auto 12px' }} className="pulse-danger" />
                       <h3 style={{ fontSize: '1.2rem', color: 'var(--danger)', fontWeight: 700, marginBottom: '8px' }}>{t.unable_to_identify}</h3>
@@ -679,7 +679,7 @@ function App() {
                   )}
 
                   {/* Accessibility Complexity Scoring */}
-                  {result.data.accessibility_analysis && (
+                  {userMode === 'patient' && explanationLevel === 'detailed' && result.data.accessibility_analysis && (
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.04), rgba(168,85,247,0.04))', border: '1px solid var(--border)' }}>
                       <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '1.25rem' }}>
                         <Gauge size={22} color="var(--primary)" /> {t.accessibility_complexity_score}
@@ -711,6 +711,7 @@ function App() {
                   )}
 
                   {/* AI Hallucination Safeguard Banner */}
+                  {(userMode === 'worker' || explanationLevel === 'detailed') && (
                   <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.05)', borderLeft: '4px solid var(--danger)' }}>
                     <h4 style={{ fontSize: '0.85rem', color: 'var(--danger)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase' }}>
                       <AlertTriangle size={16} /> AI Hallucination Safeguard
@@ -719,6 +720,7 @@ function App() {
                       {t.ai_hallucination_desc}
                     </p>
                   </div>
+                  )}
                   
                   {/* Structured Clinical Safety Intelligence */}
                   {(result?.data?.safety_alerts ?? []).length > 0 && (
@@ -779,7 +781,7 @@ function App() {
                   )}
 
                   {/* Polypharmacy De-prescribing Assistant */}
-                  {(result?.data?.polypharmacy_notes && result?.data?.polypharmacy_notes.length > 0) && (
+                  {(userMode === 'worker' || explanationLevel === 'detailed') && (result?.data?.polypharmacy_notes && result?.data?.polypharmacy_notes.length > 0) && (
 
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(139, 92, 246, 0.05)', borderLeft: '4px solid #8b5cf6' }}>
                       <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: 700, color: '#8b5cf6', marginBottom: '12px' }}>
@@ -828,6 +830,8 @@ function App() {
                   )}
 
                   {/* AI Confidence & Explainability */}
+                  {(userMode === 'worker' || explanationLevel !== 'simple') && (
+                    <>
                   {result.data.confidence && Object.keys(result.data.confidence).length > 0 && (
                     <div className="glass-card confidence-section" style={{ marginBottom: '1.5rem' }}>
                       <div className="confidence-header">
@@ -891,7 +895,11 @@ function App() {
                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{result.data.ai_safety_observations}</p>
                     </div>
                   )}
-                  {/* {t.structured_medication_table} */}
+                  </>
+                  )}
+                  
+                  {/* Structured Medication Table */}
+                  {(userMode === 'worker' || explanationLevel !== 'simple') && (
                   <div className="glass-card" style={{ marginBottom: '1.5rem', overflow: 'hidden' }}>
                     <h2 className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Activity size={20} style={{ color: 'var(--primary)' }} /> {t.structured_medication_table}</span>
@@ -987,7 +995,7 @@ function App() {
                     )}
 
                     {/* Jargon Detector */}
-                    {safeArray(result.data.confusing_terms).length > 0 && (
+                    {(userMode === 'patient' && explanationLevel === 'detailed') && safeArray(result.data.confusing_terms).length > 0 && (
                       <div style={{ marginTop: '1.25rem', padding: '12px 16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.15)', fontSize: '0.85rem' }}>
                         <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--info)', margin: 0, marginBottom: '8px' }}>
                           <Info size={16} /> {t.clinical_terms_simplified}
@@ -1027,7 +1035,7 @@ function App() {
                       </div>
                     )}
                   </div>
-
+                  )}
 
                     {safeArray(result.data.schedule).length > 0 && (
                       <div className="glass-card" style={{marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.04), rgba(168,85,247,0.04))'}}>
@@ -1093,7 +1101,7 @@ function App() {
 
                   <div className="glass-card" style={{marginBottom: '1.5rem'}}>
                     <h2 className="card-title"><CheckCircle2 size={20} style={{color: 'var(--success)'}}/> {t.clinical_summary}</h2>
-                    <p style={{lineHeight: '1.6', color: 'var(--text-muted)'}}>{result.summary}</p>
+                    <p style={{lineHeight: '1.6', color: 'var(--text-muted)', fontSize: explanationLevel === 'simple' ? '1.25rem' : '1rem', fontWeight: explanationLevel === 'simple' ? 500 : 400}}>{result.summary}</p>
                     
                     {/* Custom Premium Audio Player with Equalizer Soundwaves */}
                     {audioUrl && (

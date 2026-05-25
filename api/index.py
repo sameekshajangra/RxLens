@@ -116,6 +116,21 @@ def _make_summary(data: dict, lang: str = "English") -> str:
     if instructions: parts.append(f"Instructions: {instructions}")
     return ". ".join(parts) + "."
 
+def _generate_audio_base64(text: str, lang: str) -> str:
+    from gtts import gTTS
+    import io
+    import base64
+    try:
+        # map frontend languages to gTTS language codes
+        lang_code = "hi" if lang.lower() == "hindi" else "es" if lang.lower() == "spanish" else "en"
+        tts = gTTS(text=text, lang=lang_code)
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        return base64.b64encode(fp.getvalue()).decode('utf-8')
+    except Exception as e:
+        logger.warning(f"Audio generation failed: {e}")
+        return ""
+
 def _compress_image_for_vision(img: Image.Image) -> bytes:
     """Resize to max 1280px and compress for fast LLM uploads."""
     img = img.copy()
@@ -272,7 +287,8 @@ async def extract_prescription(
 
         key = api_key or os.getenv("GEMINI_API_KEY")
         if not key or key == "DEMO_MODE":
-            return {"success": True, "data": dict(DEMO_DATA), "summary": _make_summary(DEMO_DATA, lang)}
+            summ = _make_summary(DEMO_DATA, lang)
+            return {"success": True, "data": dict(DEMO_DATA), "summary": summ, "audio_base64": _generate_audio_base64(summ, lang)}
 
         img_bytes = _compress_image_for_vision(img)
 
@@ -296,7 +312,11 @@ async def extract_prescription(
         parsed["polypharmacy_notes"] = safety["polypharmacy_notes"]
         
         summary = _make_summary(parsed, lang)
-        return {"success": True, "data": parsed, "summary": summary}
+        
+        # Generate Audio Base64
+        audio_b64 = _generate_audio_base64(summary, lang)
+        
+        return {"success": True, "data": parsed, "summary": summary, "audio_base64": audio_b64}
 
     except HTTPException:
         raise
