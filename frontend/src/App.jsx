@@ -31,6 +31,9 @@ import ExplanationLevelSelector from './components/ExplanationLevelSelector';
 import MedicineTimeline from './components/MedicineTimeline';
 import './index.css';
 import i18n from './i18n';
+import html2pdf from 'html2pdf.js';
+import AudioPlayer from 'react-h5-audio-player';
+import 'react-h5-audio-player/lib/styles.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('scanner');
@@ -371,7 +374,19 @@ function App() {
   }, [chatMessage, result, language]);
 
   const downloadPDF = useCallback(async () => {
-    window.print();
+    const element = document.querySelector('.result-container');
+    if (!element) return;
+    const clone = element.cloneNode(true);
+    const hideElements = clone.querySelectorAll('.hide-on-print');
+    hideElements.forEach(el => el.style.display = 'none');
+    const opt = {
+      margin: 0.5,
+      filename: 'Clinical_Report.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(clone).save();
   }, []);
 
   const getWhatsAppShareLink = useCallback(() => {
@@ -978,7 +993,7 @@ function App() {
                     )}
 
                     {/* Advice Explainability */}
-                    {result.data.explainability_sources && (
+                    {result.data.explainability_sources && (result.data.explainability_sources.instructions || safeArray(result.data.explainability_sources.side_effects).length > 0 || safeArray(result.data.explainability_sources.precautions).length > 0) && (
                       <div style={{ marginTop: '1.25rem', padding: '12px 16px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.15)', fontSize: '0.85rem' }}>
                         <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--primary)', margin: 0, marginBottom: '8px' }}>
                           <Stethoscope size={16} /> {t.advice_explainability_panel}
@@ -1105,64 +1120,21 @@ function App() {
                     <h2 className="card-title"><CheckCircle2 size={20} style={{color: 'var(--success)'}}/> {t.clinical_summary}</h2>
                     <p style={{lineHeight: '1.6', color: 'var(--text-muted)', fontSize: explanationLevel === 'simple' ? '1.25rem' : '1rem', fontWeight: explanationLevel === 'simple' ? 500 : 400}}>{result.summary}</p>
                     
-                    {/* Custom Premium Audio Player with Equalizer Soundwaves */}
+                    {/* Premium Audio Player */}
                     {audioUrl && (
-                      <div className="premium-audio-player" style={{ marginTop: '20px', padding: '20px', background: 'linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.06))', borderRadius: '24px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Volume2 size={18} color="var(--primary)" /> 🎧 {t.audio_guide || "Patient Voice Playback"}
-                          </p>
-                          <div style={{ display: 'flex', gap: '3px', height: '15px', alignItems: 'flex-end' }}>
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <div key={i} className={`eq-bar ${audioPlaying ? 'active' : ''}`} style={{ width: '3px', background: 'var(--primary)', borderRadius: '2px', animationDelay: `${i * 0.15}s` }} />
-                            ))}
-                          </div>
-                        </div>
-
-                        <audio ref={audioRef} src={audioUrl} preload="metadata" style={{ display: 'none' }} />
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                          <button onClick={togglePlayPause} style={{ minWidth: '48px', width: '48px', height: '48px', borderRadius: '50%', border: 'none', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 12px rgba(99,102,241,0.3)', transition: 'all 0.2s' }} className="play-btn">
-                            {audioPlaying ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" style={{ marginLeft: '3px' }} />}
-                          </button>
-
-                          
-
-                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {/* Seek slider */}
-                            <input 
-                              type="range" 
-                              min={0} 
-                              max={audioDuration || 100} 
-                              value={audioCurrentTime} 
-                              onChange={(e) => {
-                                if (audioRef.current) {
-                                  audioRef.current.currentTime = parseFloat(e.target.value);
-                                  setAudioCurrentTime(audioRef.current.currentTime);
-                                }
-                              }}
-                              style={{ width: '100%', height: '4px', appearance: 'none', background: 'var(--border)', borderRadius: '2px', outline: 'none', cursor: 'pointer' }}
-                              className="audio-slider"
-                            />
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                              <span>{Math.floor(audioCurrentTime / 60)}:{String(Math.floor(audioCurrentTime % 60)).padStart(2, '0')}</span>
-                              <span>{Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, '0')}</span>
-                            </div>
-                          </div>
-
-                          {/* Playback speed toggle */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <select 
-                              value={playbackRate} 
-                              onChange={(e) => changePlaybackRate(parseFloat(e.target.value))}
-                              style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text)', padding: '4px 8px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', outline: 'none' }}
-                            >
-                              <option value="1">1.0x</option>
-                              <option value="1.25">1.25x</option>
-                              <option value="1.5">1.5x</option>
-                            </select>
-                          </div>
-                        </div>
+                      <div className="premium-audio-player" style={{ marginTop: '20px', padding: '15px', background: 'linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.06))', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                        <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Volume2 size={18} color="var(--primary)" /> 🎧 {t.audio_guide || "Patient Voice Playback"}
+                        </p>
+                        <AudioPlayer
+                          autoPlay={false}
+                          src={audioUrl}
+                          showJumpControls={false}
+                          customAdditionalControls={[]}
+                          customVolumeControls={[]}
+                          layout="horizontal-reverse"
+                          style={{ background: 'transparent', boxShadow: 'none', padding: 0 }}
+                        />
                       </div>
                     )}
                   </div>
@@ -1196,6 +1168,19 @@ function App() {
                       </button>
                     </div>
                   </div>
+                  
+                  {userMode === 'patient' && (
+                    <ComprehensionCheck t={t} onReview={() => {
+                      setShowChat(true);
+                      setExplanationLevel('simple');
+                      const question = language === 'Hindi' 
+                        ? "मुझे यह समझ नहीं आया कि यह दवा कब लेनी है। कृपया बहुत सरल शब्दों में फिर से समझाएं।"
+                        : "I didn't understand when to take this medicine. Please explain it to me very simply.";
+                      setChatMessage(question);
+                      setTimeout(() => handleChatSend(question), 500);
+                    }} />
+                  )}
+                  
                 </motion.div>
                 
               ) : error ? (
@@ -1440,4 +1425,40 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
   );
 }
 
+
+const ComprehensionCheck = ({ t, onReview }) => {
+  const [status, setStatus] = React.useState(null);
+  
+  if (status === 'yes') {
+    return (
+      <div className="glass-card" style={{ marginTop: '2rem', textAlign: 'center', padding: '1.5rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981' }}>
+        <CheckCircle2 size={32} color="#10b981" style={{ margin: '0 auto 10px' }} />
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: '#059669', margin: 0 }}>
+          {t.comprehension_yes_msg || "Great! You understand when and how to take this medication."}
+        </h3>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-card hide-on-print" style={{ marginTop: '2rem', textAlign: 'center', padding: '2rem', background: 'linear-gradient(to bottom, var(--card-bg), rgba(99, 102, 241, 0.05))' }}>
+      <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem' }}>
+        🧠 {t.comprehension_title || "Did you understand when to take this medicine?"}
+      </h3>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <button className="btn" style={{ padding: '0.75rem 2.5rem', background: '#10b981' }} onClick={() => setStatus('yes')}>
+          👍 {t.yes_understood || "Yes"}
+        </button>
+        <button className="btn btn-secondary" style={{ padding: '0.75rem 2.5rem', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' }} onClick={() => {
+          setStatus('no');
+          onReview();
+        }}>
+          👎 {t.no_review_again || "No, let's review again"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default App;
+
