@@ -56,6 +56,7 @@ import UploadCard from './components/UploadCard';
 import ExplanationLevelSelector from './components/ExplanationLevelSelector';
 import MedicineTimeline from './components/MedicineTimeline';
 import './index.css';
+import i18n from './i18n';
 
 function App() {
   const [activeTab, setActiveTab] = useState('scanner');
@@ -165,145 +166,7 @@ function App() {
     return 'low';
   };
 
-  const translations = {
-    English: {
-      scanner: 'Scanner',
-      history: 'History',
-      insights: 'Insights',
-      header_title: 'Clinical Hub',
-      patient_profile: 'Patient Profile',
-      input_doc: 'Input Document',
-      upload_file: 'Upload File',
-      take_photo: 'Take Photo',
-      digitize: 'Digitize',
-      analyzing: 'Analyzing...',
-      clinical_extraction: 'Clinical Extraction',
-      medication: 'Medication',
-      dosage: 'Dosage Plan',
-      frequency: 'Frequency',
-      duration: 'Duration',
-      clinical_summary: 'Clinical Summary',
-      audio_guide: 'Audio Guide',
-      download_report: 'Download Report',
-      chat_assistant: 'Chat Assistant',
-      reset_profile: 'Reset Profile',
-      clinical_profile: 'Patient Clinical Profile',
-      full_name: 'Full Name',
-      age: 'Age (Years)',
-      weight: 'Weight (kg)',
-      allergies: 'Known Allergies',
-      guard_active: 'Safety Guard Active: AI is monitoring conflicts.',
-      ask_meds: 'Ask about your meds...',
-      safety_warning: 'Safety Alert Found',
-      safety_intel: 'Clinical Safety Intelligence',
-      severity_critical: 'CRITICAL',
-      severity_warning: 'WARNING',
-      severity_info: 'INFO',
-      schedule_title: 'Treatment Schedule',
-      morning: 'Morning',
-      afternoon: 'Afternoon',
-      evening: 'Evening',
-      night: 'Night',
-      today: 'Today',
-      conditions: 'Medical Conditions',
-      conditions_placeholder: 'e.g. Asthma, Diabetes, Pregnancy',
-      adherence_tab: 'Adherence',
-      active_reminders: 'Active Reminders',
-      doses_taken: 'Doses Taken',
-      doses_missed: 'Doses Missed',
-      adherence_score: 'Adherence Score',
-      med_reminders: 'Medication Reminders',
-      clear_all: 'Clear All',
-      taken: 'Taken',
-      missed: 'Missed',
-      dose_history: 'Dose History',
-      no_doses: 'No doses logged yet',
-      taken_caps: 'TAKEN',
-      missed_caps: 'MISSED',
-      caregiver_notif: 'Caregiver Notification',
-      share_report: 'Share your adherence report with a caregiver or family member.',
-      share_btn: 'Share Report',
-      share_title: 'RxLens Adherence Report',
-      share_msg_score: 'Adherence Score',
-      share_msg_taken: 'Doses Taken',
-      share_msg_missed: 'Doses Missed',
-      share_msg_gen: 'Generated',
-      clear: 'Clear',
-      cancel: 'Cancel',
-      capture: 'Capture',
-      add_doc: 'Add Clinical Document'
-    },
-    Hindi: {
-      scanner: 'स्कैनर',
-      history: 'इतिहास',
-      insights: 'इनसाइट्स',
-      header_title: 'क्लिनिकल हब',
-      patient_profile: 'रोगी प्रोफ़ाइल',
-      input_doc: 'दस्तावेज़ जोड़ें',
-      upload_file: 'फ़ाइल अपलोड करें',
-      take_photo: 'फोटो लें',
-      digitize: 'डिजिटाइज़ करें',
-      analyzing: 'विश्लेषण हो रहा है...',
-      clinical_extraction: 'दवा विवरण',
-      medication: 'दवा का नाम',
-      dosage: 'खुराक की योजना',
-      frequency: 'कितनी बार',
-      duration: 'अवधि',
-      clinical_summary: 'क्लिनिकल सारांश',
-      audio_guide: 'ऑडियो गाइड',
-      download_report: 'रिपोर्ट डाउनलोड करें',
-      chat_assistant: 'चैट सहायक',
-      reset_profile: 'प्रोफ़ाइल रीसेट करें',
-      clinical_profile: 'रोगी क्लिनिकल प्रोफ़ाइल',
-      full_name: 'पूरा नाम',
-      age: 'उम्र (वर्ष)',
-      weight: 'वजन (किलो)',
-      allergies: 'ज्ञात एलर्जी',
-      guard_active: 'सुरक्षा गार्ड सक्रिय: AI खतरों की निगरानी कर रहा है।',
-      ask_meds: 'अपनी दवाओं के बारे में पूछें...',
-      safety_warning: 'सुरक्षा चेतावनी मिली',
-      safety_intel: 'क्लिनिकल सुरक्षा इंटेलिजेंस',
-      severity_critical: 'गंभीर',
-      severity_warning: 'चेतावनी',
-      severity_info: 'जानकारी',
-      schedule_title: 'उपचार की समय सारणी',
-      morning: 'सुबह',
-      afternoon: 'दोपहर',
-      evening: 'शाम',
-      night: 'रात',
-      today: 'आज',
-      conditions: 'चिकित्सा स्थितियां',
-      conditions_placeholder: 'जैसे अस्थमा, मधुमेह, गर्भावस्था',
-      adherence_tab: 'अनुपालन',
-      active_reminders: 'सक्रिय अनुस्मारक',
-      doses_taken: 'खुराक ली गई',
-      doses_missed: 'खुराक छूट गई',
-      adherence_score: 'अनुपालन स्कोर',
-      med_reminders: 'दवा अनुस्मारक',
-      clear_all: 'सभी साफ़ करें',
-      scan_to_generate: 'अनुस्मारक स्वचालित रूप से उत्पन्न करने के लिए पर्चे को स्कैन करें',
-      taken: 'लिया गया',
-      missed: 'छूट गया',
-      dose_history: 'खुराक का इतिहास',
-      no_doses: 'अभी तक कोई खुराक दर्ज नहीं की गई है',
-      taken_caps: 'लिया गया',
-      missed_caps: 'छूट गया',
-      caregiver_notif: 'देखभाल करने वाले की सूचना',
-      share_report: 'अपने देखभाल करने वाले या परिवार के सदस्य के साथ अपनी अनुपालन रिपोर्ट साझा करें।',
-      share_btn: 'रिपोर्ट साझा करें',
-      share_title: 'RxLens अनुपालन रिपोर्ट',
-      share_msg_score: 'अनुपालन स्कोर',
-      share_msg_taken: 'खुराक ली गई',
-      share_msg_missed: 'खुराक छूट गई',
-      share_msg_gen: 'उत्पन्न तिथि',
-      clear: 'साफ़ करें',
-      cancel: 'रद्द करें',
-      capture: 'कैप्चर करें',
-      add_doc: 'क्लिनिकल दस्तावेज़ जोड़ें'
-    }
-  };
-
-  const t = translations[language];
+  const t = i18n[language];
 
   // Update Greeting when Language changes
   useEffect(() => {
@@ -807,9 +670,9 @@ function App() {
                   {result?.data?.is_uncertain && (
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.08)', border: '2px solid var(--danger)', borderRadius: '24px', padding: '2rem', textAlign: 'center' }}>
                       <AlertTriangle size={48} color="var(--danger)" style={{ margin: '0 auto 12px' }} className="pulse-danger" />
-                      <h3 style={{ fontSize: '1.2rem', color: 'var(--danger)', fontWeight: 700, marginBottom: '8px' }}>Unable to Confidently Identify This Medicine</h3>
+                      <h3 style={{ fontSize: '1.2rem', color: 'var(--danger)', fontWeight: 700, marginBottom: '8px' }}>{t.unable_to_identify}</h3>
                       <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.6', margin: 0 }}>
-                        The image resolution or clarity is too low, or the prescription is too faint to be parsed safely. For your clinical safety, please upload a clearer photo.
+                        {t.unable_to_identify_desc}
                       </p>
                     </div>
                   )}
@@ -818,24 +681,24 @@ function App() {
                   {result.data.accessibility_analysis && (
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.04), rgba(168,85,247,0.04))', border: '1px solid var(--border)' }}>
                       <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '1.25rem' }}>
-                        <Gauge size={22} color="var(--primary)" /> Accessibility Complexity Score
+                        <Gauge size={22} color="var(--primary)" /> {t.accessibility_complexity_score}
                       </h3>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '120px', padding: '15px', borderRadius: '16px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Difficulty</span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>{t.difficulty}</span>
                           <span className={`difficulty-badge ${(result.data.accessibility_analysis.score || 'Medium').toLowerCase()}`} style={{ fontSize: '1.2rem', fontWeight: 800, padding: '4px 14px', borderRadius: '10px', color: 'white', textTransform: 'uppercase', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
                             {result.data.accessibility_analysis.score}
                           </span>
                         </div>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                            <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Jargon Density:</span>
+                            <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{t.jargon_density}:</span>
                             <span style={{ fontWeight: 700, color: result.data.accessibility_analysis.jargon_density === 'High' ? 'var(--danger)' : result.data.accessibility_analysis.jargon_density === 'Medium' ? 'var(--warning)' : 'var(--success)' }}>
                               {result.data.accessibility_analysis.jargon_density}
                             </span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                            <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Readability Level:</span>
+                            <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{t.readability_level}:</span>
                             <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{result.data.accessibility_analysis.readability}</span>
                           </div>
                           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, marginTop: '4px', lineHeight: '1.4' }}>
@@ -852,7 +715,7 @@ function App() {
                       <AlertTriangle size={16} /> AI Hallucination Safeguard
                     </h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
-                      This report was generated by an AI vision model. AI outputs may contain inaccuracies. All medication details <strong>MUST</strong> be verified by a licensed pharmacist or physician before use.
+                      {t.ai_hallucination_desc}
                     </p>
                   </div>
                   
@@ -919,7 +782,7 @@ function App() {
 
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(139, 92, 246, 0.05)', borderLeft: '4px solid #8b5cf6' }}>
                       <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: 700, color: '#8b5cf6', marginBottom: '12px' }}>
-                        <BriefcaseMedical size={20} /> Polypharmacy Review (Provider Notes)
+                        <BriefcaseMedical size={20} /> {t.polypharmacy_review_provider}
                       </h3>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {safeArray(result.data.polypharmacy_notes).map((note, idx) => (
@@ -937,7 +800,7 @@ function App() {
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(34, 197, 94, 0.05)', borderLeft: '4px solid #22c55e' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: 700, color: '#16a34a', margin: 0 }}>
-                          <Leaf size={20} /> Green Pharmacy Impact
+                          <Leaf size={20} /> {t.green_pharmacy_impact}
                         </h3>
                         <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '4px 8px', borderRadius: '12px', 
                           background: result.data.environmental.overall_impact === 'Critical' ? '#fee2e2' : result.data.environmental.overall_impact === 'High' ? '#ffedd5' : '#dcfce3',
@@ -968,7 +831,7 @@ function App() {
                     <div className="glass-card confidence-section" style={{ marginBottom: '1.5rem' }}>
                       <div className="confidence-header">
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: 700 }}>
-                          <Gauge size={20} color="var(--primary)" /> AI Confidence Score
+                          <Gauge size={20} color="var(--primary)" /> {t.ai_confidence_score}
                         </h3>
                         {result.data.overall_confidence != null && (
                           <div className="confidence-overall">
@@ -1022,16 +885,16 @@ function App() {
                   {result.data.ai_safety_observations && (
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(99, 102, 241, 0.05)', borderLeft: '4px solid var(--primary)' }}>
                        <h4 style={{ fontSize: '0.85rem', color: 'var(--primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                         <Activity size={16} /> AI Observation
+                         <Activity size={16} /> {t.ai_observation}
                        </h4>
                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{result.data.ai_safety_observations}</p>
                     </div>
                   )}
-                  {/* Structured Medication Table */}
+                  {/* {t.structured_medication_table} */}
                   <div className="glass-card" style={{ marginBottom: '1.5rem', overflow: 'hidden' }}>
                     <h2 className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Activity size={20} style={{ color: 'var(--primary)' }} /> Structured Medication Table</span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>{safeArray(result.data.drugs_list).length} Meds Found</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Activity size={20} style={{ color: 'var(--primary)' }} /> {t.structured_medication_table}</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>{safeArray(result.data.drugs_list).length} {t.meds_found}</span>
                     </h2>
                     
                     {/* Desktop Table view */}
@@ -1039,11 +902,11 @@ function App() {
                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                         <thead>
                           <tr style={{ borderBottom: '1.5px solid var(--border)', color: 'var(--text-muted)', fontWeight: 600 }}>
-                            <th style={{ padding: '12px' }}>Medication Name</th>
+                            <th style={{ padding: '12px' }}>{t.medication_name}</th>
                             <th style={{ padding: '12px' }}>Dosage</th>
                             <th style={{ padding: '12px' }}>Frequency</th>
                             <th style={{ padding: '12px' }}>Duration</th>
-                            <th style={{ padding: '12px', textAlign: 'right' }}>Confidence</th>
+                            <th style={{ padding: '12px', textAlign: 'right' }}>{t.confidence}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1062,7 +925,7 @@ function App() {
                                   {drug}
                                   {isLowConf && (
                                     <span className="uncertain-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--danger-glow)', color: 'var(--danger)', padding: '2px 8px', borderRadius: '8px', fontSize: '0.7rem' }}>
-                                      <AlertTriangle size={10} /> Verify
+                                      <AlertTriangle size={10} /> {t.verify}
                                     </span>
                                   )}
                                 </td>
@@ -1105,7 +968,7 @@ function App() {
                               <div><span style={{ color: 'var(--text-muted)' }}>Duration:</span> <strong style={{ display: 'block' }}>{result.data.duration || 'N/A'}</strong></div>
                               {isLowConf && (
                                 <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--danger)', background: 'var(--danger-glow)', padding: '6px 12px', borderRadius: '8px', marginTop: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-                                  <AlertTriangle size={14} /> Please verify this reading with a pharmacist.
+                                  <AlertTriangle size={14} /> {t.please_verify}
                                 </div>
                               )}
                             </div>
@@ -1117,7 +980,7 @@ function App() {
                     {/* General prescription notes */}
                     {result.data.notes && (
                       <div style={{ marginTop: '1.25rem', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', fontSize: '0.85rem' }}>
-                        <span style={{ fontWeight: 700, color: 'var(--primary)', display: 'block', marginBottom: '4px' }}>📝 Patient Notes:</span>
+                        <span style={{ fontWeight: 700, color: 'var(--primary)', display: 'block', marginBottom: '4px' }}>📝 {t.patient_notes}:</span>
                         <p style={{ margin: 0, color: 'var(--text-main)' }}>{result.data.notes}</p>
                       </div>
                     )}
@@ -1126,7 +989,7 @@ function App() {
                     {safeArray(result.data.confusing_terms).length > 0 && (
                       <div style={{ marginTop: '1.25rem', padding: '12px 16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.15)', fontSize: '0.85rem' }}>
                         <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--info)', margin: 0, marginBottom: '8px' }}>
-                          <Info size={16} /> Clinical Terms Simplified
+                          <Info size={16} /> {t.clinical_terms_simplified}
                         </h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           {safeArray(result.data.confusing_terms).map((item, idx) => (
@@ -1135,7 +998,7 @@ function App() {
                                 {item.term}
                               </span>
                               <span style={{ color: 'var(--text-main)', lineHeight: '1.4' }}>
-                                means <strong>{item.simplified}</strong>
+                                {t.means} <strong>{item.simplified}</strong>
                               </span>
                             </div>
                           ))}
@@ -1147,7 +1010,7 @@ function App() {
                     {result.data.explainability_sources && (
                       <div style={{ marginTop: '1.25rem', padding: '12px 16px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.15)', fontSize: '0.85rem' }}>
                         <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--primary)', margin: 0, marginBottom: '8px' }}>
-                          <Stethoscope size={16} /> Advice Explainability Panel
+                          <Stethoscope size={16} /> {t.advice_explainability_panel}
                         </h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                           {result.data.explainability_sources.instructions && (
@@ -1223,7 +1086,7 @@ function App() {
                   {/* Print button — visible for both modes */}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
                     <button className="print-btn" onClick={() => window.print()} title="Print this report">
-                      <Printer size={16} /> Print Report
+                      <Printer size={16} /> {t.print_report}
                     </button>
                   </div>
 
@@ -1295,10 +1158,10 @@ function App() {
                   {/* Pharmacist Consultation Prompt */}
                   <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '4px solid #3b82f6' }}>
                     <h4 style={{ fontSize: '0.85rem', color: '#3b82f6', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase' }}>
-                      <Stethoscope size={16} /> Pharmacist Consultation Recommended
+                      <Stethoscope size={16} /> {t.pharmacist_consultation}
                     </h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
-                      Please consult a licensed pharmacist to verify drug interactions, correct dosages for your age/weight, and any contraindications with your existing conditions or allergies.
+                      {t.pharmacist_desc}
                     </p>
                   </div>
 
@@ -1306,15 +1169,15 @@ function App() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
                     <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
                       <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary)' }} onClick={() => downloadPDF()}>
-                        <Download size={16} /> PDF Report
+                        <Download size={16} /> {t.pdf_report}
                       </button>
                       <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', borderColor: '#25D366' }} onClick={() => window.open(getWhatsAppShareLink(), '_blank')}>
-                        <Share2 size={16} /> Share on WhatsApp
+                        <Share2 size={16} /> {t.share_whatsapp}
                       </button>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
                       <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => window.print()}>
-                        <Printer size={16} /> Print Instructions
+                        <Printer size={16} /> {t.print_instructions}
                       </button>
                       <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowChat(true)}>
                         <MessageCircle size={16} /> Chat Assistant
