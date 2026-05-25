@@ -280,7 +280,7 @@ RETURN EXACTLY THIS JSON (no extra text):
         contents.insert(0, types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"))
 
     # Model Cascade
-    models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"]
+    models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest", "gemini-2.0-flash-lite"]
     last_err = None
 
     for model in models:
@@ -295,8 +295,8 @@ RETURN EXACTLY THIS JSON (no extra text):
             err_msg = str(e)
             logger.warning(f"{model} failed: {err_msg}")
             last_err = e
-            # Only cascade on 429 quota errors, otherwise throw
-            if not any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota"]):
+            # Continue cascade on Quota errors, 404s, or 400s (model not found/supported)
+            if not any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota", "404", "NOT_FOUND", "400"]):
                 raise e
 
     raise last_err
