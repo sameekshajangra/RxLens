@@ -1,31 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, Component } from 'react';
 
-// ─── ErrorBoundary: prevents any render crash showing a white screen ───────
-class ErrorBoundary extends Component {
-  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
-  static getDerivedStateFromError(error) { return { hasError: true, error }; }
-  componentDidCatch(error, info) { console.error('RxLens render error:', error, info); }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{padding:'2rem', textAlign:'center', maxWidth:480, margin:'4rem auto'}}>
-          <div style={{fontSize:'3rem',marginBottom:'1rem'}}>⚠️</div>
-          <h2 style={{marginBottom:'0.75rem'}}>Something went wrong displaying the result.</h2>
-          <p style={{color:'#64748b',marginBottom:'1.5rem',lineHeight:1.6}}>
-            The scan may have returned an unexpected format. Try uploading a clearer image.
-          </p>
-          <button
-            onClick={() => this.setState({ hasError: false, error: null })}
-            style={{padding:'0.75rem 1.5rem',background:'#6366f1',color:'white',border:'none',borderRadius:'12px',cursor:'pointer',fontWeight:600}}
-          >
-            Try Again
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
 // Helper to ensure a value is an array before mapping
 const safeArray = (arr) => (Array.isArray(arr) ? arr : []);
 
@@ -432,7 +406,7 @@ function App() {
   const isEngineReady = isApiKeySetInEnv || apiKey.length > 10 || apiKey === "DEMO_MODE";
 
   return (
-    <ErrorBoundary>
+    
     <div className="app-container">
       <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="header-content">
@@ -665,7 +639,7 @@ function App() {
                   <p>{loadingStatus}</p>
                 </div>
               ) : result ? (
-                <ErrorBoundary>
+                
                 <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
                   {/* Uncertainty Handling Banner */}
                   {(userMode === 'worker' || explanationLevel === 'detailed') && result?.data?.is_uncertain && (
@@ -1194,7 +1168,7 @@ function App() {
                     </div>
                   </div>
                 </motion.div>
-                </ErrorBoundary>
+                
               ) : error ? (
                 <div className="glass-card" style={{textAlign:'center', padding:'4rem', borderColor: 'var(--danger)'}}>
                   <AlertTriangle size={48} style={{margin:'0 auto 1rem', color: 'var(--danger)'}} />
@@ -1433,7 +1407,7 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
         )}
       </AnimatePresence>
     </div>
-    </ErrorBoundary>
+    
   );
 }
 
