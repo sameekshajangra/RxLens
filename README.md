@@ -2,14 +2,14 @@
   <h1>🩺 RxLens</h1>
   <p><b>AI-powered clinical decision-support and prescription intelligence platform using multimodal AI, deterministic safety systems, and multilingual healthcare accessibility tools.</b></p>
 
-  [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://rxlens-pilot.web.app)
-  [![Google Gemini](https://img.shields.io/badge/AI_Engine-Gemini_2.0_Flash-blueviolet.svg)](https://rxlens-pilot.web.app)
-  [![React](https://img.shields.io/badge/Frontend-React_18-cyan.svg)](https://rxlens-pilot.web.app)
-  [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://rxlens-pilot.web.app)
+  [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://rxlens-app.vercel.app)
+  [![Google Gemini](https://img.shields.io/badge/AI_Engine-Gemini_2.0_Flash-blueviolet.svg)](https://rxlens-app.vercel.app)
+  [![React](https://img.shields.io/badge/Frontend-React_18-cyan.svg)](https://rxlens-app.vercel.app)
+  [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://rxlens-app.vercel.app)
   
   <br />
   
-  ### 🌐 [Live Demo → rxlens-pilot.web.app](https://rxlens-pilot.web.app)
+  ### 🌐 [Live Demo → rxlens-app.vercel.app](https://rxlens-app.vercel.app)
   
   <br />
   <a href="https://drive.google.com/file/d/1WJ83sfL-2bHJNv6N9bmv9Z0eUpWknvhq/view?usp=sharing" target="_blank">View Demo Video</a>
