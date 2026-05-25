@@ -600,7 +600,7 @@ function App() {
                   />
                 )}
                 {retryCountdown > 0 ? (
-                  <UploadCard retryCountdown={retryCountdown} />
+                  <UploadCard retryCountdown={retryCountdown} t={t} />
                 ) : !imagePreview ? (
                   <UploadCard 
                     loading={loading} 

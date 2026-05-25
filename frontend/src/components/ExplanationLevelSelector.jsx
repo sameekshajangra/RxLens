@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ExplanationLevelSelector({ value, onChange }) {
+export default function ExplanationLevelSelector({ value, onChange, t = {} }) {
   return (
     <div className="explanation-level-selector glass-card" style={{ marginBottom: '1.5rem' }}>
       <label style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>{t.explanation_level || "Explanation Level"}</label>
