@@ -125,11 +125,11 @@ function App() {
   const [showCamera, setShowCamera] = useState(false);
   const [history, setHistory] = useState(() => {
     const stored = localStorage.getItem('rxlens_history');
-    return stored ? JSON.parse(stored) : [];
+    try { return stored ? JSON.parse(stored) : []; } catch(e) { return []; }
   });
   const [patientProfile, setPatientProfile] = useState(() => {
     const saved = localStorage.getItem('rxlens_patient_profile');
-    return saved ? JSON.parse(saved) : { name: '', age: '', weight: '', allergies: '', conditions: '' };
+    try { return saved ? JSON.parse(saved) : { name: '', age: '', weight: '', allergies: '', conditions: '' }; } catch(e) { return { name: '', age: '', weight: '', allergies: '', conditions: '' }; }
   });
   const [showProfile, setShowProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
@@ -333,7 +333,7 @@ function App() {
       };
       setHistory(prev => {
         const updated = [...prev, entry];
-        localStorage.setItem('rxlens_history', JSON.stringify(updated));
+        try { localStorage.setItem('rxlens_history', JSON.stringify(updated)); } catch (e) { console.error('Storage full', e); }
         return updated;
       });
 
@@ -353,7 +353,7 @@ function App() {
         }));
         setReminders(prev => {
           const updated = [...prev, ...newReminders];
-          localStorage.setItem('rxlens_reminders', JSON.stringify(updated));
+          try { localStorage.setItem('rxlens_reminders', JSON.stringify(updated)); } catch (e) { console.error('Storage full', e); }
           return updated;
         });
       }
@@ -432,6 +432,7 @@ function App() {
   const isEngineReady = isApiKeySetInEnv || apiKey.length > 10 || apiKey === "DEMO_MODE";
 
   return (
+    <ErrorBoundary>
     <div className="app-container">
       <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="header-content">
@@ -1189,7 +1190,7 @@ function App() {
               ) : error ? (
                 <div className="glass-card" style={{textAlign:'center', padding:'4rem', borderColor: 'var(--danger)'}}>
                   <AlertTriangle size={48} style={{margin:'0 auto 1rem', color: 'var(--danger)'}} />
-                  <p style={{color: 'var(--danger)', fontWeight: 600}}>{error}</p>
+                  <p style={{color: 'var(--danger)', fontWeight: 600}}>{typeof error === 'string' ? error : JSON.stringify(error)}</p>
                   <p style={{fontSize: '0.85rem', marginTop: '1rem'}}>Check your internet or wait for the quota to reset.</p>
                 </div>
               ) : (
@@ -1424,6 +1425,7 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
         )}
       </AnimatePresence>
     </div>
+    </ErrorBoundary>
   );
 }
 
