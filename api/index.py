@@ -239,7 +239,8 @@ RETURN EXACTLY THIS JSON (no extra text):
   "confidence": {{"drug": 0.9}},
   "overall_confidence": 0.9,
   "is_uncertain": false,
-  "accessibility_analysis": {{"score": "Medium", "jargon_density": "Low", "readability": "6th Grade Level", "reason": ""}}
+  "accessibility_analysis": {{"score": "Medium", "jargon_density": "Low", "readability": "6th Grade Level", "reason": ""}},
+  "explainability_sources": {{"instructions": "source of instructions", "side_effects": ["source 1"], "precautions": ["source 2"]}}
 }}
 """
     
