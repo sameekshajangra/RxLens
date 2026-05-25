@@ -1,9 +1,9 @@
 import os
 import sys
 import json
-import cv2
 import uuid
-import numpy as np
+import io
+from PIL import Image
 from datetime import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -58,15 +58,17 @@ async def extract_prescription(
     file: UploadFile = File(...), 
     api_key: str = Form(None), 
     lang: str = Form("English"),
-    patient_profile: str = Form(None)
+    patient_profile: str = Form(None),
+    explanation_level: str = Form("standard")  # simple | standard | detailed
 ):
     try:
         # Read image
         contents = await file.read()
-        nparr = np.frombuffer(contents, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        if img is None:
+        try:
+            img = Image.open(io.BytesIO(contents))
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+        except Exception:
             raise HTTPException(status_code=400, detail="Invalid image file")
 
         # Parse patient profile
@@ -77,14 +79,18 @@ async def extract_prescription(
             except:
                 pass
 
-        # Process with VLM (Gemini) - now with patient context and schedule engine!
-        parsed_data = analyze_prescription_vision(img, api_key=api_key, lang=lang, patient_profile=profile_data)
+        # Process with split OCR+LLM pipeline
+        parsed_data = analyze_prescription_vision(
+            img, api_key=api_key, lang=lang,
+            patient_profile=profile_data,
+            explanation_level=explanation_level
+        )
         
         if not parsed_data:
             raise HTTPException(status_code=500, detail="Failed to parse prescription")
 
         # Create localized summary
-        summary_text = generate_human_readable_summary(parsed_data)
+        summary_text = generate_human_readable_summary(parsed_data, lang=lang)
         
         # Generate audio summary
         audio_file = generate_audio(summary_text, lang)
@@ -123,8 +129,7 @@ async def extract_prescription(
             raise HTTPException(status_code=429, detail="AI is recharging! Daily limit reached. Please wait 30s.")
         raise HTTPException(status_code=500, detail=f"AI Engine Error: {err_msg}")
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/audio/{filename}")
 def serve_audio(filename: str):

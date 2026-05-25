@@ -26,3 +26,4 @@ pdf_reports/
 audio_summaries/
 *.mp3
 *.pdf
+.vercel

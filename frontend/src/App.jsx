@@ -1,4 +1,18 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+// Helper to ensure a value is an array before mapping
+const safeArray = (arr) => (Array.isArray(arr) ? arr : []);
+
+// Helper: compute average treatment duration across history items
+const avgDurationDays = (historyArr) => {
+  const nums = safeArray(historyArr).flatMap(h => {
+    const raw = typeof h.duration === 'string' ? h.duration : String(h.duration || '');
+    const m = raw.match(/[0-9]+/);
+    return m ? [parseInt(m[0], 10)] : [];
+  }).filter(n => n > 0);
+  if (!nums.length) return '\u2014';
+  return (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1);
+};
+
 import axios from 'axios';
 import Webcam from "react-webcam";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,15 +23,67 @@ import {
   Upload, Camera, FileText, Activity, ShieldCheck, ShieldAlert,
   Download, PlayCircle, Loader2, AlertTriangle, Info,
   CheckCircle2, Settings, Key, Globe, History, 
-  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle
+  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle, Play, Pause, Printer, Volume2
 } from 'lucide-react';
+import UploadCard from './components/UploadCard';
+import ExplanationLevelSelector from './components/ExplanationLevelSelector';
+import MedicineTimeline from './components/MedicineTimeline';
 import './index.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('scanner');
+  
+  // Bespoke Audio Player State & Effects
+  const audioRef = useRef(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handlePlay = () => setAudioPlaying(true);
+    const handlePause = () => setAudioPlaying(false);
+    const handleTimeUpdate = () => setAudioCurrentTime(audio.currentTime);
+    const handleDurationChange = () => setAudioDuration(audio.duration);
+    const handleEnded = () => setAudioPlaying(false);
+
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('durationchange', handleDurationChange);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('durationchange', handleDurationChange);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const togglePlayPause = () => {
+    if (!audioRef.current) return;
+    if (audioPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+  };
+
+  const changePlaybackRate = (rate) => {
+    if (!audioRef.current) return;
+    audioRef.current.playbackRate = rate;
+    setPlaybackRate(rate);
+  };
   const [darkMode, setDarkMode] = useState(localStorage.getItem('darkMode') === 'true');
   const [elderlyMode, setElderlyMode] = useState(localStorage.getItem('rxlens_elderly_mode') === 'true');
-  const [language, setLanguage] = useState('English');
+  const language = 'English';
+  const [userMode, setUserMode] = useState('patient'); // 'patient' | 'worker'
+  const [explanationLevel, setExplanationLevel] = useState('standard'); // 'simple' | 'standard' | 'detailed'
   const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
   const [isApiKeySetInEnv, setIsApiKeySetInEnv] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -29,7 +95,10 @@ function App() {
   const [error, setError] = useState('');
   const [audioUrl, setAudioUrl] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(() => {
+    const stored = localStorage.getItem('rxlens_history');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [patientProfile, setPatientProfile] = useState(() => {
     const saved = localStorage.getItem('rxlens_patient_profile');
     return saved ? JSON.parse(saved) : { name: '', age: '', weight: '', allergies: '', conditions: '' };
@@ -110,7 +179,32 @@ function App() {
       night: 'Night',
       today: 'Today',
       conditions: 'Medical Conditions',
-      conditions_placeholder: 'e.g. Asthma, Diabetes, Pregnancy'
+      conditions_placeholder: 'e.g. Asthma, Diabetes, Pregnancy',
+      adherence_tab: 'Adherence',
+      active_reminders: 'Active Reminders',
+      doses_taken: 'Doses Taken',
+      doses_missed: 'Doses Missed',
+      adherence_score: 'Adherence Score',
+      med_reminders: 'Medication Reminders',
+      clear_all: 'Clear All',
+      taken: 'Taken',
+      missed: 'Missed',
+      dose_history: 'Dose History',
+      no_doses: 'No doses logged yet',
+      taken_caps: 'TAKEN',
+      missed_caps: 'MISSED',
+      caregiver_notif: 'Caregiver Notification',
+      share_report: 'Share your adherence report with a caregiver or family member.',
+      share_btn: 'Share Report',
+      share_title: 'RxLens Adherence Report',
+      share_msg_score: 'Adherence Score',
+      share_msg_taken: 'Doses Taken',
+      share_msg_missed: 'Doses Missed',
+      share_msg_gen: 'Generated',
+      clear: 'Clear',
+      cancel: 'Cancel',
+      capture: 'Capture',
+      add_doc: 'Add Clinical Document'
     },
     Hindi: {
       scanner: 'स्कैनर',
@@ -152,7 +246,33 @@ function App() {
       night: 'रात',
       today: 'आज',
       conditions: 'चिकित्सा स्थितियां',
-      conditions_placeholder: 'जैसे अस्थमा, मधुमेह, गर्भावस्था'
+      conditions_placeholder: 'जैसे अस्थमा, मधुमेह, गर्भावस्था',
+      adherence_tab: 'अनुपालन',
+      active_reminders: 'सक्रिय अनुस्मारक',
+      doses_taken: 'खुराक ली गई',
+      doses_missed: 'खुराक छूट गई',
+      adherence_score: 'अनुपालन स्कोर',
+      med_reminders: 'दवा अनुस्मारक',
+      clear_all: 'सभी साफ़ करें',
+      scan_to_generate: 'अनुस्मारक स्वचालित रूप से उत्पन्न करने के लिए पर्चे को स्कैन करें',
+      taken: 'लिया गया',
+      missed: 'छूट गया',
+      dose_history: 'खुराक का इतिहास',
+      no_doses: 'अभी तक कोई खुराक दर्ज नहीं की गई है',
+      taken_caps: 'लिया गया',
+      missed_caps: 'छूट गया',
+      caregiver_notif: 'देखभाल करने वाले की सूचना',
+      share_report: 'अपने देखभाल करने वाले या परिवार के सदस्य के साथ अपनी अनुपालन रिपोर्ट साझा करें।',
+      share_btn: 'रिपोर्ट साझा करें',
+      share_title: 'RxLens अनुपालन रिपोर्ट',
+      share_msg_score: 'अनुपालन स्कोर',
+      share_msg_taken: 'खुराक ली गई',
+      share_msg_missed: 'खुराक छूट गई',
+      share_msg_gen: 'उत्पन्न तिथि',
+      clear: 'साफ़ करें',
+      cancel: 'रद्द करें',
+      capture: 'कैप्चर करें',
+      add_doc: 'क्लिनिकल दस्तावेज़ जोड़ें'
     }
   };
 
@@ -185,6 +305,11 @@ function App() {
     checkConfig();
     fetchHistory();
   }, []);
+
+  // Apply patient‑mode CSS class to body
+  useEffect(() => {
+    document.body.classList.toggle('patient-mode', userMode === 'patient');
+  }, [userMode]);
 
   useEffect(() => {
     document.body.classList.toggle('dark-mode', darkMode);
@@ -237,7 +362,16 @@ function App() {
     try {
       const res = await axios.get('/api/history');
       setHistory(res.data);
-    } catch (err) { console.error("History fetch failed", err); }
+      // Persist fetched history to localStorage for offline fallback
+      localStorage.setItem('rxlens_history', JSON.stringify(res.data));
+    } catch (err) {
+      console.error("History fetch failed", err);
+      // Fallback: load history from localStorage if available
+      const stored = localStorage.getItem('rxlens_history');
+      if (stored) {
+        setHistory(JSON.parse(stored));
+      }
+    }
   };
 
   const handleFileChange = (e) => {
@@ -266,17 +400,33 @@ function App() {
     formData.append('file', imageFile);
     formData.append('lang', language);
     formData.append('patient_profile', JSON.stringify(patientProfile));
+    formData.append('explanation_level', explanationLevel);
 
     try {
       const res = await axios.post('/api/extract', formData, { timeout: 120000 });
       setResult(res.data);
+      // --- New: Store this scan into local history for the History tab ---
+      if (res.data && res.data.data) {
+        const entry = {
+          drug_name: res.data.data.drug || res.data.data.drug_name || '',
+          dosage: res.data.data.dosage || '',
+          date: new Date().toLocaleString(),
+          safety_alert_count: (Array.isArray(res.data.data.safety_alerts) ? res.data.data.safety_alerts.length : 0)
+        };
+        setHistory(prev => {
+          const updated = [...prev, entry];
+          // Persist to localStorage so history survives refresh
+          localStorage.setItem('rxlens_history', JSON.stringify(updated));
+          return updated;
+        });
+      }
       if (res.data.audio_url) {
         setAudioUrl(`/api/audio/${res.data.audio_url}`);
       }
 
       // Auto-generate reminders from schedule
       if (res.data.data?.schedule) {
-        const newReminders = res.data.data.schedule.map((item, idx) => ({
+        const newReminders = safeArray(res.data.data.schedule).map((item, idx) => ({
           id: Date.now() + idx,
           time: item.time,
           task: item.task || item.drug,
@@ -290,7 +440,7 @@ function App() {
           return updated;
         });
       }
-      fetchHistory();
+
     } catch (err) {
       if (err.response?.status === 429 || (err.response?.data?.detail && (err.response.data.detail.includes('Quota') || err.response.data.detail.includes('exhausted')))) {
         setError(err.response.data.detail || 'Daily Quota Reached.');
@@ -334,7 +484,7 @@ function App() {
     pdfForm.append('frequency', data.frequency || '');
     pdfForm.append('duration', data.duration || '');
     pdfForm.append('summary', summaryText || data.summary || '');
-    pdfForm.append('safety_alerts', JSON.stringify(data.safety_alerts || []));
+    pdfForm.append('safety_alerts', JSON.stringify(data.safety_alerts ?? []));
     try {
       const res = await axios.post('/api/pdf', pdfForm, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -343,6 +493,23 @@ function App() {
       link.setAttribute('download', 'Clinical_Report.pdf');
       link.click();
     } catch (err) { console.error(err); }
+  }, [result]);
+
+  const getWhatsAppShareLink = useCallback(() => {
+    if (!result?.data) return '';
+    const drugName = result.data.drug || 'Unknown';
+    const instructions = result.data.instructions || 'As directed';
+    const scheduleStr = safeArray(result.data.schedule).map(item => `• ${item.time}: ${item.task}`).join('\n');
+    const safetyStr = safeArray(result.data.safety_alerts).map(alert => `⚠ [${alert.severity}] ${alert.message}`).join('\n');
+    
+    const text = `🩺 *RxLens Prescription Summary*\n\n` +
+                 `*Medication:* ${drugName}\n` +
+                 `*Instructions:* ${instructions}\n\n` +
+                 `*Intake Schedule:*\n${scheduleStr || 'None'}\n\n` +
+                 (safetyStr ? `*Safety Warnings:*\n${safetyStr}\n\n` : '') +
+                 `_Shared via RxLens Clinical App_`;
+                 
+    return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
   }, [result]);
 
   const isEngineReady = isApiKeySetInEnv || apiKey.length > 10 || apiKey === "DEMO_MODE";
@@ -371,6 +538,18 @@ function App() {
                 <option value="English">English</option>
                 <option value="Hindi">Hindi</option>
               </select>
+               {/* Mode Switch — styled badge */}
+               <span className={`mode-badge ${userMode === 'patient' ? 'patient' : 'worker'}`}>
+                 {userMode === 'patient' ? '🧑‍⚕️ Patient' : '🏥 Clinician'}
+               </span>
+               <select 
+                 value={userMode}
+                 onChange={(e) => setUserMode(e.target.value)}
+                 style={{marginLeft: '4px', background: 'none', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem'}}
+               >
+                 <option value="patient">Patient Mode</option>
+                 <option value="worker">Healthcare Worker Mode</option>
+               </select>
             </div>
             <div style={{display: 'flex', gap: '10px'}}>
               <div className="theme-toggle" onClick={() => setElderlyMode(!elderlyMode)} title="Elderly Accessibility Mode">
@@ -394,7 +573,7 @@ function App() {
           <TrendingUp size={18} /> {t.insights}
         </div>
         <div className={`nav-item ${activeTab === 'adherence' ? 'active' : ''}`} onClick={() => setActiveTab('adherence')}>
-          <BellRing size={18} /> Adherence
+          <BellRing size={18} /> {t.adherence_tab}
         </div>
       </div>
 
@@ -449,8 +628,30 @@ function App() {
                 <div className="form-group">
                   <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.age}</label>
                   <div className="profile-input-wrapper">
-                    <Calendar className="input-icon" size={18} />
-                    <input type="number" className="input-field" placeholder="Years" value={patientProfile.age} onChange={(e)=>setPatientProfile({...patientProfile, age: e.target.value})} />
+                    <Calendar className="input-icon" size={18} style={{ zIndex: 10 }} />
+                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                      <select 
+                        className="input-field" 
+                        value={patientProfile.age || ''} 
+                        onChange={(e) => setPatientProfile({ ...patientProfile, age: e.target.value })}
+                        style={{ flex: 1.5, paddingLeft: '45px', color: 'var(--text)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '12px', outline: 'none', cursor: 'pointer' }}
+                      >
+                        <option value="">Age</option>
+                        {Array.from({ length: 110 }, (_, i) => i + 1).map((val) => (
+                          <option key={val} value={val} style={{ color: '#000' }}>{val}</option>
+                        ))}
+                      </select>
+                      <select 
+                        className="input-field" 
+                        value={patientProfile.ageUnit || 'Years'} 
+                        onChange={(e) => setPatientProfile({ ...patientProfile, ageUnit: e.target.value })}
+                        style={{ flex: 1.2, color: 'var(--text)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '12px', outline: 'none', cursor: 'pointer' }}
+                      >
+                        <option value="Years" style={{ color: '#000' }}>Years</option>
+                        <option value="Months" style={{ color: '#000' }}>Months</option>
+                        <option value="Weeks" style={{ color: '#000' }}>Weeks</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -496,37 +697,25 @@ function App() {
             <div className="left-col">
               <div className="glass-card">
                 <h2 className="card-title"><FileText size={20} /> {t.input_doc}</h2>
+                {/* Explanation Level — patient mode only */}
+                {userMode === 'patient' && (
+                  <ExplanationLevelSelector
+                    value={explanationLevel}
+                    onChange={setExplanationLevel}
+                  />
+                )}
                 {retryCountdown > 0 ? (
-                  <div className="glass-card" style={{textAlign: 'center', borderColor: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)'}}>
-                    <Timer size={48} style={{margin: '0 auto 1rem', color: 'var(--primary)'}} className="spin-slow" />
-                    <h3 style={{color: 'var(--primary)'}}>Daily Limit Reached</h3>
-                    <p style={{fontSize: '2rem', fontWeight: 700, margin: '1rem 0'}}>{retryCountdown}s</p>
-                    <p style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>The AI is recharging. Please try again when the timer hits zero or tomorrow.</p>
-                  </div>
-                ) : !imagePreview && !showCamera ? (
-                  <div className="upload-area" onDragOver={(e)=>e.preventDefault()} onDrop={(e)=>{e.preventDefault(); const file = e.dataTransfer.files[0]; if(file){setImageFile(file); setImagePreview(URL.createObjectURL(file)); resetState();}}}>
-                    <Upload size={48} className="upload-icon" style={{marginBottom: '1rem', color: 'var(--primary)'}} />
-                    <h3 style={{marginBottom: '1.5rem'}}>Add Clinical Document</h3>
-                    <div style={{display: 'flex', gap: '15px', justifyContent: 'center'}}>
-                      <button className="btn" onClick={() => fileInputRef.current.click()} style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                        <Upload size={18} /> {t.upload_file}
-                      </button>
-                      <button className="btn btn-secondary" onClick={() => setShowCamera(true)} style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                        <Camera size={18} /> {t.take_photo}
-                      </button>
-                    </div>
-                  </div>
-                ) : showCamera ? (
-                  <div style={{textAlign: 'center'}}>
-                    <div style={{borderRadius: '20px', overflow: 'hidden', border: '4px solid var(--primary)', marginBottom: '20px', position: 'relative'}}>
-                      <Webcam ref={webcamRef} screenshotFormat="image/jpeg" style={{width: '100%', display: 'block'}} />
-                      <div className="scanning-line"></div>
-                    </div>
-                    <div style={{display: 'flex', gap: '10px', justifyContent: 'center'}}>
-                      <button className="btn btn-secondary" onClick={() => setShowCamera(false)}>Cancel</button>
-                      <button className="btn" onClick={() => { const img = webcamRef.current.getScreenshot(); setImagePreview(img); fetch(img).then(res => res.blob()).then(blob => setImageFile(new File([blob], "camera.jpg", {type:"image/jpeg"}))); setShowCamera(false); }}>Capture</button>
-                    </div>
-                  </div>
+                  <UploadCard retryCountdown={retryCountdown} />
+                ) : !imagePreview ? (
+                  <UploadCard 
+                    loading={loading} 
+                    t={t} 
+                    onImageCapture={(file) => {
+                      setImageFile(file);
+                      setImagePreview(URL.createObjectURL(file));
+                      resetState();
+                    }}
+                  />
                 ) : (
                   <div style={{textAlign: 'center'}}>
                     <div className="scanner-frame" style={{position: 'relative', overflow: 'hidden', borderRadius: '16px', border: loading ? '2px solid var(--primary)' : '2px solid rgba(99,102,241,0.15)', transition: 'border-color 0.3s'}}>
@@ -542,7 +731,7 @@ function App() {
                       <img src={imagePreview} className="img-preview" style={{display:'block', width:'100%', maxHeight:'400px', objectFit:'contain', borderRadius:'14px'}} />
                     </div>
                     <div style={{display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '25px'}}>
-                      <button className="btn btn-secondary" onClick={() => { setImagePreview(null); setImageFile(null); resetState(); }}>Clear</button>
+                      <button className="btn btn-secondary" onClick={() => { setImagePreview(null); setImageFile(null); resetState(); }}>{t.clear}</button>
                       <button className="btn" onClick={processImage} disabled={loading}>{loading ? t.analyzing : t.digitize}</button>
                     </div>
                   </div>
@@ -559,6 +748,49 @@ function App() {
                 </div>
               ) : result ? (
                 <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
+                  {/* Uncertainty Handling Banner */}
+                  {result.data.is_uncertain && (
+                    <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.08)', border: '2px solid var(--danger)', borderRadius: '24px', padding: '2rem', textAlign: 'center' }}>
+                      <AlertTriangle size={48} color="var(--danger)" style={{ margin: '0 auto 12px' }} className="pulse-danger" />
+                      <h3 style={{ fontSize: '1.2rem', color: 'var(--danger)', fontWeight: 700, marginBottom: '8px' }}>Unable to Confidently Identify This Medicine</h3>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.6', margin: 0 }}>
+                        The image resolution or clarity is too low, or the prescription is too faint to be parsed safely. For your clinical safety, please upload a clearer photo.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Accessibility Complexity Scoring */}
+                  {result.data.accessibility_analysis && (
+                    <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.04), rgba(168,85,247,0.04))', border: '1px solid var(--border)' }}>
+                      <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '1.25rem' }}>
+                        <Gauge size={22} color="var(--primary)" /> Accessibility Complexity Score
+                      </h3>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '120px', padding: '15px', borderRadius: '16px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Difficulty</span>
+                          <span className={`difficulty-badge ${(result.data.accessibility_analysis.score || 'Medium').toLowerCase()}`} style={{ fontSize: '1.2rem', fontWeight: 800, padding: '4px 14px', borderRadius: '10px', color: 'white', textTransform: 'uppercase', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+                            {result.data.accessibility_analysis.score}
+                          </span>
+                        </div>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Jargon Density:</span>
+                            <span style={{ fontWeight: 700, color: result.data.accessibility_analysis.jargon_density === 'High' ? 'var(--danger)' : result.data.accessibility_analysis.jargon_density === 'Medium' ? 'var(--warning)' : 'var(--success)' }}>
+                              {result.data.accessibility_analysis.jargon_density}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Readability Level:</span>
+                            <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{result.data.accessibility_analysis.readability}</span>
+                          </div>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, marginTop: '4px', lineHeight: '1.4' }}>
+                            {result.data.accessibility_analysis.reason}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* AI Hallucination Safeguard Banner */}
                   <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.05)', borderLeft: '4px solid var(--danger)' }}>
                     <h4 style={{ fontSize: '0.85rem', color: 'var(--danger)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase' }}>
@@ -570,19 +802,19 @@ function App() {
                   </div>
                   
                   {/* Structured Clinical Safety Intelligence */}
-                  {(result.data.safety_alerts && result.data.safety_alerts.length > 0) && (
+                  {(result?.data?.safety_alerts ?? []).length > 0 && (
                     <div className={`glass-card safety-section ${result.data.safety_alerts.some(a => a.severity === 'Critical') ? 'safety-section-critical' : 'safety-section-warning'}`} style={{ padding: '1.5rem' }}>
                       <div className="safety-header">
                         <div className="safety-header-left">
                           <ShieldAlert size={24} color="var(--danger)" />
-                          <h3 style={{ color: result.data.safety_alerts.some(a => a.severity === 'Critical') ? 'var(--danger)' : 'var(--warning)' }}>{t.safety_intel}</h3>
+                          <h3 style={{ color: result.data.safety_alerts?.some(a => a.severity === 'Critical') ? 'var(--danger)' : 'var(--warning)' }}>{t.safety_intel}</h3>
                         </div>
-                        <span className={`safety-count-badge ${result.data.safety_alerts.some(a => a.severity === 'Critical') ? 'critical' : 'warning'}`}>
-                          {result.data.safety_alerts.length} {result.data.safety_alerts.length === 1 ? 'Alert' : 'Alerts'}
+                        <span className={`safety-count-badge ${result.data.safety_alerts?.some(a => a.severity === 'Critical') ? 'critical' : 'warning'}`}>
+                          {result.data.safety_alerts?.length || 0} {result.data.safety_alerts?.length === 1 ? 'Alert' : 'Alerts'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {result.data.safety_alerts.map((alert, idx) => (
+                        {safeArray(result.data.safety_alerts).map((alert, idx) => (
                           <motion.div 
                             key={idx} 
                             className={`safety-alert-card ${(alert.severity || 'info').toLowerCase()}`}
@@ -605,7 +837,7 @@ function App() {
                             <p className="alert-message">{alert.message}</p>
                             {alert.involved_drugs && (
                               <div className="alert-drugs">
-                                {alert.involved_drugs.map((d, i) => (
+                                {safeArray(alert.involved_drugs).map((d, i) => (
                                   <span key={i} className="alert-drug-tag">{d}</span>
                                 ))}
                               </div>
@@ -628,13 +860,14 @@ function App() {
                   )}
 
                   {/* Polypharmacy De-prescribing Assistant */}
-                  {(result.data.polypharmacy_notes && result.data.polypharmacy_notes.length > 0) && (
+                  {(result?.data?.polypharmacy_notes && result?.data?.polypharmacy_notes.length > 0) && (
+
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(139, 92, 246, 0.05)', borderLeft: '4px solid #8b5cf6' }}>
                       <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: 700, color: '#8b5cf6', marginBottom: '12px' }}>
                         <BriefcaseMedical size={20} /> Polypharmacy Review (Provider Notes)
                       </h3>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {result.data.polypharmacy_notes.map((note, idx) => (
+                        {safeArray(result.data.polypharmacy_notes).map((note, idx) => (
                           <div key={idx} style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.5)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
                             <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#6d28d9', marginBottom: '4px' }}>{note.topic}</div>
                             <div style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>{note.note}</div>
@@ -645,7 +878,7 @@ function App() {
                   )}
 
                   {/* Green Pharmacy Environmental Impact */}
-                  {(result.data.environmental && result.data.environmental.drug_impacts && result.data.environmental.drug_impacts.length > 0) && (
+                  {safeArray(result.data.environmental?.drug_impacts).length > 0 && (
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(34, 197, 94, 0.05)', borderLeft: '4px solid #22c55e' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: 700, color: '#16a34a', margin: 0 }}>
@@ -659,7 +892,7 @@ function App() {
                         </span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {result.data.environmental.drug_impacts.map((env, idx) => (
+                        {safeArray(result.data.environmental?.drug_impacts).map((env, idx) => (
                           <div key={idx} style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.5)', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                               <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#15803d' }}>{env.drug}</span>
@@ -717,9 +950,9 @@ function App() {
                       </div>
 
                       {/* Uncertainty Warnings */}
-                      {result.data.uncertainty_warnings && result.data.uncertainty_warnings.length > 0 && (
+                      {safeArray(result.data.uncertainty_warnings).length > 0 && (
                         <div className="uncertainty-warnings">
-                          {result.data.uncertainty_warnings.map((w, i) => (
+                          {safeArray(result.data.uncertainty_warnings).map((w, i) => (
                             <div key={i} className={`uncertainty-chip ${w.level}`}>
                               <AlertTriangle size={14} className="unc-icon" />
                               <span>{w.message}</span>
@@ -739,39 +972,150 @@ function App() {
                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{result.data.ai_safety_observations}</p>
                     </div>
                   )}
-                  <div className="glass-card" style={{marginBottom: '1.5rem'}}>
-                    <h2 className="card-title"><Activity size={20} style={{color: 'var(--primary)'}}/> {t.clinical_extraction}</h2>
-                    <div className="metrics-grid">
-                      {['drug', 'dosage', 'frequency', 'duration'].map((field) => {
-                        const isUncertain = (result.data.uncertain_fields || []).includes(field) || 
-                          (result.data.confidence && result.data.confidence[field] != null && 
-                           (typeof result.data.confidence[field] === 'number' ? result.data.confidence[field] : result.data.confidence[field]?.score) < 0.7);
-                        const labels = { drug: t.medication, dosage: t.dosage, frequency: t.frequency, duration: t.duration };
-                        const values = { 
-                          drug: result.data.drug, 
-                          dosage: result.data.dosage, 
-                          frequency: result.data.frequency || 'As directed', 
-                          duration: result.data.duration || 'N/A' 
-                        };
+                  {/* Structured Medication Table */}
+                  <div className="glass-card" style={{ marginBottom: '1.5rem', overflow: 'hidden' }}>
+                    <h2 className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Activity size={20} style={{ color: 'var(--primary)' }} /> Structured Medication Table</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>{safeArray(result.data.drugs_list).length} Meds Found</span>
+                    </h2>
+                    
+                    {/* Desktop Table view */}
+                    <div className="desktop-table-container">
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1.5px solid var(--border)', color: 'var(--text-muted)', fontWeight: 600 }}>
+                            <th style={{ padding: '12px' }}>Medication Name</th>
+                            <th style={{ padding: '12px' }}>Dosage</th>
+                            <th style={{ padding: '12px' }}>Frequency</th>
+                            <th style={{ padding: '12px' }}>Duration</th>
+                            <th style={{ padding: '12px', textAlign: 'right' }}>Confidence</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {safeArray(result.data.drugs_list).map((drug, idx) => {
+                            const dose = result.data.drugs_dosage?.[drug] || result.data.dosage || 'As directed';
+                            const individualConf = result.data.confidence?.[drug] != null 
+                              ? result.data.confidence[drug] 
+                              : (result.data.confidence?.drug || 0.9);
+                            const level = getConfidenceLevel(individualConf);
+                            const isLowConf = individualConf < 0.7;
+
+                            return (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }} className={isLowConf ? 'row-low-confidence' : ''}>
+                                <td style={{ padding: '14px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Pill size={16} color="var(--primary)" />
+                                  {drug}
+                                  {isLowConf && (
+                                    <span className="uncertain-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--danger-glow)', color: 'var(--danger)', padding: '2px 8px', borderRadius: '8px', fontSize: '0.7rem' }}>
+                                      <AlertTriangle size={10} /> Verify
+                                    </span>
+                                  )}
+                                </td>
+                                <td style={{ padding: '14px 12px' }}>{dose}</td>
+                                <td style={{ padding: '14px 12px' }}>{result.data.frequency || 'As directed'}</td>
+                                <td style={{ padding: '14px 12px' }}>{result.data.duration || 'N/A'}</td>
+                                <td style={{ padding: '14px 12px', textAlign: 'right', fontWeight: 700, color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)' }}>
+                                  {Math.round(individualConf * 100)}%
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile Card view (Feature 1) */}
+                    <div className="mobile-cards-container">
+                      {safeArray(result.data.drugs_list).map((drug, idx) => {
+                        const dose = result.data.drugs_dosage?.[drug] || result.data.dosage || 'As directed';
+                        const individualConf = result.data.confidence?.[drug] != null 
+                          ? result.data.confidence[drug] 
+                          : (result.data.confidence?.drug || 0.9);
+                        const level = getConfidenceLevel(individualConf);
+                        const isLowConf = individualConf < 0.7;
+
                         return (
-                          <div key={field} className={`metric-box ${isUncertain ? 'field-uncertain' : ''}`}>
-                            <div className="metric-label">
-                              {labels[field]}
-                              {isUncertain && <span className="uncertain-badge"><AlertTriangle size={9} /> Verify</span>}
+                          <div key={idx} style={{ padding: '16px', borderRadius: '16px', background: 'rgba(255,255,255,0.03)', border: isLowConf ? '1px solid var(--danger)' : '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Pill size={16} color="var(--primary)" /> {drug}
+                              </span>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)' }}>
+                                {Math.round(individualConf * 100)}% Conf
+                              </span>
                             </div>
-                            <div className="metric-value" style={field === 'drug' ? {fontSize: '1.2rem'} : {}}>{values[field]}</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem' }}>
+                              <div><span style={{ color: 'var(--text-muted)' }}>Dosage:</span> <strong style={{ display: 'block' }}>{dose}</strong></div>
+                              <div><span style={{ color: 'var(--text-muted)' }}>Frequency:</span> <strong style={{ display: 'block' }}>{result.data.frequency || 'As directed'}</strong></div>
+                              <div><span style={{ color: 'var(--text-muted)' }}>Duration:</span> <strong style={{ display: 'block' }}>{result.data.duration || 'N/A'}</strong></div>
+                              {isLowConf && (
+                                <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--danger)', background: 'var(--danger-glow)', padding: '6px 12px', borderRadius: '8px', marginTop: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                                  <AlertTriangle size={14} /> Please verify this reading with a pharmacist.
+                                </div>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
                     </div>
+                    
+                    {/* General prescription notes */}
+                    {result.data.notes && (
+                      <div style={{ marginTop: '1.25rem', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--primary)', display: 'block', marginBottom: '4px' }}>📝 Patient Notes:</span>
+                        <p style={{ margin: 0, color: 'var(--text-main)' }}>{result.data.notes}</p>
+                      </div>
+                    )}
+
+                    {/* Jargon Detector */}
+                    {safeArray(result.data.confusing_terms).length > 0 && (
+                      <div style={{ marginTop: '1.25rem', padding: '12px 16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.15)', fontSize: '0.85rem' }}>
+                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--info)', margin: 0, marginBottom: '8px' }}>
+                          <Info size={16} /> Clinical Terms Simplified
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {safeArray(result.data.confusing_terms).map((item, idx) => (
+                            <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                              <span style={{ fontWeight: 700, color: 'var(--info)', background: 'rgba(59,130,246,0.1)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap', fontSize: '0.75rem' }}>
+                                {item.term}
+                              </span>
+                              <span style={{ color: 'var(--text-main)', lineHeight: '1.4' }}>
+                                means <strong>{item.simplified}</strong>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Advice Explainability */}
+                    {result.data.explainability_sources && (
+                      <div style={{ marginTop: '1.25rem', padding: '12px 16px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.15)', fontSize: '0.85rem' }}>
+                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--primary)', margin: 0, marginBottom: '8px' }}>
+                          <Stethoscope size={16} /> Advice Explainability Panel
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          {result.data.explainability_sources.instructions && (
+                            <div>💡 Intake instructions came from: <strong>{result.data.explainability_sources.instructions}</strong></div>
+                          )}
+                          {safeArray(result.data.explainability_sources.side_effects).length > 0 && (
+                            <div>⚠ Side effects profile belongs to: <strong>{safeArray(result.data.explainability_sources.side_effects).join(', ')}</strong></div>
+                          )}
+                          {safeArray(result.data.explainability_sources.precautions).length > 0 && (
+                            <div>🛡 Precautions list belongs to: <strong>{safeArray(result.data.explainability_sources.precautions).join(', ')}</strong></div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {result.data.schedule && result.data.schedule.length > 0 && (
-                    <div className="glass-card" style={{marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.04), rgba(168,85,247,0.04))'}}>
-                      <h2 className="card-title"><CalendarCheck size={20} style={{color: 'var(--primary)'}}/> {t.schedule_title}</h2>
+
+                    {safeArray(result.data.schedule).length > 0 && (
+                      <div className="glass-card" style={{marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.04), rgba(168,85,247,0.04))'}}>
+                        <h2 className="card-title"><CalendarCheck size={20} style={{color: 'var(--primary)'}}/> {t.schedule_title}</h2>
                       <div style={{display:'flex', flexDirection:'column', gap:'0', position:'relative', paddingLeft:'30px'}}>
                         <div style={{position:'absolute', left:'14px', top:'8px', bottom:'8px', width:'2px', background:'linear-gradient(180deg, var(--primary), rgba(168,85,247,0.3))', borderRadius:'2px'}}></div>
-                        {result.data.schedule.map((item, idx) => (
+                        {safeArray(result.data.schedule).map((item, idx) => (
                           <motion.div 
                             key={idx}
                             initial={{opacity:0, x:-20}} 
@@ -816,16 +1160,79 @@ function App() {
                     </div>
                   )}
 
+                  {/* Enhanced visual medicine timeline — all modes */}
+                  {safeArray(result.data.schedule).length > 0 && (
+                    <MedicineTimeline schedule={result.data.schedule} />
+                  )}
+
+                  {/* Print button — visible for both modes */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+                    <button className="print-btn" onClick={() => window.print()} title="Print this report">
+                      <Printer size={16} /> Print Report
+                    </button>
+                  </div>
+
                   <div className="glass-card" style={{marginBottom: '1.5rem'}}>
                     <h2 className="card-title"><CheckCircle2 size={20} style={{color: 'var(--success)'}}/> {t.clinical_summary}</h2>
                     <p style={{lineHeight: '1.6', color: 'var(--text-muted)'}}>{result.summary}</p>
                     
+                    {/* Custom Premium Audio Player with Equalizer Soundwaves */}
                     {audioUrl && (
-                      <div style={{marginTop: '20px', padding: '15px', background: 'rgba(99, 102, 241, 0.05)', borderRadius: '15px'}}>
-                        <p style={{fontSize: '0.85rem', fontWeight: 600, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px'}}>
-                          <PlayCircle size={16} color="var(--primary)" /> {t.audio_guide}
-                        </p>
-                        <audio controls src={audioUrl} style={{width: '100%', height: '35px'}} />
+                      <div className="premium-audio-player" style={{ marginTop: '20px', padding: '20px', background: 'linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.06))', borderRadius: '24px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Volume2 size={18} color="var(--primary)" /> 🎧 {t.audio_guide || "Patient Voice Playback"}
+                          </p>
+                          {/* Animated equalizer waves when playing */}
+                          <div style={{ display: 'flex', gap: '3px', height: '15px', alignItems: 'flex-end' }}>
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <div key={i} className={`eq-bar ${audioPlaying ? 'active' : ''}`} style={{ width: '3px', background: 'var(--primary)', borderRadius: '2px', animationDelay: `${i * 0.15}s` }} />
+                            ))}
+                          </div>
+                        </div>
+
+                        <audio ref={audioRef} src={audioUrl} preload="metadata" style={{ display: 'none' }} />
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                          <button onClick={togglePlayPause} style={{ width: '48px', height: '48px', borderRadius: '50%', border: 'none', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 12px rgba(99,102,241,0.3)', transition: 'all 0.2s' }} className="play-btn">
+                            {audioPlaying ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" style={{ marginLeft: '3px' }} />}
+                          </button>
+
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {/* Seek slider */}
+                            <input 
+                              type="range" 
+                              min={0} 
+                              max={audioDuration || 100} 
+                              value={audioCurrentTime} 
+                              onChange={(e) => {
+                                if (audioRef.current) {
+                                  audioRef.current.currentTime = parseFloat(e.target.value);
+                                  setAudioCurrentTime(audioRef.current.currentTime);
+                                }
+                              }}
+                              style={{ width: '100%', height: '4px', appearance: 'none', background: 'var(--border)', borderRadius: '2px', outline: 'none', cursor: 'pointer' }}
+                              className="audio-slider"
+                            />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                              <span>{Math.floor(audioCurrentTime / 60)}:{String(Math.floor(audioCurrentTime % 60)).padStart(2, '0')}</span>
+                              <span>{Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, '0')}</span>
+                            </div>
+                          </div>
+
+                          {/* Playback speed toggle */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <select 
+                              value={playbackRate} 
+                              onChange={(e) => changePlaybackRate(parseFloat(e.target.value))}
+                              style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text)', padding: '4px 8px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', outline: 'none' }}
+                            >
+                              <option value="1">1.0x</option>
+                              <option value="1.25">1.25x</option>
+                              <option value="1.5">1.5x</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -840,13 +1247,24 @@ function App() {
                     </p>
                   </div>
 
-                  <div style={{display: 'flex', gap: '15px', marginTop: '20px'}}>
-                    <button className="btn" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}} onClick={() => downloadPDF()}>
-                      <Download size={18} /> {t.download_report}
-                    </button>
-                    <button className="btn btn-secondary" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}} onClick={() => setShowChat(true)}>
-                      <MessageCircle size={18} /> {t.chat_assistant}
-                    </button>
+                  {/* Export & Sharing Suite */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
+                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                      <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary)' }} onClick={() => downloadPDF()}>
+                        <Download size={16} /> PDF Report
+                      </button>
+                      <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', borderColor: '#25D366' }} onClick={() => window.open(getWhatsAppShareLink(), '_blank')}>
+                        <Share2 size={16} /> Share on WhatsApp
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                      <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => window.print()}>
+                        <Printer size={16} /> Print Instructions
+                      </button>
+                      <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowChat(true)}>
+                        <MessageCircle size={16} /> Chat Assistant
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ) : error ? (
@@ -870,7 +1288,7 @@ function App() {
             <div className="glass-card">
               <h2 className="card-title"><History size={20} /> Past Scans</h2>
               <div className="history-list">
-                {history.map((item, idx) => (
+                {safeArray(history).map((item, idx) => (
                   <div key={idx} className="history-item">
                     <div className="history-info">
                       <h4>{item.drug_name}</h4>
@@ -897,26 +1315,14 @@ function App() {
               <div className="stat-card">
                 <div className="stat-icon" style={{background:'rgba(239, 68, 68, 0.1)', color:'var(--danger)'}}><AlertTriangle size={24}/></div>
                 <div className="stat-value" style={{color: 'var(--danger)'}}>
-                  {history.reduce((sum, h) => sum + (h.safety_alert_count || 0), 0)}
+                  {safeArray(history).reduce((sum, h) => sum + (h.safety_alert_count || 0), 0)}
                 </div>
                 <div className="stat-label">Safety Alerts</div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon" style={{background:'rgba(34, 197, 94, 0.1)', color:'var(--success)'}}><Calendar size={24}/></div>
                 <div className="stat-value">
-                  {history.length > 0
-                    ? (() => {
-                        const allDurations = history.flatMap(h =>
-                          typeof h.duration === 'string'
-                            ? (h.duration.match(/\d+/) || [])
-                            : []
-                        ).map(Number).filter(n => n > 0);
-                        return allDurations.length > 0
-                          ? (allDurations.reduce((a, b) => a + b, 0) / allDurations.length).toFixed(1)
-                          : '—';
-                      })()
-                    : '—'
-                  }
+                  {avgDurationDays(history)}
                 </div>
                 <div className="stat-label">Avg. Days</div>
               </div>
@@ -961,34 +1367,34 @@ function App() {
               <div className="stat-card">
                 <div className="stat-icon" style={{background:'rgba(99,102,241,0.1)'}}><Bell size={24} color="var(--primary)"/></div>
                 <div className="stat-value">{reminders.filter(r => r.enabled).length}</div>
-                <div className="stat-label">Active Reminders</div>
+                <div className="stat-label">{t.active_reminders}</div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon" style={{background:'rgba(34,197,94,0.1)',color:'var(--success)'}}><Check size={24}/></div>
                 <div className="stat-value" style={{color:'var(--success)'}}>{adherenceLog.filter(l => l.taken).length}</div>
-                <div className="stat-label">Doses Taken</div>
+                <div className="stat-label">{t.doses_taken}</div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon" style={{background:'rgba(239,68,68,0.1)',color:'var(--danger)'}}><X size={24}/></div>
                 <div className="stat-value" style={{color:'var(--danger)'}}>{adherenceLog.filter(l => !l.taken).length}</div>
-                <div className="stat-label">Doses Missed</div>
+                <div className="stat-label">{t.doses_missed}</div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon" style={{background:'rgba(245,158,11,0.1)',color:'var(--warning)'}}><Target size={24}/></div>
                 <div className="stat-value">{adherenceLog.length > 0 ? Math.round((adherenceLog.filter(l => l.taken).length / adherenceLog.length) * 100) : 0}%</div>
-                <div className="stat-label">Adherence Score</div>
+                <div className="stat-label">{t.adherence_score}</div>
               </div>
             </div>
 
             <div className="glass-card" style={{marginBottom:'20px'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}}>
-                <h2 className="card-title" style={{margin:0}}><BellRing size={20}/> Medication Reminders</h2>
-                <button className="btn btn-secondary" style={{padding:'6px 14px',fontSize:'0.8rem'}} onClick={() => {setReminders([]); localStorage.removeItem('rxlens_reminders');}}>Clear All</button>
+                <h2 className="card-title" style={{margin:0}}><BellRing size={20}/> {t.med_reminders}</h2>
+                <button className="btn btn-secondary" style={{padding:'6px 14px',fontSize:'0.8rem'}} onClick={() => {setReminders([]); localStorage.removeItem('rxlens_reminders');}}>{t.clear_all}</button>
               </div>
               {reminders.length === 0 ? (
                 <div style={{textAlign:'center',padding:'3rem',opacity:0.5}}>
                   <Bell size={48} style={{margin:'0 auto 1rem'}}/>
-                  <p>Scan a prescription to auto-generate reminders</p>
+                  <p>{t.scan_to_generate}</p>
                 </div>
               ) : (
                 <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
@@ -1008,9 +1414,9 @@ function App() {
                       <div style={{fontWeight:700,color:'var(--primary)',fontSize:'0.95rem',minWidth:'80px',textAlign:'right'}}>{rem.time}</div>
                       <div style={{display:'flex',gap:'6px'}}>
                         <button className="btn" style={{padding:'6px 12px',fontSize:'0.75rem',background:'var(--success)',borderColor:'var(--success)'}}
-                          onClick={() => {const e={id:Date.now(),reminderId:rem.id,taken:true,timestamp:new Date().toISOString(),drug:rem.drug}; setAdherenceLog(p=>{const u=[...p,e];localStorage.setItem('rxlens_adherence_log',JSON.stringify(u));return u;});}}><Check size={14}/> Taken</button>
+                          onClick={() => {const e={id:Date.now(),reminderId:rem.id,taken:true,timestamp:new Date().toISOString(),drug:rem.drug}; setAdherenceLog(p=>{const u=[...p,e];localStorage.setItem('rxlens_adherence_log',JSON.stringify(u));return u;});}}><Check size={14}/> {t.taken}</button>
                         <button className="btn btn-secondary" style={{padding:'6px 12px',fontSize:'0.75rem',color:'var(--danger)',borderColor:'var(--danger)'}}
-                          onClick={() => {const e={id:Date.now(),reminderId:rem.id,taken:false,timestamp:new Date().toISOString(),drug:rem.drug}; setAdherenceLog(p=>{const u=[...p,e];localStorage.setItem('rxlens_adherence_log',JSON.stringify(u));return u;});}}><X size={14}/> Missed</button>
+                          onClick={() => {const e={id:Date.now(),reminderId:rem.id,taken:false,timestamp:new Date().toISOString(),drug:rem.drug}; setAdherenceLog(p=>{const u=[...p,e];localStorage.setItem('rxlens_adherence_log',JSON.stringify(u));return u;});}}><X size={14}/> {t.missed}</button>
                       </div>
                     </motion.div>
                   ))}
@@ -1019,9 +1425,9 @@ function App() {
             </div>
 
             <div className="glass-card" style={{marginBottom:'20px'}}>
-              <h2 className="card-title"><Activity size={20}/> Dose History</h2>
+              <h2 className="card-title"><Activity size={20}/> {t.dose_history}</h2>
               {adherenceLog.length === 0 ? (
-                <p style={{textAlign:'center',padding:'2rem',opacity:0.5}}>No doses logged yet</p>
+                <p style={{textAlign:'center',padding:'2rem',opacity:0.5}}>{t.no_doses}</p>
               ) : (
                 <div style={{display:'flex',flexDirection:'column',gap:'8px',maxHeight:'300px',overflowY:'auto'}}>
                   {[...adherenceLog].reverse().slice(0,20).map((log) => (
@@ -1031,7 +1437,7 @@ function App() {
                       borderRadius:'10px',fontSize:'0.85rem'}}>
                       {log.taken ? <CheckCircle2 size={16} color="var(--success)"/> : <AlertTriangle size={16} color="var(--danger)"/>}
                       <span style={{flex:1,fontWeight:500}}>{log.drug}</span>
-                      <span style={{color:log.taken?'var(--success)':'var(--danger)',fontWeight:600,fontSize:'0.8rem'}}>{log.taken?'TAKEN':'MISSED'}</span>
+                      <span style={{color:log.taken?'var(--success)':'var(--danger)',fontWeight:600,fontSize:'0.8rem'}}>{log.taken?t.taken_caps:t.missed_caps}</span>
                       <span style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>{new Date(log.timestamp).toLocaleString()}</span>
                     </div>
                   ))}
@@ -1040,18 +1446,18 @@ function App() {
             </div>
 
             <div className="glass-card">
-              <h2 className="card-title"><Share2 size={20}/> Caregiver Notification</h2>
-              <p style={{fontSize:'0.9rem',color:'var(--text-muted)',marginBottom:'15px'}}>Share your adherence report with a caregiver or family member.</p>
+              <h2 className="card-title"><Share2 size={20}/> {t.caregiver_notif}</h2>
+              <p style={{fontSize:'0.9rem',color:'var(--text-muted)',marginBottom:'15px'}}>{t.share_report}</p>
               <button className="btn" style={{display:'flex',alignItems:'center',gap:'8px'}} onClick={() => {
                 const sc=adherenceLog.length>0?Math.round((adherenceLog.filter(l=>l.taken).length/adherenceLog.length)*100):0;
-                const msg=`RxLens Adherence Report for ${patientProfile.name||'Patient'}:
-Adherence Score: ${sc}%
-Doses Taken: ${adherenceLog.filter(l=>l.taken).length}
-Doses Missed: ${adherenceLog.filter(l=>!l.taken).length}
-Generated: ${new Date().toLocaleString()}`;
-                if(navigator.share){navigator.share({title:'RxLens Adherence Report',text:msg});}
-                else{navigator.clipboard.writeText(msg);alert('Report copied to clipboard!');}
-              }}><Share2 size={16}/> Share Report</button>
+                const msg=`${t.share_title} for ${patientProfile.name||(language === 'Hindi' ? 'रोगी' : 'Patient')}:
+${t.share_msg_score}: ${sc}%
+${t.share_msg_taken}: ${adherenceLog.filter(l=>l.taken).length}
+${t.share_msg_missed}: ${adherenceLog.filter(l=>!l.taken).length}
+${t.share_msg_gen}: ${new Date().toLocaleString()}`;
+                if(navigator.share){navigator.share({title:t.share_title,text:msg});}
+                else{navigator.clipboard.writeText(msg);alert(language === 'Hindi' ? 'रिपोर्ट क्लिपबोर्ड पर कॉपी की गई!' : 'Report copied to clipboard!');}
+              }}><Share2 size={16}/> {t.share_btn}</button>
             </div>
           </motion.div>
         )}
@@ -1073,7 +1479,7 @@ Generated: ${new Date().toLocaleString()}`;
               <X size={18} style={{cursor:'pointer'}} onClick={() => setShowChat(false)} />
             </div>
             <div className="chat-messages">
-              {chatHistory.map((msg, i) => (
+              {safeArray(chatHistory).map((msg, i) => (
                 <div key={i} className={`message ${msg.role}`}>
                   {msg.text}
                 </div>
