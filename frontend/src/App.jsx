@@ -1,4 +1,31 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, Component } from 'react';
+
+// ─── ErrorBoundary: prevents any render crash showing a white screen ───────
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) { console.error('RxLens render error:', error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding:'2rem', textAlign:'center', maxWidth:480, margin:'4rem auto'}}>
+          <div style={{fontSize:'3rem',marginBottom:'1rem'}}>⚠️</div>
+          <h2 style={{marginBottom:'0.75rem'}}>Something went wrong displaying the result.</h2>
+          <p style={{color:'#64748b',marginBottom:'1.5rem',lineHeight:1.6}}>
+            The scan may have returned an unexpected format. Try uploading a clearer image.
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{padding:'0.75rem 1.5rem',background:'#6366f1',color:'white',border:'none',borderRadius:'12px',cursor:'pointer',fontWeight:600}}
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 // Helper to ensure a value is an array before mapping
 const safeArray = (arr) => (Array.isArray(arr) ? arr : []);
 
@@ -81,7 +108,7 @@ function App() {
   };
   const [darkMode, setDarkMode] = useState(localStorage.getItem('darkMode') === 'true');
   const [elderlyMode, setElderlyMode] = useState(localStorage.getItem('rxlens_elderly_mode') === 'true');
-  const language = 'English';
+  const [language, setLanguage] = useState('English');
   const [userMode, setUserMode] = useState('patient'); // 'patient' | 'worker'
   const [explanationLevel, setExplanationLevel] = useState('standard'); // 'simple' | 'standard' | 'detailed'
   const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
@@ -451,7 +478,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [imageFile, language, patientProfile]);
+  }, [imageFile, language, patientProfile, explanationLevel]);
 
   const handleChatSend = useCallback(async () => {
     if (!chatMessage.trim()) return;
@@ -747,9 +774,17 @@ function App() {
                   <p>{loadingStatus}</p>
                 </div>
               ) : result ? (
+                <ErrorBoundary>
                 <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
+                  {/* ─── Safe data extraction — guards all child accesses ─── */}
+                  {(() => {
+                    const resultData = result?.data || {};
+                    // Patch result.data reference so all existing code below works safely
+                    if (!result.data) result.data = {};
+                    return null;
+                  })()}
                   {/* Uncertainty Handling Banner */}
-                  {result.data.is_uncertain && (
+                  {result?.data?.is_uncertain && (
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.08)', border: '2px solid var(--danger)', borderRadius: '24px', padding: '2rem', textAlign: 'center' }}>
                       <AlertTriangle size={48} color="var(--danger)" style={{ margin: '0 auto 12px' }} className="pulse-danger" />
                       <h3 style={{ fontSize: '1.2rem', color: 'var(--danger)', fontWeight: 700, marginBottom: '8px' }}>Unable to Confidently Identify This Medicine</h3>
@@ -1267,6 +1302,7 @@ function App() {
                     </div>
                   </div>
                 </motion.div>
+                </ErrorBoundary>
               ) : error ? (
                 <div className="glass-card" style={{textAlign:'center', padding:'4rem', borderColor: 'var(--danger)'}}>
                   <AlertTriangle size={48} style={{margin:'0 auto 1rem', color: 'var(--danger)'}} />
