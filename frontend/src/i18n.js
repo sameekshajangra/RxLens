@@ -1,6 +1,6 @@
 const i18n = {
   English: {
-    header_title: "Intelligent Prescription Decoder",
+    header_title: "Making Prescriptions Understandable",
     upload_prescription: "Upload Prescription",
     take_photo: "Take Photo",
     capture: "Capture",
@@ -18,6 +18,8 @@ const i18n = {
     download_pdf: "Download PDF",
     whatsapp_share: "Share via WhatsApp",
     meds_found: "Medications Found",
+    clear: "Clear",
+    digitize: "Digitize",
     structured_medication_table: "Structured Medication Table",
     accessibility_complexity_score: "Accessibility & Complexity",
     clinical_terms_simplified: "Clinical Terms Simplified",
@@ -43,7 +45,7 @@ const i18n = {
     audio_guide: "Patient Voice Playback",
   },
   Hindi: {
-    header_title: "बुद्धिमान प्रिस्क्रिप्शन डिकोडर",
+    header_title: "प्रिस्क्रिप्शन को समझने योग्य बनाना",
     upload_prescription: "प्रिस्क्रिप्शन अपलोड करें",
     take_photo: "फोटो लें",
     capture: "कैप्चर",

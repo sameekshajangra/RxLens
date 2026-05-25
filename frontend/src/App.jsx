@@ -370,24 +370,9 @@ function App() {
     }
   }, [chatMessage, result, language]);
 
-  const downloadPDF = useCallback(async (data = result?.data, summaryText = result?.summary) => {
-    if (!data) return;
-    const pdfForm = new FormData();
-    pdfForm.append('drug', data.drug || data.drug_name || '');
-    pdfForm.append('dosage', data.dosage || '');
-    pdfForm.append('frequency', data.frequency || '');
-    pdfForm.append('duration', data.duration || '');
-    pdfForm.append('summary', summaryText || data.summary || '');
-    pdfForm.append('safety_alerts', JSON.stringify(data.safety_alerts ?? []));
-    try {
-      const res = await axios.post('/api/pdf', pdfForm, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'Clinical_Report.pdf');
-      link.click();
-    } catch (err) { console.error(err); }
-  }, [result]);
+  const downloadPDF = useCallback(async () => {
+    window.print();
+  }, []);
 
   const getWhatsAppShareLink = useCallback(() => {
     if (!result?.data) return '';
@@ -1114,11 +1099,7 @@ function App() {
                   )}
 
                   {/* Print button — visible for both modes */}
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-                    <button className="print-btn" onClick={() => window.print()} title="Print this report">
-                      <Printer size={16} /> {t.print_report}
-                    </button>
-                  </div>
+                  
 
                   <div className="glass-card" style={{marginBottom: '1.5rem'}}>
                     <h2 className="card-title"><CheckCircle2 size={20} style={{color: 'var(--success)'}}/> {t.clinical_summary}</h2>
@@ -1145,15 +1126,7 @@ function App() {
                             {audioPlaying ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" style={{ marginLeft: '3px' }} />}
                           </button>
 
-                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ height: '6px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
-                              <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', background: 'var(--primary)', width: `${audioDuration ? (audioCurrentTime / audioDuration) * 100 : 0}%`, transition: 'width 0.1s linear' }} />
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                              <span>{Math.floor(audioCurrentTime)}s</span>
-                              <span>{Math.floor(audioDuration || 0)}s</span>
-                            </div>
-                          </div>
+                          
 
                           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             {/* Seek slider */}
