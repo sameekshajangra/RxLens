@@ -97,6 +97,7 @@ function App() {
   const [error, setError] = useState('');
   const [audioUrl, setAudioUrl] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [comprehensionStatus, setComprehensionStatus] = useState(null);
   const [history, setHistory] = useState(() => {
     const stored = localStorage.getItem('rxlens_history');
     try { return stored ? JSON.parse(stored) : []; } catch(e) { return []; }
@@ -258,6 +259,7 @@ function App() {
   const processImage = useCallback(async () => {
     if (!imageFile) return;
     setLoading(true);
+    setComprehensionStatus(null);
     setError('');
     setLoadingStatus('Fast-tracking VLM Engine...');
     const formData = new FormData();
@@ -1010,6 +1012,50 @@ function App() {
                     )}
                   </div>
                   )}
+
+                    
+                    {/* Visual Medication Cards */}
+                    {safeArray(result.data.drugs_list).length > 0 && (
+                      <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
+                        <h2 className="card-title"><Pill size={20} style={{ color: 'var(--primary)' }} /> {t.visual_cards_title || "Your Medications"}</h2>
+                        <div className="visual-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                          {safeArray(result.data.drugs_list).map((drug, idx) => {
+                            const dLower = drug.toLowerCase();
+                            let icon = "💊"; // default pill
+                            if (dLower.includes('syrup') || dLower.includes('liquid')) icon = "🥄";
+                            else if (dLower.includes('inhaler') || dLower.includes('spray')) icon = "💨";
+                            else if (dLower.includes('drop')) icon = "💧";
+                            else if (dLower.includes('cream') || dLower.includes('ointment')) icon = "🧴";
+                            else if (dLower.includes('injection') || dLower.includes('pen')) icon = "💉";
+
+                            return (
+                              <motion.div 
+                                key={idx}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: idx * 0.1 }}
+                                style={{ 
+                                  background: 'var(--bg-card)', 
+                                  border: '2px solid var(--border)', 
+                                  borderRadius: '16px', 
+                                  padding: '1.5rem 1rem', 
+                                  textAlign: 'center',
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '8px'
+                                }}
+                              >
+                                <div style={{ fontSize: '3rem', lineHeight: 1 }}>{icon}</div>
+                                <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary)', wordBreak: 'break-word' }}>{drug}</div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {safeArray(result.data.schedule).length > 0 && (
                       <div className="glass-card" style={{marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.04), rgba(168,85,247,0.04))'}}>

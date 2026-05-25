@@ -106,14 +106,29 @@ def _normalize(data: dict) -> dict:
 
 
 def _make_summary(data: dict, lang: str = "English") -> str:
-    drug = data.get("drug", "Unknown medication")
+    drug = data.get("drug", "Unknown medication" if lang == "English" else "अज्ञात दवा" if lang == "Hindi" else "Medicamento desconocido")
     dosage = data.get("dosage", "")
-    freq = data.get("frequency", "as directed")
+    freq = data.get("frequency", "")
     instructions = data.get("instructions", "")
-    parts = [f"Medication: {drug}"]
-    if dosage: parts.append(f"Dosage: {dosage}")
-    if freq: parts.append(f"Frequency: {freq}")
-    if instructions: parts.append(f"Instructions: {instructions}")
+    
+    parts = []
+    
+    if lang.lower() == "hindi":
+        parts.append(f"दवा: {drug}")
+        if dosage: parts.append(f"खुराक: {dosage}")
+        if freq: parts.append(f"समय: {freq}")
+        if instructions: parts.append(f"निर्देश: {instructions}")
+    elif lang.lower() == "spanish":
+        parts.append(f"Medicamento: {drug}")
+        if dosage: parts.append(f"Dosis: {dosage}")
+        if freq: parts.append(f"Frecuencia: {freq}")
+        if instructions: parts.append(f"Instrucciones: {instructions}")
+    else:
+        parts.append(f"Medication: {drug}")
+        if dosage: parts.append(f"Dosage: {dosage}")
+        if freq: parts.append(f"Frequency: {freq}")
+        if instructions: parts.append(f"Instructions: {instructions}")
+        
     return ". ".join(parts) + "."
 
 def _generate_audio_base64(text: str, lang: str) -> str:
@@ -206,7 +221,7 @@ EXPLANATION STYLE: {level_instruction}
 INSTRUCTIONS:
 1. Read the doctor's handwriting carefully. Identify ALL medications.
 2. Build a 'schedule' array with time-labelled doses.
-3. ALL text values MUST be translated accurately into {lang}. Do not leave English text unless it's an untranslatable drug name.
+3. CRITICAL: ALL text values MUST be translated accurately into {lang}. Do not leave any English text in the values (unless it is a globally standard medical drug name). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
 
 RETURN EXACTLY THIS JSON (no extra text):
 {{

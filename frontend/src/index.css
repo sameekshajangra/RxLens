@@ -1885,3 +1885,30 @@ html.elderly-mode .nav-item {
 .patient-mode .timeline-task {
   font-size: 1.1rem;
 }
+
+/* ── Mobile UI/UX Polish ───────────────────────── */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 1rem 0.5rem;
+  }
+  .glass-card {
+    padding: 1.25rem;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+  }
+  .header-content h1 {
+    font-size: 1.75rem;
+  }
+  .visual-cards-grid {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+  }
+  .confidence-section .grid-2 {
+    grid-template-columns: 1fr;
+  }
+  button {
+    min-height: 48px; /* Touch target size */
+  }
+  .desktop-table-container {
+    overflow-x: auto;
+  }
+}
