@@ -431,35 +431,62 @@ function App() {
 
     try {
       const res = await axios.post('/api/extract', formData, { timeout: 120000 });
-      setResult(res.data);
-      // --- New: Store this scan into local history for the History tab ---
-      if (res.data && res.data.data) {
-        const entry = {
-          drug_name: res.data.data.drug || res.data.data.drug_name || '',
-          dosage: res.data.data.dosage || '',
-          date: new Date().toLocaleString(),
-          safety_alert_count: (Array.isArray(res.data.data.safety_alerts) ? res.data.data.safety_alerts.length : 0)
-        };
-        setHistory(prev => {
-          const updated = [...prev, entry];
-          // Persist to localStorage so history survives refresh
-          localStorage.setItem('rxlens_history', JSON.stringify(updated));
-          return updated;
-        });
+
+      // ── Validate response is proper JSON with expected shape ────────────
+      // When backend isn't running (e.g. Firebase hosting without the Python API),
+      // axios parses the HTML 404/index.html as a string → crash on result.data
+      const raw = res.data;
+      if (!raw || typeof raw !== 'object' || !raw.data) {
+        // Backend not reachable or returned unexpected format
+        throw new Error(
+          'Backend API is not reachable. The live demo frontend is hosted on Firebase, ' +
+          'but the Python backend needs to be running separately. ' +
+          'To test locally: run the FastAPI backend and use npm run dev.'
+        );
       }
-      if (res.data.audio_url) {
-        setAudioUrl(`/api/audio/${res.data.audio_url}`);
+
+      // ── Normalise so result.data is always a safe object ───────────────
+      const safeResult = {
+        ...raw,
+        data: {
+          drugs_list: [],
+          safety_alerts: [],
+          schedule: [],
+          uncertainty_warnings: [],
+          confusing_terms: [],
+          polypharmacy_notes: [],
+          ...(raw.data || {}),
+        },
+      };
+
+      setResult(safeResult);
+
+      // Store scan into local history
+      const entry = {
+        drug_name: safeResult.data.drug || safeResult.data.drug_name || '',
+        dosage: safeResult.data.dosage || '',
+        date: new Date().toLocaleString(),
+        safety_alert_count: safeArray(safeResult.data.safety_alerts).length,
+      };
+      setHistory(prev => {
+        const updated = [...prev, entry];
+        localStorage.setItem('rxlens_history', JSON.stringify(updated));
+        return updated;
+      });
+
+      if (safeResult.audio_url) {
+        setAudioUrl(`/api/audio/${safeResult.audio_url}`);
       }
 
       // Auto-generate reminders from schedule
-      if (res.data.data?.schedule) {
-        const newReminders = safeArray(res.data.data.schedule).map((item, idx) => ({
+      if (safeResult.data.schedule?.length) {
+        const newReminders = safeArray(safeResult.data.schedule).map((item, idx) => ({
           id: Date.now() + idx,
           time: item.time,
           task: item.task || item.drug,
-          drug: res.data.data.drug,
+          drug: safeResult.data.drug,
           enabled: true,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         }));
         setReminders(prev => {
           const updated = [...prev, ...newReminders];
@@ -776,13 +803,6 @@ function App() {
               ) : result ? (
                 <ErrorBoundary>
                 <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
-                  {/* ─── Safe data extraction — guards all child accesses ─── */}
-                  {(() => {
-                    const resultData = result?.data || {};
-                    // Patch result.data reference so all existing code below works safely
-                    if (!result.data) result.data = {};
-                    return null;
-                  })()}
                   {/* Uncertainty Handling Banner */}
                   {result?.data?.is_uncertain && (
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.08)', border: '2px solid var(--danger)', borderRadius: '24px', padding: '2rem', textAlign: 'center' }}>

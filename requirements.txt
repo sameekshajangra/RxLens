@@ -1,12 +1,7 @@
 fastapi
-uvicorn
 python-multipart
 requests
 python-dotenv
-sqlalchemy
 Pillow
-gTTS
-reportlab
-python-Levenshtein
-fuzzywuzzy
 google-genai
+mangum
