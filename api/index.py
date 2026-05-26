@@ -38,37 +38,56 @@ app.add_middleware(
 
 # ── Demo fallback data (used when all cascades fail) ────────────────────────
 DEMO_DATA = {
-    "drug": "Dolo 650 (Paracetamol)",
-    "drugs_list": ["Dolo 650", "Paracetamol"],
-    "drugs_dosage": {"Dolo 650": "650mg"},
-    "dosage": "650mg",
-    "frequency": "Three times a day (TDS)",
-    "duration": "5 days",
-    "instructions": "Take after meals with water.",
-    "notes": "Stay hydrated. Safe for adults.",
-    "side_effects": ["Nausea", "Allergic skin rash (rare)"],
-    "precautions": ["Avoid alcohol."],
-    "schedule": [
-        {"time": "08:00 AM", "task": "Take 1 tablet after breakfast"},
-        {"time": "02:00 PM", "task": "Take 1 tablet after lunch"},
-        {"time": "08:00 PM", "task": "Take 1 tablet after dinner"},
+    "drug": "Tamsulosin, Cefpodoxime (Rovcef)",
+    "drugs_list": ["Tamsulosin", "Cefpodoxime (Rovcef)"],
+    "drugs_dosage": {"Tamsulosin": "0.4mg", "Cefpodoxime (Rovcef)": "200mg"},
+    "dosage": "Tamsulosin: 0.4mg once daily; Cefpodoxime: 200mg twice daily",
+    "frequency": "Tamsulosin: Once daily; Cefpodoxime: Twice daily (BDS)",
+    "duration": "Tamsulosin: 30 days; Cefpodoxime: Unclear (likely 5-7 days for antibiotics)",
+    "instructions": "Administer Tamsulosin (Tamkeros 100DX) 0.4mg once daily for 30 days, preferably after the same meal each day. Administer Cefpodoxime (Rovcef) 200mg twice daily (BDS), usually in the morning and evening, with food.",
+    "notes": "Patient RAMPAL SHARMA, an 85-year-old male, presents with frequency of urination and voiding Lower Urinary Tract Symptoms (LUTS). Ultrasound findings indicate urinary bladder calculi (stones) and a prostate volume of 28 cc. A Reflex PSA (Prostate Specific Antigen) test has been requested. An unclear instruction 'a CLT' is also present in the advice section.",
+    "side_effects": [
+        "Official drug monographs (e.g., FDA, EMA, BNF), Clinical pharmacology textbooks (e.g., Goodman & Gilman's The Pharmacological Basis of Therapeutics), MedlinePlus, Mayo Clinic"
     ],
-    "confidence": {"drug": 0.98},
-    "overall_confidence": 0.95,
+    "precautions": [
+        "Official drug monographs (e.g., FDA, EMA, BNF), Clinical pharmacology textbooks (e.g., Goodman & Gilman's The Pharmacological Basis of Therapeutics), MedlinePlus, Mayo Clinic"
+    ],
+    "schedule": [
+        {"time": "Morning (after breakfast)", "task": "Take Tamsulosin 0.4mg tablet (Tamkeros 100DX)."},
+        {"time": "Morning (with food)", "task": "Take Cefpodoxime 200mg tablet (Rovcef)."},
+        {"time": "Evening (with food)", "task": "Take Cefpodoxime 200mg tablet (Rovcef)."}
+    ],
+    "confidence": {"Tamsulosin": 0.85, "Cefpodoxime (Rovcef)": 0.85},
+    "overall_confidence": 0.85,
     "uncertainty_warnings": [],
     "is_uncertain": False,
     "accessibility_analysis": {
         "score": "Medium",
-        "jargon_density": "Low",
-        "readability": "6th Grade Level",
-        "reason": "Simple medication.",
+        "jargon_density": "Medium",
+        "readability": "8th Grade Level",
+        "reason": "The explanation uses clear language for drug information, but includes several medical terms like 'orthostatic hypotension', 'priapism', 'retrograde ejaculation', 'Intraoperative Floppy Iris Syndrome', 'Clostridioides difficile-associated diarrhea', 'cephalosporin', 'beta-lactam antibiotics', and 'renal impairment' which require a moderate level of medical literacy. The 'CLT' instruction and antibiotic duration are also unclear from the original prescription, adding complexity."
     },
-    "confusing_terms": [],
+    "confusing_terms": [
+        {"term": "BDS", "simplified": "Twice a day (usually morning and evening)"},
+        {"term": "LUTS", "simplified": "Lower Urinary Tract Symptoms (difficulty peeing)"},
+        {"term": "Prostate Specific Antigen (PSA)", "simplified": "A blood test used to screen for prostate issues"}
+    ],
     "safety_alerts": [],
-    "polypharmacy_notes": [],
+    "polypharmacy_notes": [
+        "Patient is taking multiple medications. Monitor for drug interactions and adhere strictly to the schedule."
+    ],
+    "explainability_sources": {
+        "instructions": "Handwritten prescription and standard clinical guidelines for medication administration.",
+        "side_effects": [
+            "Official drug monographs (e.g., FDA, EMA, BNF), Clinical pharmacology textbooks (e.g., Goodman & Gilman's The Pharmacological Basis of Therapeutics), MedlinePlus, Mayo Clinic"
+        ],
+        "precautions": [
+            "Official drug monographs (e.g., FDA, EMA, BNF), Clinical pharmacology textbooks (e.g., Goodman & Gilman's The Pharmacological Basis of Therapeutics), MedlinePlus, Mayo Clinic"
+        ]
+    },
     "environmental": {},
     "is_demo_fallback": True,
-    "_pipeline": "demo",
+    "_pipeline": "demo"
 }
 
 # ── Helpers ──────────────────────────────────────────────────────────────────

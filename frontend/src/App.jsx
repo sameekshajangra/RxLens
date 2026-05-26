@@ -1009,7 +1009,6 @@ function App() {
 
                           {safeArray(result.data.schedule).length > 0 && (
                             <>
-                              <MedicineTimeline schedule={result.data.schedule} />
                               <div style={{display:'flex', flexDirection:'column', gap:'0', position:'relative', paddingLeft:'30px', marginTop: '1.5rem'}}>
                                 <div style={{position:'absolute', left:'14px', top:'8px', bottom:'8px', width:'2px', background:'linear-gradient(180deg, var(--primary), rgba(13, 148, 136, 0.3))', borderRadius:'2px'}}></div>
                                 {safeArray(result.data.schedule).map((item, idx) => (
@@ -1084,12 +1083,17 @@ function App() {
                                 <BriefcaseMedical size={18} /> {t.polypharmacy_review_provider || "Polypharmacy De-prescribing Review (Provider Guidance)"}
                               </h4>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                {safeArray(result.data.polypharmacy_notes).map((note, idx) => (
-                                  <div key={idx} style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.6)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
-                                    <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#6d28d9', marginBottom: '4px' }}>{note.topic}</div>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{note.note}</div>
-                                  </div>
-                                ))}
+                                {safeArray(result.data.polypharmacy_notes).map((note, idx) => {
+                                  const isStr = typeof note === 'string';
+                                  const topic = isStr ? null : note.topic;
+                                  const text = isStr ? note : note.note;
+                                  return (
+                                    <div key={idx} style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.6)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
+                                      {topic && <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#6d28d9', marginBottom: '4px' }}>{topic}</div>}
+                                      <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{text}</div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
@@ -1255,43 +1259,88 @@ function App() {
                       <AnimatePresence>
                         {expandedSection === 'advanced' && (
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginTop: '1.5rem' }}>
-                            <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', fontWeight: 700 }}>Structured Extraction</h3>
-                            <div className="desktop-table-container">
-                              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                                <thead>
-                                  <tr style={{ borderBottom: '1.5px solid var(--border)', color: 'var(--text-muted)', fontWeight: 600 }}>
-                                    <th style={{ padding: '12px' }}>{t.medication_name}</th>
-                                    <th style={{ padding: '12px' }}>Dosage</th>
-                                    <th style={{ padding: '12px' }}>Frequency</th>
-                                    <th style={{ padding: '12px' }}>Duration</th>
-                                    <th style={{ padding: '12px', textAlign: 'right' }}>{t.confidence}</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {safeArray(result.data.drugs_list).map((drug, idx) => {
-                                    const dose = result.data.drugs_dosage?.[drug] || result.data.dosage || 'As directed';
-                                    const individualConf = result.data.confidence?.[drug] != null 
-                                      ? result.data.confidence[drug] 
-                                      : (result.data.confidence?.drug || 0.9);
-                                    const level = getConfidenceLevel(individualConf);
-
-                                    return (
-                                      <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                                        <td style={{ padding: '14px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                          <Pill size={16} color="var(--primary)" /> {drug}
-                                        </td>
-                                        <td style={{ padding: '14px 12px' }}>{renderValue(dose)}</td>
-                                        <td style={{ padding: '14px 12px' }}>{renderValue(result.data.frequency || 'As directed')}</td>
-                                        <td style={{ padding: '14px 12px' }}>{renderValue(result.data.duration || 'N/A')}</td>
-                                        <td style={{ padding: '14px 12px', textAlign: 'right', fontWeight: 700, color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)' }}>
-                                          {Math.round(individualConf * 100)}%
-                                        </td>
+                            {!isDetailedMode && (
+                              <>
+                                <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', fontWeight: 700 }}>Structured Extraction</h3>
+                                <div className="desktop-table-container">
+                                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                                    <thead>
+                                      <tr style={{ borderBottom: '1.5px solid var(--border)', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                        <th style={{ padding: '12px' }}>{t.medication_name}</th>
+                                        <th style={{ padding: '12px' }}>Dosage</th>
+                                        <th style={{ padding: '12px' }}>Frequency</th>
+                                        <th style={{ padding: '12px' }}>Duration</th>
+                                        <th style={{ padding: '12px', textAlign: 'right' }}>{t.confidence}</th>
                                       </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
+                                    </thead>
+                                    <tbody>
+                                      {safeArray(result.data.drugs_list).map((drug, idx) => {
+                                        const dose = result.data.drugs_dosage?.[drug] || result.data.dosage || 'As directed';
+                                        const individualConf = result.data.confidence?.[drug] != null 
+                                          ? result.data.confidence[drug] 
+                                          : (result.data.confidence?.drug || 0.9);
+                                        const level = getConfidenceLevel(individualConf);
+
+                                        return (
+                                          <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                            <td style={{ padding: '14px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                              <Pill size={16} color="var(--primary)" /> {drug}
+                                            </td>
+                                            <td style={{ padding: '14px 12px' }}>{renderValue(dose)}</td>
+                                            <td style={{ padding: '14px 12px' }}>{renderValue(result.data.frequency || 'As directed')}</td>
+                                            <td style={{ padding: '14px 12px' }}>{renderValue(result.data.duration || 'N/A')}</td>
+                                            <td style={{ padding: '14px 12px', textAlign: 'right', fontWeight: 700, color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)' }}>
+                                              {Math.round(individualConf * 100)}%
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </>
+                            )}
+
+                            {/* Detailed Patient Notes card */}
+                            {result?.data?.notes && (
+                              <div style={{ padding: '16px', borderRadius: '12px', background: '#ffffff', border: '1px solid rgba(0, 0, 0, 0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', marginBottom: '1.5rem' }}>
+                                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#4f46e5', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  📝 Patient Notes:
+                                </div>
+                                <div style={{ fontSize: '0.9rem', color: '#1f2937', lineHeight: '1.6' }}>
+                                  {result.data.notes}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Advice Explainability Panel card */}
+                            {result?.data?.explainability_sources && (result.data.explainability_sources.instructions || safeArray(result.data.explainability_sources.side_effects).length > 0 || safeArray(result.data.explainability_sources.precautions).length > 0) && (
+                              <div style={{ padding: '16px', borderRadius: '12px', background: '#f5f3ff', border: '1px solid #e0d7ff', marginBottom: '1.5rem' }}>
+                                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#4f46e5', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <Stethoscope size={18} color="#4f46e5" /> Advice Explainability Panel
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.88rem', color: '#4b5563', lineHeight: '1.5' }}>
+                                  {result.data.explainability_sources.instructions && (
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                      <span>💡</span>
+                                      <span>Intake instructions came from: <strong>{result.data.explainability_sources.instructions}</strong></span>
+                                    </div>
+                                  )}
+                                  {safeArray(result.data.explainability_sources.side_effects).length > 0 && (
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                      <span>⚠️</span>
+                                      <span>Side effects profile belongs to: <strong>{safeArray(result.data.explainability_sources.side_effects).join(', ')}</strong></span>
+                                    </div>
+                                  )}
+                                  {safeArray(result.data.explainability_sources.precautions).length > 0 && (
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                      <span>🛡️</span>
+                                      <span>Precautions list belongs to: <strong>{safeArray(result.data.explainability_sources.precautions).join(', ')}</strong></span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
 
                             {result.data.confidence && Object.keys(result.data.confidence).length > 0 && (
                               <div style={{ marginBottom: '1.5rem' }}>
