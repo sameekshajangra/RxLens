@@ -6,7 +6,8 @@ const safeArray = (arr) => (Array.isArray(arr) ? arr : []);
 // Helper: compute average treatment duration across history items
 const avgDurationDays = (historyArr) => {
   const nums = safeArray(historyArr).flatMap(h => {
-    const raw = typeof h.duration === 'string' ? h.duration : String(h.duration || '');
+    const durStr = h.duration || (h.data && h.data.data && h.data.data.duration) || '';
+    const raw = typeof durStr === 'string' ? durStr : String(durStr);
     const m = raw.match(/[0-9]+/);
     return m ? [parseInt(m[0], 10)] : [];
   }).filter(n => n > 0);
@@ -1477,7 +1478,7 @@ function App() {
                     <BarChart data={getDrugFrequencyData()}>
                       <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#e2e8f0'} />
                       <XAxis dataKey="name" stroke={darkMode ? '#94a3b8' : '#64748b'} />
-                      <YAxis stroke={darkMode ? '#94a3b8' : '#64748b'} />
+                      <YAxis stroke={darkMode ? '#94a3b8' : '#64748b'} allowDecimals={false} />
                       <Tooltip contentStyle={{background: darkMode ? '#1e293b' : '#fff', border: 'none', borderRadius: '8px'}} />
                       <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                     </BarChart>
