@@ -106,6 +106,12 @@ function App() {
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
 
+  // Safe time formatter helper
+  const formatTime = (secs) => {
+    const s = isNaN(secs) || !isFinite(secs) ? 0 : secs;
+    return `${Math.floor(s / 60)}:${(Math.floor(s % 60)).toString().padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -129,7 +135,7 @@ function App() {
       audio.removeEventListener('durationchange', handleDurationChange);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, []);
+  }, [audioUrl]);
 
   const togglePlayPause = () => {
     if (!audioRef.current) return;
@@ -960,7 +966,7 @@ function App() {
                                 </div>
                                 
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, minWidth: '45px', textAlign: 'right' }}>
-                                  {Math.floor(audioCurrentTime / 60)}:{(Math.floor(audioCurrentTime % 60)).toString().padStart(2, '0')}
+                                  {formatTime(audioCurrentTime)}
                                 </div>
                               </div>
                               
