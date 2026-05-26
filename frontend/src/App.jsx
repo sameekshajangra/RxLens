@@ -51,7 +51,46 @@ import html2pdf from 'html2pdf.js';
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 
+// ── FAQ Data & Component ────────────────────────────────────────────────────
+const FAQ_ITEMS = [
+  { q: "Is RxLens a replacement for doctors?", a: "No. RxLens is an assistive interpretation platform. All medication information should be verified by a licensed healthcare professional." },
+  { q: "Can RxLens read handwritten prescriptions?", a: "Yes. RxLens supports handwritten and printed prescriptions. Unclear handwriting or low-quality images may reduce accuracy." },
+  { q: "What file types are supported?", a: "RxLens supports prescription images (JPG, PNG, WEBP), PDF prescriptions, and clinical document uploads." },
+  { q: "What languages does RxLens support?", a: "Currently English and Hindi. Additional regional language support is planned in future updates." },
+  { q: "Who is RxLens designed for?", a: "Patients, caregivers, elderly users, healthcare workers, and multilingual low-resource healthcare settings." },
+  { q: "What is the Accessibility Insight feature?", a: "It analyzes prescription complexity, medical jargon, abbreviations, and readability to estimate how difficult a prescription may be to understand." },
+  { q: "Why does RxLens show confidence warnings?", a: "Prescriptions may contain unclear handwriting or ambiguous abbreviations. Confidence indicators help identify sections that may require manual verification." },
+  { q: "Does RxLens store patient data?", a: "No. RxLens does not permanently store sensitive patient information during normal use." },
+  { q: "What if the scan is unclear?", a: "Try better lighting, take a clearer photo, avoid shadows, and capture the prescription flat on a surface." },
+  { q: "Can healthcare workers use RxLens in outreach?", a: "Yes. RxLens includes healthcare worker workflows designed for multilingual patient communication and simplified medication guidance." },
+];
+
+function SidebarFAQ() {
+  const [openIdx, setOpenIdx] = useState(null);
+  const toggle = (i) => setOpenIdx(openIdx === i ? null : i);
+  return (
+    <div style={{ marginTop: 'auto', padding: '0 0.75rem 1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+      <p style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', paddingLeft: '4px' }}>FAQ</p>
+      {FAQ_ITEMS.map((item, i) => (
+        <div key={i} style={{ borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
+          <button
+            onClick={() => toggle(i)}
+            style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px', gap: '8px', textAlign: 'left' }}
+          >
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.3, flex: 1 }}>{item.q}</span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--primary)', flexShrink: 0, transition: 'transform 0.18s', transform: openIdx === i ? 'rotate(45deg)' : 'rotate(0deg)', display: 'inline-block' }}>+</span>
+          </button>
+          <div style={{ maxHeight: openIdx === i ? '200px' : '0', overflow: 'hidden', transition: 'max-height 0.2s ease' }}>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.55, padding: '0 4px 10px', margin: 0 }}>{item.a}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function App() {
+
   const [activeTab, setActiveTab] = useState('scanner');
   const [historySortOrder, setHistorySortOrder] = useState("newest");
 
@@ -608,7 +647,8 @@ function App() {
       {/* Sidebar */}
       <div className="sidebar hide-on-print">
         <div className="sidebar-header">
-          <h1><span style={{ fontSize: '2rem' }}>🩺</span> RxLens</h1>
+          {/* Logo in teal */}
+          <h1 style={{ color: 'var(--primary)' }}><span style={{ fontSize: '2rem' }}>🩺</span> RxLens</h1>
         </div>
         <div className="sidebar-nav">
           <button className={`sidebar-item ${activeTab === 'scanner' ? 'active' : ''}`} onClick={() => setActiveTab('scanner')}>
@@ -624,7 +664,11 @@ function App() {
             <TrendingUp size={20} /> {t.insights || "Reminders & Insights"}
           </button>
         </div>
+
+        {/* FAQ Section */}
+        <SidebarFAQ />
       </div>
+
 
       {/* Main Content Area */}
       <div className="main-content-wrapper">
