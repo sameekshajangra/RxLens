@@ -264,7 +264,7 @@ function App() {
     setLoading(true);
     setComprehensionStatus(null);
     setError('');
-    setLoadingStatus('Fast-tracking VLM Engine...');
+    setLoadingStatus(t.loading_status || 'Fast-tracking VLM Engine...');
     const formData = new FormData();
     formData.append('file', imageFile);
     formData.append('lang', language);
@@ -1129,17 +1129,34 @@ function App() {
                     {/* Premium Audio Player */}
                     {audioUrl && (
                       <div className="premium-audio-player" style={{ marginTop: '20px', padding: '15px', background: 'linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.06))', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                        <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Volume2 size={18} color="var(--primary)" /> 🎧 {t.audio_guide || "Patient Voice Playback"}
-                        </p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                          <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: '0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Volume2 size={18} color="var(--primary)" /> 🎧 {t.audio_guide || "Patient Voice Playback"}
+                          </p>
+                          <select 
+                            className="input-field" 
+                            style={{ padding: '4px 8px', fontSize: '0.8rem', width: 'auto', background: 'var(--card-bg)' }}
+                            onChange={(e) => {
+                              if (audioRef.current && audioRef.current.audio.current) {
+                                audioRef.current.audio.current.playbackRate = parseFloat(e.target.value);
+                              }
+                            }}
+                          >
+                            <option value="1">{t.speed || 'Speed'}: 1x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2x</option>
+                          </select>
+                        </div>
                         <AudioPlayer
+                          ref={audioRef}
                           autoPlay={false}
                           src={audioUrl}
                           showJumpControls={false}
                           customAdditionalControls={[]}
                           customVolumeControls={[]}
-                          layout="horizontal-reverse"
-                          style={{ background: 'transparent', boxShadow: 'none', padding: 0 }}
+                          style={{ boxShadow: 'none', background: 'transparent' }}
                         />
                       </div>
                     )}
@@ -1198,7 +1215,7 @@ function App() {
               ) : (
                 <div className="glass-card" style={{textAlign:'center', opacity:0.5, padding:'4rem'}}>
                   <Activity size={48} style={{margin:'0 auto 1rem'}} />
-                  <p>Awaiting scan results...</p>
+                  <p>{t.awaiting_scan || 'Awaiting scan results...'}</p>
                 </div>
               )}
             </div>
@@ -1217,7 +1234,7 @@ function App() {
                       <p>{item.date} • {item.dosage}</p>
                     </div>
                     <div style={{display:'flex', gap:'8px'}}>
-                      <button className="btn btn-secondary" style={{padding:'0.5rem'}} onClick={(e) => { e.stopPropagation(); setResult({ data: item.data }); setActiveTab('scanner'); setTimeout(() => downloadPDF(), 500); }}><Download size={16}/></button>
+                      <button className="btn btn-secondary" style={{padding:'0.5rem'}} onClick={(e) => { e.stopPropagation(); setResult(item.data); setActiveTab('scanner'); setTimeout(() => downloadPDF(), 500); }}><Download size={16}/></button>
                     </div>
                   </div>
                 ))}

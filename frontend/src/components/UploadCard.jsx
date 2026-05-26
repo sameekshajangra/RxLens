@@ -105,7 +105,7 @@ export default function UploadCard({
       <div className="mb-6">
         <Upload size={56} className="mx-auto text-indigo-500 mb-4" />
         <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">{t.add_doc || "Add Clinical Document"}</h3>
-        <p className="text-slate-500 text-sm">Upload a prescription or take a photo instantly</p>
+        <p className="text-slate-500 text-sm">{t.upload_desc || "Upload a prescription or take a photo instantly"}</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
