@@ -15,10 +15,7 @@
   <a href="https://drive.google.com/file/d/1WJ83sfL-2bHJNv6N9bmv9Z0eUpWknvhq/view?usp=sharing" target="_blank">View Demo Video</a>
 </div>
 
-  [![Google Gemini](https://img.shields.io/badge/AI_Engine-Gemini_2.0_Flash-blueviolet.svg)]()
-  [![React](https://img.shields.io/badge/Frontend-React_18-cyan.svg)]()
-  [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)]()
-  
+
   <br />
   <a href="https://drive.google.com/file/d/1WJ83sfL-2bHJNv6N9bmv9Z0eUpWknvhq/view?usp=sharing" target="_blank">View Demo Video</a>
 </div>
