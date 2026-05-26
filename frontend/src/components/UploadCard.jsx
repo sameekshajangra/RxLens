@@ -147,11 +147,11 @@ export default function UploadCard({
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        {/* Enforced with an explicit inline style style={{ marginBottom: '8rem' }} to guarantee generous space regardless of CSS cache/overrides */}
-        <div className="mb-24" style={{ marginBottom: '8rem' }}>
-          <Upload size={56} className="mx-auto text-teal-600 opacity-90" style={{ marginBottom: '2rem' }} />
+        {/* Enforced with an explicit inline style style={{ marginBottom: '4.5rem' }} to guarantee perfect, balanced spacing regardless of CSS cache/overrides */}
+        <div className="mb-16" style={{ marginBottom: '4.5rem' }}>
+          <Upload size={56} className="mx-auto text-teal-600 opacity-90" style={{ marginBottom: '1.75rem' }} />
           {/* Made the text smaller (text-xl md:text-2xl) and adjusted margin bottom */}
-          <h3 className="text-xl md:text-2xl font-bold text-slate-800" style={{ marginBottom: '1.25rem' }}>
+          <h3 className="text-xl md:text-2xl font-bold text-slate-800" style={{ marginBottom: '1rem' }}>
             {t.add_doc || "Add Clinical Document"}
           </h3>
           {/* Made the text smaller (text-xs md:text-sm) and centered it cleanly */}
