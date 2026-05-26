@@ -376,7 +376,15 @@ function App() {
 
   const downloadPDF = useCallback(async () => {
     try {
-      const element = document.querySelector('.result-container');
+      let element = document.querySelector('.result-container');
+      let retries = 0;
+      
+      while (!element && retries < 20) {
+        await new Promise(r => setTimeout(r, 100));
+        element = document.querySelector('.result-container');
+        retries++;
+      }
+      
       if (!element) {
         console.error("Result container not found");
         return;
