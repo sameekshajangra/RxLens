@@ -1001,28 +1001,75 @@ function App() {
                           </div>
                         )}
                       </div>
-                      <div className="confidence-bar-group">
-                        {Object.entries(result.data.confidence).map(([field, score]) => {
-                          const s = typeof score === 'object' ? score.score : score;
-                          const level = getConfidenceLevel(s);
-                          return (
-                            <div key={field} className="confidence-bar-item">
-                              <span className="confidence-bar-label">{field}</span>
-                              <div className="confidence-bar-track">
-                                <motion.div 
-                                  className={`confidence-bar-fill ${level}`}
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${s * 100}%` }}
-                                  transition={{ duration: 1, delay: 0.2 }}
-                                />
+                      
+                      {(() => {
+                        // Find lowest confidence field
+                        let lowestField = null;
+                        let lowestScore = 1.0;
+                        if (result.data.confidence) {
+                          Object.entries(result.data.confidence).forEach(([f, s]) => {
+                            const val = typeof s === 'object' ? s.score : s;
+                            if (val < lowestScore) { lowestScore = val; lowestField = f; }
+                          });
+                        }
+                        
+                        // Helper to highlight inferred values
+                        const renderValue = (val) => {
+                          if (typeof val !== 'string') return val;
+                          const isAssumed = val.toLowerCase().includes('assumed') || val.toLowerCase().includes('inferred');
+                          if (isAssumed) {
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 800, background: '#f59e0b', color: '#fff', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.5px', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <AlertTriangle size={10} /> INFERRED VALUE
+                                </span>
+                                <span style={{ color: '#b45309', fontWeight: 600, fontSize: '0.85rem' }}>{val}</span>
                               </div>
-                              <span className={`confidence-bar-score`} style={{ color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)' }}>
-                                {Math.round(s * 100)}%
-                              </span>
+                            );
+                          }
+                          return val;
+                        };
+
+                        return (
+                          <>
+                            <div className="confidence-bar-group">
+                              {Object.entries(result.data.confidence).map(([field, score]) => {
+                                const s = typeof score === 'object' ? score.score : score;
+                                const level = getConfidenceLevel(s);
+                                const isLowestAndCritical = field === lowestField && s <= 0.7;
+                                
+                                return (
+                                  <div key={field} style={{ marginBottom: isLowestAndCritical ? '16px' : '0' }}>
+                                    <div className="confidence-bar-item">
+                                      <span className="confidence-bar-label">{field}</span>
+                                      <div className="confidence-bar-track">
+                                        <motion.div 
+                                          className={`confidence-bar-fill ${level}`}
+                                          initial={{ width: 0 }}
+                                          animate={{ width: `${s * 100}%` }}
+                                          transition={{ duration: 1, delay: 0.2 }}
+                                        />
+                                      </div>
+                                      <span className={`confidence-bar-score`} style={{ color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)' }}>
+                                        {Math.round(s * 100)}%
+                                      </span>
+                                    </div>
+                                    {isLowestAndCritical && (
+                                      <div style={{ marginTop: '8px', padding: '8px 12px', background: 'var(--danger-glow)', borderLeft: '3px solid var(--danger)', borderRadius: '0 8px 8px 0', display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.8rem', color: 'var(--danger)' }}>
+                                        <ShieldAlert size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                                        <div>
+                                          <strong style={{ display: 'block', marginBottom: '2px' }}>Critical Action Required</strong>
+                                          Confirm {field.toLowerCase()} with pharmacist before starting.
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })}
-                      </div>
+                          </>
+                        );
+                      })()}
 
                       {/* Uncertainty Warnings */}
                       {safeArray(result.data.uncertainty_warnings).length > 0 && (
@@ -1090,9 +1137,9 @@ function App() {
                                     </span>
                                   )}
                                 </td>
-                                <td style={{ padding: '14px 12px' }}>{dose}</td>
-                                <td style={{ padding: '14px 12px' }}>{result.data.frequency || 'As directed'}</td>
-                                <td style={{ padding: '14px 12px' }}>{result.data.duration || 'N/A'}</td>
+                                <td style={{ padding: '14px 12px' }}>{renderValue(dose)}</td>
+                                <td style={{ padding: '14px 12px' }}>{renderValue(result.data.frequency || 'As directed')}</td>
+                                <td style={{ padding: '14px 12px' }}>{renderValue(result.data.duration || 'N/A')}</td>
                                 <td style={{ padding: '14px 12px', textAlign: 'right', fontWeight: 700, color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)' }}>
                                   {Math.round(individualConf * 100)}%
                                 </td>
@@ -1124,9 +1171,9 @@ function App() {
                               </span>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem' }}>
-                              <div><span style={{ color: 'var(--text-muted)' }}>Dosage:</span> <strong style={{ display: 'block' }}>{dose}</strong></div>
-                              <div><span style={{ color: 'var(--text-muted)' }}>Frequency:</span> <strong style={{ display: 'block' }}>{result.data.frequency || 'As directed'}</strong></div>
-                              <div><span style={{ color: 'var(--text-muted)' }}>Duration:</span> <strong style={{ display: 'block' }}>{result.data.duration || 'N/A'}</strong></div>
+                              <div><span style={{ color: 'var(--text-muted)' }}>Dosage:</span> <strong style={{ display: 'block' }}>{renderValue(dose)}</strong></div>
+                              <div><span style={{ color: 'var(--text-muted)' }}>Frequency:</span> <strong style={{ display: 'block' }}>{renderValue(result.data.frequency || 'As directed')}</strong></div>
+                              <div><span style={{ color: 'var(--text-muted)' }}>Duration:</span> <strong style={{ display: 'block' }}>{renderValue(result.data.duration || 'N/A')}</strong></div>
                               {isLowConf && (
                                 <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--danger)', background: 'var(--danger-glow)', padding: '6px 12px', borderRadius: '8px', marginTop: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
                                   <AlertTriangle size={14} /> {t.please_verify}
