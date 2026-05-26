@@ -410,69 +410,74 @@ function App() {
 
   return (
     
-    <div className="app-container">
-      <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="header-content">
-          <h1>🩺 RxLens <span style={{ whiteSpace: "nowrap" }}>{t.header_title}</span></h1>
+    <div className="app-wrapper">
+      {/* Sidebar */}
+      <div className="sidebar hide-on-print">
+        <div className="sidebar-header">
+          <h1><span style={{ fontSize: '2rem' }}>🩺</span> RxLens</h1>
         </div>
-          <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-            <button 
-              className={`btn ${showProfile ? 'btn-primary' : 'btn-secondary'}`} 
-              onClick={() => setShowProfile(!showProfile)} 
-              style={{padding: '8px 15px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem'}}
-            >
-              <User size={16} /> {patientProfile.name || t.patient_profile}
-            </button>
-            <div className="settings-toggle">
-              <div className={`status-dot ${isEngineReady ? 'active' : ''}`}></div>
-              <select 
-                value={language} 
-                onChange={(e) => setLanguage(e.target.value)}
-                style={{background: 'none', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer', fontWeight: 600}}
-              >
-                <option value="English">English</option>
-                <option value="Hindi">Hindi</option>
-              </select>
-               {/* Mode Switch — styled badge */}
-               <span className={`mode-badge ${userMode === 'patient' ? 'patient' : 'worker'}`}>
-                 {userMode === 'patient' ? '🧑‍⚕️ Patient' : '🏥 Clinician'}
-               </span>
-               <select 
-                 value={userMode}
-                 onChange={(e) => setUserMode(e.target.value)}
-                 style={{marginLeft: '4px', background: 'none', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem'}}
-               >
-                 <option value="patient">{t.mode_patient || "Patient Mode"}</option>
-                 <option value="worker">{t.mode_worker || "Healthcare Worker"} Mode</option>
-               </select>
-            </div>
-            <div style={{display: 'flex', gap: '10px'}}>
-              <div className="theme-toggle" onClick={() => setElderlyMode(!elderlyMode)} title="Elderly Accessibility Mode">
-                <span style={{ fontSize: '1.2rem', fontWeight: elderlyMode ? 'bold' : 'normal', color: elderlyMode ? 'var(--primary)' : 'inherit' }}>A+</span>
-              </div>
-              <div className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
-                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-              </div>
-            </div>
-          </div>
-      </motion.header>
-
-      <div className="nav-bar">
-        <div className={`nav-item ${activeTab === 'scanner' ? 'active' : ''}`} onClick={() => setActiveTab('scanner')}>
-          <LayoutDashboard size={18} /> {t.scanner}
-        </div>
-        <div className={`nav-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
-          <History size={18} /> {t.history}
-        </div>
-        <div className={`nav-item ${activeTab === 'insights' ? 'active' : ''}`} onClick={() => setActiveTab('insights')}>
-          <TrendingUp size={18} /> {t.insights}
-        </div>
-        <div className={`nav-item ${activeTab === 'adherence' ? 'active' : ''}`} onClick={() => setActiveTab('adherence')}>
-          <BellRing size={18} /> {t.adherence_tab}
+        <div className="sidebar-nav">
+          <button className={`sidebar-item ${activeTab === 'scanner' ? 'active' : ''}`} onClick={() => setActiveTab('scanner')}>
+            <LayoutDashboard size={20} /> {t.scanner || "Scanner"}
+          </button>
+          <button className={`sidebar-item ${activeTab === 'adherence' ? 'active' : ''}`} onClick={() => setActiveTab('adherence')}>
+            <CheckCircle2 size={20} /> {t.adherence_tab || "Medication Adherence"}
+          </button>
+          <button className={`sidebar-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
+            <History size={20} /> {t.history || "History"}
+          </button>
+          <button className={`sidebar-item ${activeTab === 'insights' ? 'active' : ''}`} onClick={() => setActiveTab('insights')}>
+            <TrendingUp size={20} /> {t.insights || "Reminders & Insights"}
+          </button>
         </div>
       </div>
 
-      <AnimatePresence>
+      {/* Main Content Area */}
+      <div className="main-content-wrapper">
+        {/* Redesigned Header */}
+        <header className="top-header hide-on-print">
+          <div className="top-header-row1">
+            <h2>{t.header_title}</h2>
+          </div>
+          <div className="top-header-row2">
+            <div className="header-left-controls">
+              <button className={`btn ${showProfile ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setShowProfile(!showProfile)} style={{padding: '8px 15px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem'}}>
+                <User size={16} /> {patientProfile.name || t.patient_profile || "Patient Profile"}
+              </button>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Languages size={16} color="var(--text-muted)" />
+                <select value={language} onChange={(e) => setLanguage(e.target.value)} style={{background: 'none', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer', fontWeight: 600}}>
+                  <option value="English">English</option>
+                  <option value="Hindi">Hindi</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 <span className={`mode-badge ${userMode === 'patient' ? 'patient' : 'worker'}`}>
+                   {userMode === 'patient' ? '🧑‍⚕️' : '🏥'}
+                 </span>
+                 <select value={userMode} onChange={(e) => setUserMode(e.target.value)} style={{background: 'none', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem'}}>
+                   <option value="patient">{t.mode_patient || "Patient Mode"}</option>
+                   <option value="worker">{t.mode_worker || "Healthcare Worker"}</option>
+                 </select>
+              </div>
+            </div>
+
+            <div className="header-right-controls">
+              <button className="btn btn-secondary" onClick={() => setElderlyMode(!elderlyMode)} title="Large Font Mode" style={{ padding: '8px 12px' }}>
+                <span style={{ fontSize: '1.2rem', fontWeight: elderlyMode ? 'bold' : 'normal', color: elderlyMode ? 'var(--primary)' : 'inherit' }}>A+</span>
+              </button>
+              <button className="btn btn-secondary" onClick={() => setDarkMode(!darkMode)} style={{ padding: '8px 12px' }}>
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="app-container" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+          <AnimatePresence>
+
         {showProfile && (
           <motion.div 
             initial={{ opacity: 0, height: 0 }} 
@@ -513,15 +518,15 @@ function App() {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '25px' }}>
                 <div className="form-group">
-                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.full_name}</label>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.name || "Full Name"}</label>
                   <div className="profile-input-wrapper">
                     <User className="input-icon" size={18} />
-                    <input type="text" className="input-field" placeholder="e.g. John Doe" value={patientProfile.name} onChange={(e)=>setPatientProfile({...patientProfile, name: e.target.value})} />
+                    <input type="text" className="input-field" placeholder={t.name_placeholder || "e.g. John Doe"} value={patientProfile.name} onChange={(e)=>setPatientProfile({...patientProfile, name: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.age}</label>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.age || "Age"}</label>
                   <div className="profile-input-wrapper">
                     <Calendar className="input-icon" size={18} style={{ zIndex: 10 }} />
                     <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
@@ -551,23 +556,23 @@ function App() {
                 </div>
 
                 <div className="form-group">
-                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.weight}</label>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.weight || "Weight"}</label>
                   <div className="profile-input-wrapper">
                     <Activity className="input-icon" size={18} />
-                    <input type="number" className="input-field" placeholder="kg" value={patientProfile.weight} onChange={(e)=>setPatientProfile({...patientProfile, weight: e.target.value})} />
+                    <input type="number" className="input-field" placeholder={t.weight_placeholder || "kg"} value={patientProfile.weight} onChange={(e)=>setPatientProfile({...patientProfile, weight: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.allergies}</label>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.allergies || "Allergies"}</label>
                   <div className="profile-input-wrapper">
                     <AlertTriangle className="input-icon" size={18} />
-                    <input type="text" className="input-field" placeholder="e.g. Penicillin, Peanuts" value={patientProfile.allergies} onChange={(e)=>setPatientProfile({...patientProfile, allergies: e.target.value})} />
+                    <input type="text" className="input-field" placeholder={t.allergies_placeholder || "e.g. Penicillin, Peanuts"} value={patientProfile.allergies} onChange={(e)=>setPatientProfile({...patientProfile, allergies: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.conditions}</label>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>{t.conditions || "Conditions"}</label>
                   <div className="profile-input-wrapper">
                     <Stethoscope className="input-icon" size={18} />
                     <input type="text" className="input-field" placeholder={t.conditions_placeholder} value={patientProfile.conditions} onChange={(e)=>setPatientProfile({...patientProfile, conditions: e.target.value})} />
@@ -1420,8 +1425,9 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
           </motion.div>
         )}
       </AnimatePresence>
+        </div>
+      </div>
     </div>
-    
   );
 }
 

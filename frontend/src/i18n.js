@@ -37,12 +37,26 @@ const i18n = {
     chat_assistant: "Chat Assistant",
     
     comprehension_title: "Did you understand when to take this medicine?",
-    comprehension_yes: "Yes, I understand",
-    comprehension_no: "No, let's review again",
+    yes_understood: "Yes, I understand",
+    no_review_again: "No, let's review again",
+    comprehension_yes_msg: "Great! You understand when and how to take this medication.",
     comprehension_thanks: "Great! Stay safe and healthy.",
     comprehension_review: "Please ask a pharmacist or doctor for more clarification.",
     visual_cards_title: "Your Medications",
     audio_guide: "Patient Voice Playback",
+    
+    // Missing Keys Added
+    conditions: "Pre-existing Conditions",
+    conditions_placeholder: "e.g. Diabetes, Hypertension",
+    pharmacist_consultation: "Pharmacist Consultation Recommended",
+    pharmacist_desc: "Always consult a certified pharmacist or your primary doctor before changing any medication routines based on these results.",
+    name: "Full Name",
+    name_placeholder: "Enter patient name",
+    age: "Age",
+    age_placeholder: "Enter age",
+    gender: "Gender",
+    allergies: "Known Allergies",
+    allergies_placeholder: "e.g. Penicillin, Peanuts"
   },
   Hindi: {
     header_title: "प्रिस्क्रिप्शन को समझने योग्य बनाना",
@@ -63,6 +77,8 @@ const i18n = {
     download_pdf: "पीडीएफ डाउनलोड करें",
     whatsapp_share: "व्हाट्सएप शेयर",
     meds_found: "दवाइयां मिलीं",
+    clear: "साफ़ करें",
+    digitize: "डिजिटाइज़ करें",
     structured_medication_table: "संरचित दवा तालिका",
     accessibility_complexity_score: "पहुंच और जटिलता",
     clinical_terms_simplified: "सरल किए गए नैदानिक शब्द",
@@ -80,12 +96,26 @@ const i18n = {
     chat_assistant: "चैट सहायक",
     
     comprehension_title: "क्या आप समझ गए कि यह दवा कब लेनी है?",
-    comprehension_yes: "हाँ, मैं समझ गया",
-    comprehension_no: "नहीं, मुझे फिर से समझाएं",
+    yes_understood: "हाँ, मैं समझ गया",
+    no_review_again: "नहीं, मुझे फिर से समझाएं",
+    comprehension_yes_msg: "बहुत बढ़िया! आप समझ गए कि यह दवा कब और कैसे लेनी है।",
     comprehension_thanks: "बहुत बढ़िया! सुरक्षित और स्वस्थ रहें।",
     comprehension_review: "कृपया अधिक जानकारी के लिए फार्मासिस्ट या डॉक्टर से पूछें।",
     visual_cards_title: "आपकी दवाइयाँ",
     audio_guide: "ऑडियो गाइड",
+    
+    // Missing Keys Added
+    conditions: "पहले से मौजूद बीमारियाँ",
+    conditions_placeholder: "उदा. मधुमेह, उच्च रक्तचाप",
+    pharmacist_consultation: "फार्मासिस्ट से परामर्श अनुशंसित",
+    pharmacist_desc: "इन परिणामों के आधार पर किसी भी दवा की दिनचर्या को बदलने से पहले हमेशा एक प्रमाणित फार्मासिस्ट या अपने प्राथमिक चिकित्सक से परामर्श लें।",
+    name: "पूरा नाम",
+    name_placeholder: "रोगी का नाम दर्ज करें",
+    age: "आयु",
+    age_placeholder: "आयु दर्ज करें",
+    gender: "लिंग",
+    allergies: "ज्ञात एलर्जी",
+    allergies_placeholder: "उदा. पेनिसिलिन, मूंगफली"
   }
 };
 
