@@ -1382,12 +1382,23 @@ function App() {
               <div className="history-list">
                 {safeArray(history).map((item, idx) => (
                   <div key={idx} className="history-item" style={{cursor: 'pointer'}} onClick={() => { 
-                      if(item.data) { 
-                        setResult(item.data); 
-                        setActiveTab('scanner'); 
-                      } else {
-                        alert("Full report data is missing for this old scan. Please rescan.");
+                      let scanData = item.data;
+                      if (!scanData) {
+                        scanData = {
+                          data: {
+                            drug: item.drug_name || 'Unknown',
+                            drugs_list: [item.drug_name || 'Unknown'],
+                            dosage: item.dosage || 'Unknown',
+                            frequency: 'N/A',
+                            duration: 'N/A',
+                            instructions: 'Historical scan. Full data was not retained.',
+                            safety_alerts: [],
+                            side_effects: []
+                          }
+                        };
                       }
+                      setResult(scanData); 
+                      setActiveTab('scanner'); 
                     }}>
                     <div className="history-info">
                       <h4>{item.drug_name}</h4>
@@ -1396,11 +1407,17 @@ function App() {
                     <div style={{display:'flex', gap:'8px'}}>
                       <button className="btn btn-secondary" style={{padding:'0.5rem'}} onClick={(e) => { 
                         e.stopPropagation(); 
-                        if (item.data) {
-                          downloadPDF(item.data.data);
-                        } else {
-                          alert("Full report data is missing for this old scan. Please rescan.");
-                        }
+                        let scanData = item.data ? item.data.data : {
+                          drug: item.drug_name || 'Unknown',
+                          drugs_list: [item.drug_name || 'Unknown'],
+                          dosage: item.dosage || 'Unknown',
+                          frequency: 'N/A',
+                          duration: 'N/A',
+                          instructions: 'Historical scan. Full data was not retained.',
+                          safety_alerts: [],
+                          side_effects: []
+                        };
+                        downloadPDF(scanData);
                       }}><Download size={16}/></button>
                     </div>
                   </div>
