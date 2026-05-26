@@ -3,6 +3,21 @@ import React, { useState, useRef, useCallback, useEffect, Component } from 'reac
 // Helper to ensure a value is an array before mapping
 const safeArray = (arr) => (Array.isArray(arr) ? arr : []);
 
+// Period Icon helper based on time/task details for Visual Schedule
+const getSchedulePeriodIcon = (item) => {
+  const text = ((item.time || '') + ' ' + (item.task || '') + ' ' + (item.time_label || '')).toLowerCase();
+  if (text.includes('morning') || text.includes('breakfast') || text.includes('am') || text.includes('🌅')) {
+    return '🌅';
+  }
+  if (text.includes('afternoon') || text.includes('lunch') || text.includes('noon') || text.includes('☀️')) {
+    return '☀️';
+  }
+  if (text.includes('evening') || text.includes('night') || text.includes('dinner') || text.includes('bedtime') || text.includes('pm') || text.includes('🌙')) {
+    return '🌙';
+  }
+  return '⏰';
+};
+
 // Module-level helper: render a field value, flagging inferred/assumed values with a badge.
 // Defined at module scope so it is ALWAYS available regardless of component render order.
 const renderValue = (val) => {
@@ -140,6 +155,10 @@ function App() {
   // Helper: render a value, highlighting inferred/assumed fields with a badge — v2
   // NOTE: renderValue is now defined at MODULE scope above the component.
   const [explanationLevel, setExplanationLevel] = useState('standard'); // 'simple' | 'standard' | 'detailed'
+  const isSimpleMode = userMode === 'patient' && explanationLevel === 'simple';
+  const isWorkerMode = userMode === 'worker';
+  const isDetailedMode = userMode === 'patient' && explanationLevel === 'detailed';
+  const isIntermediateMode = userMode === 'patient' && explanationLevel === 'standard';
   const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
   const [isApiKeySetInEnv, setIsApiKeySetInEnv] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -241,9 +260,10 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('elderly-mode', elderlyMode);
+    const isSimple = userMode === 'patient' && explanationLevel === 'simple';
+    document.documentElement.classList.toggle('elderly-mode', elderlyMode || isSimple);
     localStorage.setItem('rxlens_elderly_mode', elderlyMode);
-  }, [elderlyMode]);
+  }, [elderlyMode, explanationLevel, userMode]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -963,8 +983,8 @@ function App() {
                                 {safeArray(result.data.schedule).map((item, idx) => (
                                   <div key={idx} style={{ display:'flex', alignItems:'center', gap:'16px', padding:'14px 18px', margin:'4px 0', background:'rgba(13, 148, 136, 0.03)', borderRadius:'12px', border:'1px solid rgba(13, 148, 136, 0.1)', position:'relative' }}>
                                     <div style={{ position:'absolute', left:'-24px', width:'12px', height:'12px', borderRadius:'50%', background:'var(--primary)', boxShadow:'0 0 12px rgba(13, 148, 136, 0.4)', border:'2px solid #fff' }}></div>
-                                    <div style={{ minWidth:'90px', fontWeight:700, fontSize:'0.95rem', color:'var(--primary)', display:'flex', alignItems:'center', gap:'6px' }}>
-                                      <Clock size={14}/> {item.time || item.times?.join(', ') || '—'}
+                                    <div style={{ minWidth:'95px', fontWeight:700, fontSize:'0.95rem', color:'var(--primary)', display:'flex', alignItems:'center', gap:'6px' }}>
+                                      <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{getSchedulePeriodIcon(item)}</span> {item.time || item.times?.join(', ') || '—'}
                                     </div>
                                     <div style={{flex:1, fontSize:'0.9rem', color:'var(--text-main)', fontWeight:500}}>
                                       {item.task || item.drug || '—'}
@@ -1011,9 +1031,9 @@ function App() {
                             </div>
                           )}
 
-                          {safeArray(result.data.safety_alerts).length > 0 && (
+                          {safeArray(isSimpleMode ? safeArray(result.data.safety_alerts).filter(a => a.severity === 'Critical') : result.data.safety_alerts).length > 0 && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1.5rem' }}>
-                              {safeArray(result.data.safety_alerts).map((alert, idx) => (
+                              {safeArray(isSimpleMode ? safeArray(result.data.safety_alerts).filter(a => a.severity === 'Critical') : result.data.safety_alerts).map((alert, idx) => (
                                 <div key={idx} style={{ padding: '16px', borderRadius: '12px', background: alert.severity === 'Critical' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(245, 158, 11, 0.05)', borderLeft: `4px solid ${alert.severity === 'Critical' ? 'var(--danger)' : 'var(--warning)'}`, display: 'flex', gap: '12px' }}>
                                   <AlertTriangle size={20} color={alert.severity === 'Critical' ? 'var(--danger)' : 'var(--warning)'} style={{ flexShrink: 0, marginTop: '2px' }} />
                                   <div>
@@ -1039,6 +1059,51 @@ function App() {
                                   </div>
                                 ))}
                               </div>
+                            </div>
+                          )}
+
+                          {/* Healthcare Worker Adherence Risk & Interaction Notes */}
+                          {userMode === 'worker' && (
+                            <div style={{ marginBottom: '1.5rem', padding: '16px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                              <h4 style={{ margin: '0 0 10px 0', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}><ShieldAlert size={16} /> Healthcare Worker Risk Assessment</h4>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
+                                <div>
+                                  <strong style={{ color: 'var(--text-main)' }}>Adherence Risk Profile:</strong>
+                                  <span style={{ marginLeft: '6px', padding: '2px 8px', borderRadius: '6px', background: safeArray(result.data.drugs_list).length >= 4 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: safeArray(result.data.drugs_list).length >= 4 ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>
+                                    {safeArray(result.data.drugs_list).length >= 4 ? 'HIGH (Polypharmacy Detected)' : 'LOW'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span style={{ color: 'var(--text-muted)' }}>
+                                    {safeArray(result.data.drugs_list).length >= 4 
+                                      ? "⚠️ Patient is prescribed 4 or more medications. High risk of pill fatigue, duplication, and missing doses."
+                                      : "✓ Patient has low pill burden. Standard follow-up recommended."}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Common Side Effects & Precautions */}
+                          {((explanationLevel === 'standard' || explanationLevel === 'detailed') && (safeArray(result.data.side_effects).length > 0 || safeArray(result.data.precautions).length > 0)) && (
+                            <div style={{ marginBottom: '1.5rem', padding: '16px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.03)', border: '1px solid rgba(245, 158, 11, 0.15)' }}>
+                              <h4 style={{ margin: '0 0 10px 0', color: '#d97706', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}><ShieldAlert size={16} /> Common Side Effects & Precautions</h4>
+                              {safeArray(result.data.side_effects).length > 0 && (
+                                <div style={{ marginBottom: '8px' }}>
+                                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>Side Effects:</strong>
+                                  <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                    {safeArray(result.data.side_effects).map((eff, i) => <li key={i}>{eff}</li>)}
+                                  </ul>
+                                </div>
+                              )}
+                              {safeArray(result.data.precautions).length > 0 && (
+                                <div>
+                                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>Precautions:</strong>
+                                  <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                    {safeArray(result.data.precautions).map((prec, i) => <li key={i}>{prec}</li>)}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
                           )}
 
@@ -1239,26 +1304,28 @@ function App() {
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
-                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                      <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary)' }} onClick={() => downloadPDF()}>
-                        <Download size={16} /> {t.pdf_report}
-                      </button>
-                      <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', borderColor: '#25D366' }} onClick={() => window.open(getWhatsAppShareLink(), '_blank')}>
-                        <Share2 size={16} /> {t.share_whatsapp}
-                      </button>
+                  {!isSimpleMode && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
+                      <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                        <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary)' }} onClick={() => downloadPDF()}>
+                          <Download size={16} /> {t.pdf_report}
+                        </button>
+                        <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', borderColor: '#25D366' }} onClick={() => window.open(getWhatsAppShareLink(), '_blank')}>
+                          <Share2 size={16} /> {t.share_whatsapp}
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                        <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => window.print()}>
+                          <Printer size={16} /> {t.print_instructions}
+                        </button>
+                        <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowChat(true)}>
+                          <MessageCircle size={16} /> {t.chat_assistant || "Chat Assistant"}
+                        </button>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                      <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => window.print()}>
-                        <Printer size={16} /> {t.print_instructions}
-                      </button>
-                      <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowChat(true)}>
-                        <MessageCircle size={16} /> {t.chat_assistant || "Chat Assistant"}
-                      </button>
-                    </div>
-                  </div>
+                  )}
                   
-                  {userMode === 'patient' && (
+                  {(userMode === 'patient' && !isSimpleMode) && (
                     <ComprehensionCheck t={t} onReview={() => {
                       setShowChat(true);
                       setExplanationLevel('simple');
