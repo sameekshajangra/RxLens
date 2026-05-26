@@ -37,8 +37,6 @@ import 'react-h5-audio-player/lib/styles.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('scanner');
-  const [historySortOrder, setHistorySortOrder] = useState("newest");
-
   
   // Bespoke Audio Player State & Effects
   const audioRef = useRef(null);
