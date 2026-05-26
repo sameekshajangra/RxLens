@@ -138,16 +138,16 @@ export default function UploadCard({
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <div className="mb-10">
-          <Upload size={56} className="mx-auto text-teal-600 mb-6 opacity-90" />
-          <h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3">{t.add_doc || "Add Clinical Document"}</h3>
+        <div className="mb-14">
+          <Upload size={56} className="mx-auto text-teal-600 mb-8 opacity-90" />
+          <h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-6">{t.add_doc || "Add Clinical Document"}</h3>
           <p className="text-slate-500 text-base">{t.upload_desc || "Upload a prescription or take a photo instantly"}</p>
         </div>
 
-        {/* Action buttons — increased gap between rows */}
-        <div className="flex flex-col sm:flex-row gap-6 justify-center mb-10">
+        {/* Action buttons — increased gap between rows and columns */}
+        <div className="flex flex-col sm:flex-row gap-8 justify-center mb-16">
           {/* Mobile Camera Input */}
-          <label className="cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-semibold py-4 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-95 text-lg">
+          <label className="cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-semibold py-4 px-10 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-95 text-lg">
             <Camera size={22} />
             <span>{t.take_photo || "Take Photo"}</span>
             <input 
@@ -164,7 +164,7 @@ export default function UploadCard({
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={loading}
-            className="bg-white border-2 border-slate-200 hover:border-teal-600 hover:bg-slate-50 text-slate-700 hover:text-teal-700 font-semibold py-4 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95 text-lg"
+            className="bg-white border-2 border-slate-200 hover:border-teal-600 hover:bg-slate-50 text-slate-700 hover:text-teal-700 font-semibold py-4 px-10 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95 text-lg"
           >
             <Upload size={22} />
             <span>{t.upload_file || "Upload File"}</span>
@@ -172,7 +172,7 @@ export default function UploadCard({
         </div>
 
         {/* Trust Indicators — more vertical spacing between rows */}
-        <div className="flex flex-col gap-3 items-center justify-center text-xs md:text-sm text-slate-400 font-medium pt-6 border-t border-slate-100">
+        <div className="flex flex-col gap-4 items-center justify-center text-xs md:text-sm text-slate-400 font-medium pt-8 border-t border-slate-100">
           <p>Supported formats: JPG, PNG, WEBP, PDF</p>
           <p className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-500 opacity-80"></span> Your data is analyzed securely and not stored permanently.</p>
         </div>

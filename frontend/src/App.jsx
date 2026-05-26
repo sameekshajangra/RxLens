@@ -40,7 +40,7 @@ import {
   Upload, Camera, FileText, Activity, ShieldCheck, ShieldAlert,
   Download, PlayCircle, Loader2, AlertTriangle, Info,
   CheckCircle2, Settings, Key, Globe, History, 
-  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle, Play, Pause, Printer, Volume2
+  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle, Play, Pause, Printer, Volume2, HelpCircle, ChevronDown
 } from 'lucide-react';
 import UploadCard from './components/UploadCard';
 import ExplanationLevelSelector from './components/ExplanationLevelSelector';
@@ -51,43 +51,33 @@ import html2pdf from 'html2pdf.js';
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 
-// ── FAQ Data & Component ────────────────────────────────────────────────────
-const FAQ_ITEMS = [
-  { q: "Is RxLens a replacement for doctors?", a: "No. RxLens is an assistive interpretation platform. All medication information should be verified by a licensed healthcare professional." },
-  { q: "Can RxLens read handwritten prescriptions?", a: "Yes. RxLens supports handwritten and printed prescriptions. Unclear handwriting or low-quality images may reduce accuracy." },
-  { q: "What file types are supported?", a: "RxLens supports prescription images (JPG, PNG, WEBP), PDF prescriptions, and clinical document uploads." },
-  { q: "What languages does RxLens support?", a: "Currently English and Hindi. Additional regional language support is planned in future updates." },
-  { q: "Who is RxLens designed for?", a: "Patients, caregivers, elderly users, healthcare workers, and multilingual low-resource healthcare settings." },
-  { q: "What is the Accessibility Insight feature?", a: "It analyzes prescription complexity, medical jargon, abbreviations, and readability to estimate how difficult a prescription may be to understand." },
-  { q: "Why does RxLens show confidence warnings?", a: "Prescriptions may contain unclear handwriting or ambiguous abbreviations. Confidence indicators help identify sections that may require manual verification." },
-  { q: "Does RxLens store patient data?", a: "No. RxLens does not permanently store sensitive patient information during normal use." },
-  { q: "What if the scan is unclear?", a: "Try better lighting, take a clearer photo, avoid shadows, and capture the prescription flat on a surface." },
-  { q: "Can healthcare workers use RxLens in outreach?", a: "Yes. RxLens includes healthcare worker workflows designed for multilingual patient communication and simplified medication guidance." },
-];
-
-function SidebarFAQ() {
-  const [openIdx, setOpenIdx] = useState(null);
-  const toggle = (i) => setOpenIdx(openIdx === i ? null : i);
-  return (
-    <div style={{ marginTop: 'auto', padding: '0 0.75rem 1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-      <p style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', paddingLeft: '4px' }}>FAQ</p>
-      {FAQ_ITEMS.map((item, i) => (
-        <div key={i} style={{ borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
-          <button
-            onClick={() => toggle(i)}
-            style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px', gap: '8px', textAlign: 'left' }}
-          >
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.3, flex: 1 }}>{item.q}</span>
-            <span style={{ fontSize: '0.9rem', color: 'var(--primary)', flexShrink: 0, transition: 'transform 0.18s', transform: openIdx === i ? 'rotate(45deg)' : 'rotate(0deg)', display: 'inline-block' }}>+</span>
-          </button>
-          <div style={{ maxHeight: openIdx === i ? '200px' : '0', overflow: 'hidden', transition: 'max-height 0.2s ease' }}>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.55, padding: '0 4px 10px', margin: 0 }}>{item.a}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+// ── FAQ Data ─────────────────────────────────────────────────────────────────
+const FAQ_DATA = {
+  English: [
+    { q: "Is RxLens a replacement for doctors?", a: "No. RxLens is an assistive interpretation platform. All medication information should be verified by a licensed healthcare professional." },
+    { q: "Can RxLens read handwritten prescriptions?", a: "Yes. RxLens supports handwritten and printed prescriptions. Unclear handwriting or low-quality images may reduce accuracy." },
+    { q: "What file types are supported?", a: "RxLens supports prescription images (JPG, PNG, WEBP), PDF prescriptions, and clinical document uploads." },
+    { q: "What languages does RxLens support?", a: "Currently English and Hindi. Additional regional language support is planned in future updates." },
+    { q: "Who is RxLens designed for?", a: "Patients, caregivers, elderly users, healthcare workers, and multilingual low-resource healthcare settings." },
+    { q: "What is the Accessibility Insight feature?", a: "It analyzes prescription complexity, medical jargon, abbreviations, and readability to estimate how difficult a prescription may be to understand." },
+    { q: "Why does RxLens show confidence warnings?", a: "Prescriptions may contain unclear handwriting or ambiguous abbreviations. Confidence indicators help identify sections that may require manual verification." },
+    { q: "Does RxLens store patient data?", a: "No. RxLens does not permanently store sensitive patient information during normal use." },
+    { q: "What if the scan is unclear?", a: "Try better lighting, take a clearer photo, avoid shadows, and capture the prescription flat on a surface." },
+    { q: "Can healthcare workers use RxLens in outreach?", a: "Yes. RxLens includes healthcare worker workflows designed for multilingual patient communication and simplified medication guidance." },
+  ],
+  Hindi: [
+    { q: "क्या RxLens डॉक्टरों का विकल्प है?", a: "नहीं। RxLens एक सहायक व्याख्या मंच है। सभी दवा संबंधी जानकारी को एक लाइसेंस प्राप्त स्वास्थ्य सेवा पेशेवर द्वारा सत्यापित किया जाना चाहिए।" },
+    { q: "क्या RxLens हस्तलिखित पर्चे पढ़ सकता है?", a: "हाँ। RxLens हस्तलिखित और मुद्रित दोनों पर्चों का समर्थन करता है। अस्पष्ट लिखावट या कम गुणवत्ता वाली छवियों से सटीकता कम हो सकती है।" },
+    { q: "किस प्रकार की फाइलें समर्थित हैं?", a: "RxLens प्रिस्क्रिप्शन छवियों (JPG, PNG, WEBP), पीडीएफ प्रिस्क्रिप्शन और क्लिनिकल दस्तावेज़ अपलोड का समर्थन करता है।" },
+    { q: "RxLens किन भाषाओं का समर्थन करता है?", a: "वर्तमान में अंग्रेजी और हिंदी। भविष्य के अपडेट में अतिरिक्त क्षेत्रीय भाषाओं के समर्थन की योजना है।" },
+    { q: "RxLens किसके लिए डिज़ाइन किया गया है?", a: "मरीजों, देखभाल करने वालों, बुजुर्ग उपयोगकर्ताओं, स्वास्थ्य कार्यकर्ताओं और कम संसाधन वाले बहुभाषी स्वास्थ्य देखभाल सेटिंग्स के लिए।" },
+    { q: "एक्सेसिबिलिटी इनसाइट (सुगमता अंतर्दृष्टि) सुविधा क्या है?", a: "यह प्रिस्क्रिप्शन की जटिलता, चिकित्सा शब्दजाल, संक्षिप्ताक्षरों और पठनीयता का विश्लेषण करता है ताकि यह अनुमान लगाया जा सके कि किसी पर्चे को समझना कितना कठिन हो सकता है।" },
+    { q: "RxLens आत्मविश्वास (confidence) चेतावनियां क्यों दिखाता है?", a: "पर्चे में अस्पष्ट लिखावट या संदिग्ध संक्षिप्ताक्षर हो सकते हैं। आत्मविश्वास संकेतक उन वर्गों की पहचान करने में मदद करते हैं जिन्हें मैन्युअल सत्यापन की आवश्यकता हो सकती है।" },
+    { q: "क्या RxLens मरीज का डेटा सहेजता है?", a: "नहीं। RxLens सामान्य उपयोग के दौरान संवेदनशील रोगी जानकारी को स्थायी रूप से संग्रहीत नहीं करता है।" },
+    { q: "यदि स्कैन अस्पष्ट हो तो क्या करें?", a: "बेहतर रोशनी का प्रयास करें, स्पष्ट फ़ोटो लें, परछाइयों से बचें और प्रिस्क्रिप्शन को समतल सतह पर रखकर कैप्चर करें।" },
+    { q: "क्या स्वास्थ्य कार्यकर्ता आउटरीच में RxLens का उपयोग कर सकते हैं?", a: "हाँ। RxLens में स्वास्थ्य कार्यकर्ता वर्कफ़्लो शामिल हैं जिन्हें बहुभाषी रोगी संचार और सरलीकृत दवा मार्गदर्शन के लिए डिज़ाइन किया गया है।" },
+  ]
+};
 
 function App() {
 
@@ -182,6 +172,9 @@ function App() {
     const saved = localStorage.getItem('rxlens_adherence_log');
     return saved ? JSON.parse(saved) : [];
   });
+  
+  const [faqSearchQuery, setFaqSearchQuery] = useState('');
+  const [openFaqIdx, setOpenFaqIdx] = useState(null);
   
   // Rate Limit Countdown
   const [retryCountdown, setRetryCountdown] = useState(0);
@@ -663,10 +656,10 @@ function App() {
           <button className={`sidebar-item ${activeTab === 'insights' ? 'active' : ''}`} onClick={() => setActiveTab('insights')}>
             <TrendingUp size={20} /> {t.insights || "Reminders & Insights"}
           </button>
+          <button className={`sidebar-item ${activeTab === 'faq' ? 'active' : ''}`} onClick={() => setActiveTab('faq')}>
+            <HelpCircle size={20} /> {t.faq || "FAQ"}
+          </button>
         </div>
-
-        {/* FAQ Section */}
-        <SidebarFAQ />
       </div>
 
 
@@ -1462,6 +1455,117 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
                 if(navigator.share){navigator.share({title:t.share_title,text:msg});}
                 else{navigator.clipboard.writeText(msg);alert(language === 'Hindi' ? 'रिपोर्ट क्लिपबोर्ड पर कॉपी की गई!' : 'Report copied to clipboard!');}
               }}><Share2 size={16}/> {t.share_btn || "Share Report"}</button>
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'faq' && (
+          <motion.div key="faq" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <div className="glass-card" style={{ padding: '2.5rem', marginBottom: '2rem', textAlign: 'center', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', marginBottom: '1rem' }}>
+                <HelpCircle size={28} />
+              </div>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.75rem' }}>
+                {language === 'Hindi' ? "सामान्य प्रश्न (FAQ)" : "Frequently Asked Questions"}
+              </h2>
+              <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+                {language === 'Hindi' ? "RxLens के बारे में त्वरित और स्पष्ट उत्तर प्राप्त करें" : "Find quick, plain-language answers about prescription interpreting, safety checks, and patient profiles."}
+              </p>
+              
+              {/* Search Bar */}
+              <div style={{ position: 'relative', maxWidth: '500px', margin: '0 auto' }}>
+                <input 
+                  type="text" 
+                  value={faqSearchQuery} 
+                  onChange={(e) => setFaqSearchQuery(e.target.value)} 
+                  placeholder={language === 'Hindi' ? "प्रश्न खोजें..." : "Search questions..."} 
+                  style={{ width: '100%', padding: '12px 20px 12px 45px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }}
+                  className="faq-search-input"
+                />
+                <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', opacity: 0.7 }}>🔍</span>
+              </div>
+            </div>
+
+            {/* Accordion List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {(FAQ_DATA[language] || FAQ_DATA.English)
+                .filter(item => 
+                  item.q.toLowerCase().includes(faqSearchQuery.toLowerCase()) || 
+                  item.a.toLowerCase().includes(faqSearchQuery.toLowerCase())
+                )
+                .map((item, idx) => {
+                  const isOpen = openFaqIdx === idx;
+                  return (
+                    <motion.div 
+                      key={idx} 
+                      className="glass-card" 
+                      style={{ 
+                        borderRadius: '16px', 
+                        overflow: 'hidden', 
+                        border: isOpen ? '1px solid var(--primary)' : '1px solid var(--border)',
+                        background: isOpen ? 'var(--card-bg)' : 'rgba(255, 255, 255, 0.01)',
+                        transition: 'border-color 0.2s, background 0.2s'
+                      }}
+                    >
+                      <button
+                        onClick={() => setOpenFaqIdx(isOpen ? null : idx)}
+                        style={{ 
+                          width: '100%', 
+                          background: 'none', 
+                          border: 'none', 
+                          cursor: 'pointer', 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center', 
+                          padding: '18px 24px', 
+                          gap: '16px', 
+                          textAlign: 'left' 
+                        }}
+                      >
+                        <span style={{ fontSize: '1.05rem', fontWeight: 700, color: isOpen ? 'var(--primary)' : 'var(--text-main)', transition: 'color 0.2s' }}>
+                          {item.q}
+                        </span>
+                        <div 
+                          style={{ 
+                            color: 'var(--primary)', 
+                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
+                            transition: 'transform 0.2s ease', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center' 
+                          }}
+                        >
+                          <ChevronDown size={20} />
+                        </div>
+                      </button>
+                      <div 
+                        style={{ 
+                          maxHeight: isOpen ? '300px' : '0', 
+                          overflow: 'hidden', 
+                          transition: 'max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1)' 
+                        }}
+                      >
+                        <div style={{ padding: '0 24px 20px', borderTop: '1px solid rgba(255, 255, 255, 0.02)' }}>
+                          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.65, margin: 0 }}>
+                            {item.a}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+
+              {(FAQ_DATA[language] || FAQ_DATA.English).filter(item => 
+                item.q.toLowerCase().includes(faqSearchQuery.toLowerCase()) || 
+                item.a.toLowerCase().includes(faqSearchQuery.toLowerCase())
+              ).length === 0 && (
+                <div style={{ textAlign: 'center', padding: '3rem', opacity: 0.5 }}>
+                  <HelpCircle size={40} style={{ margin: '0 auto 1rem', display: 'block', opacity: 0.6 }} />
+                  <p style={{ fontSize: '1rem', fontWeight: 500 }}>
+                    {language === 'Hindi' ? "कोई प्रश्न नहीं मिला।" : "No questions found matching your search."}
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

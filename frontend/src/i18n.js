@@ -74,7 +74,8 @@ const i18n = {
     age_placeholder: "Enter age",
     gender: "Gender",
     allergies: "Known Allergies",
-    allergies_placeholder: "e.g. Penicillin, Peanuts"
+    allergies_placeholder: "e.g. Penicillin, Peanuts",
+    faq: "FAQ"
   },
   Hindi: {
     header_title: "प्रिस्क्रिप्शन को समझने योग्य बनाना",
@@ -151,7 +152,8 @@ const i18n = {
     age_placeholder: "आयु दर्ज करें",
     gender: "लिंग",
     allergies: "ज्ञात एलर्जी",
-    allergies_placeholder: "उदा. पेनिसिलिन, मूंगफली"
+    allergies_placeholder: "उदा. पेनिसिलिन, मूंगफली",
+    faq: "सामान्य प्रश्न (FAQ)"
   }
 };
 
