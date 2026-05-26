@@ -85,7 +85,23 @@ DEMO_DATA = {
             "Official drug monographs (e.g., FDA, EMA, BNF), Clinical pharmacology textbooks (e.g., Goodman & Gilman's The Pharmacological Basis of Therapeutics), MedlinePlus, Mayo Clinic"
         ]
     },
-    "environmental": {},
+    "environmental": {
+        "overall_impact": "High",
+        "drug_impacts": [
+            {
+                "drug": "Tamsulosin",
+                "impact": "Low",
+                "reason": "Highly specific alpha-blocker; minimal persistent biological footprint in public waterways.",
+                "disposal": "Dispose via standard pharmaceutical take-back programs."
+            },
+            {
+                "drug": "Cefpodoxime (Rovcef)",
+                "impact": "High",
+                "reason": "Cephalosporin antibiotic. Environmental discharge of antibiotics contributes directly to bacterial mutation and global antimicrobial resistance (AMR).",
+                "disposal": "Never flush unused suspension or tablets down the drain. Return to a licensed pharmacy for safe incineration."
+            }
+        ]
+    },
     "is_demo_fallback": True,
     "_pipeline": "demo"
 }
@@ -342,9 +358,18 @@ async def extract_prescription(
 
         # Run Safety & Finalize
         drugs = parsed.get("drugs_list", [])
-        safety = _run_safety(drugs, profile_data, lang)
-        parsed["safety_alerts"] = safety["alerts"]
-        parsed["polypharmacy_notes"] = safety["polypharmacy_notes"]
+        try:
+            from src.safety_engine import analyze_safety
+            safety = analyze_safety(drugs, profile_data, parsed.get("drugs_dosage"))
+            parsed["safety_alerts"] = safety.get("alerts", [])
+            parsed["polypharmacy_notes"] = safety.get("polypharmacy_notes", [])
+            parsed["environmental"] = safety.get("environmental", {})
+        except Exception as e:
+            logger.warning(f"Failed to run advanced safety engine: {e}")
+            safety = _run_safety(drugs, profile_data, lang)
+            parsed["safety_alerts"] = safety["alerts"]
+            parsed["polypharmacy_notes"] = safety["polypharmacy_notes"]
+            parsed["environmental"] = safety["environmental"]
         
         summary = _make_summary(parsed, lang)
         

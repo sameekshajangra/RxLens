@@ -913,21 +913,100 @@ function App() {
                           </p>
                           
                           {audioUrl && (
-                            <div className="premium-audio-player" style={{ marginTop: '20px', padding: '15px', background: 'rgba(13, 148, 136, 0.05)', borderRadius: '16px', border: '1px solid rgba(13, 148, 136, 0.2)' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: '0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <Volume2 size={18} color="var(--primary)" /> 🎧 {t.audio_guide || "Patient Voice Playback"}
-                                </p>
-                              </div>
-                              <AudioPlayer
+                            <div className="premium-audio-player" style={{ marginTop: '20px', padding: '16px', background: 'rgba(13, 148, 136, 0.04)', borderRadius: '16px', border: '1px solid rgba(13, 148, 136, 0.15)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              <audio
                                 ref={audioRef}
-                                autoPlay={false}
                                 src={audioUrl}
-                                showJumpControls={false}
-                                customAdditionalControls={[]}
-                                customVolumeControls={[]}
-                                style={{ boxShadow: 'none', background: 'transparent' }}
+                                preload="metadata"
+                                onPlay={() => setAudioPlaying(true)}
+                                onPause={() => setAudioPlaying(false)}
+                                onTimeUpdate={(e) => setAudioCurrentTime(e.target.currentTime)}
+                                onDurationChange={(e) => setAudioDuration(e.target.duration)}
+                                onEnded={() => setAudioPlaying(false)}
                               />
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <Volume2 size={16} /> 🎧 {language === 'Hindi' ? "रोगी आवाज प्लेबैक (Bilingual Audio)" : "Patient Voice Playback (Bilingual Audio)"}
+                                </span>
+                                
+                                {/* Playback speed selector */}
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Speed:</span>
+                                  {[1, 1.25, 1.5, 2].map((rate) => (
+                                    <button
+                                      key={rate}
+                                      onClick={() => changePlaybackRate(rate)}
+                                      style={{
+                                        padding: '3px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 800,
+                                        border: rate === playbackRate ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.08)',
+                                        background: rate === playbackRate ? 'var(--primary)' : '#ffffff',
+                                        color: rate === playbackRate ? '#ffffff' : 'var(--text-main)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                      }}
+                                    >
+                                      {rate}x
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Progress bar and moving traveling icon */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <button
+                                  onClick={togglePlayPause}
+                                  style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '50%',
+                                    background: 'var(--primary)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 10px rgba(13, 148, 136, 0.2)',
+                                    transition: 'all 0.2s',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  {audioPlaying ? <Pause size={16} fill="#ffffff" /> : <Play size={16} fill="#ffffff" style={{ marginLeft: '2px' }} />}
+                                </button>
+
+                                {/* The progress track with traveling moving icon */}
+                                <div 
+                                  style={{ flex: 1, position: 'relative', height: '8px', background: 'rgba(13, 148, 136, 0.1)', borderRadius: '4px', cursor: 'pointer' }} 
+                                  onClick={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const clickX = e.clientX - rect.left;
+                                    const pct = clickX / rect.width;
+                                    if (audioRef.current && audioDuration) {
+                                      audioRef.current.currentTime = pct * audioDuration;
+                                    }
+                                  }}
+                                >
+                                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(audioCurrentTime / (audioDuration || 1)) * 100}%`, background: 'var(--primary)', borderRadius: '4px' }}></div>
+                                  <div style={{
+                                    position: 'absolute',
+                                    top: '-10px',
+                                    left: `calc(${(audioCurrentTime / (audioDuration || 1)) * 100}% - 14px)`,
+                                    fontSize: '1.4rem',
+                                    lineHeight: 1,
+                                    transition: audioPlaying ? 'none' : 'left 0.1s ease',
+                                    cursor: 'grab'
+                                  }}>
+                                    🎧
+                                  </div>
+                                </div>
+
+                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', minWidth: '70px', textAlign: 'right' }}>
+                                  {formatTime(audioCurrentTime)} / {formatTime(audioDuration || 0)}
+                                </span>
+                              </div>
                             </div>
                           )}
 
@@ -1298,6 +1377,74 @@ function App() {
                                     </tbody>
                                   </table>
                                 </div>
+
+                                {/* Healthcare Worker Advanced Clinical Features */}
+                                <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                  
+                                  {/* Polypharmacy Assistant */}
+                                  {(result?.data?.polypharmacy_notes && safeArray(result.data.polypharmacy_notes).length > 0) && (
+                                    <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
+                                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 12px 0', color: '#8b5cf6', fontSize: '0.95rem', fontWeight: 700 }}>
+                                        <BriefcaseMedical size={18} /> Polypharmacy Assistant
+                                      </h4>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        {safeArray(result.data.polypharmacy_notes).map((note, idx) => {
+                                          const isStr = typeof note === 'string';
+                                          const topic = isStr ? null : note.topic;
+                                          const text = isStr ? note : note.note;
+                                          return (
+                                            <div key={idx} style={{ padding: '12px', background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
+                                              {topic && <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#6d28d9', marginBottom: '4px' }}>{topic}</div>}
+                                              <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{text}</div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Hallucination Safeguards */}
+                                  <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                                    <h4 style={{ fontSize: '0.95rem', color: 'var(--danger)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', fontWeight: 700 }}>
+                                      <AlertTriangle size={18} /> AI Hallucination Safeguards
+                                    </h4>
+                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5', margin: 0 }}>
+                                      AI Hallucination Safeguard: This analysis is powered by advanced clinical vision AI. To eliminate any risk of AI hallucinations or transcription anomalies, all extracted dosages, durations, and safety guidelines MUST be cross-verified with a licensed pharmacist or physician before clinical administration.
+                                    </p>
+                                  </div>
+
+                                  {/* Green Pharmacy Score */}
+                                  {result.data.environmental && safeArray(result.data.environmental.drug_impacts).length > 0 && (
+                                    <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.15)' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: '#16a34a', margin: 0 }}>
+                                          <Leaf size={18} /> Green Pharmacy Score & Impact
+                                        </h4>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 8px', borderRadius: '12px', 
+                                          background: result.data.environmental.overall_impact === 'Critical' ? '#fee2e2' : result.data.environmental.overall_impact === 'High' ? '#ffedd5' : '#dcfce3',
+                                          color: result.data.environmental.overall_impact === 'Critical' ? '#ef4444' : result.data.environmental.overall_impact === 'High' ? '#f97316' : '#22c55e'
+                                        }}>
+                                          {result.data.environmental.overall_impact} Impact
+                                        </span>
+                                      </div>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        {safeArray(result.data.environmental.drug_impacts).map((env, idx) => (
+                                          <div key={idx} style={{ padding: '12px', background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                              <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#15803d' }}>{env.drug}</span>
+                                              <span style={{ fontSize: '0.75rem', color: env.impact === 'Critical' ? '#ef4444' : env.impact === 'High' ? '#f97316' : '#22c55e', fontWeight: 600 }}>{env.impact}</span>
+                                            </div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-main)', marginBottom: '6px' }}>{env.reason}</div>
+                                            <div style={{ fontSize: '0.75rem', color: '#166534', display: 'flex', alignItems: 'flex-start', gap: '4px', background: '#f0fdf4', padding: '6px', borderRadius: '4px' }}>
+                                              <Recycle size={12} style={{ marginTop: '2px', flexShrink: 0 }} /> {env.disposal}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                </div>
                               </>
                             )}
 
@@ -1388,26 +1535,24 @@ function App() {
                     </div>
                   )}
 
-                  {!isSimpleMode && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
-                      <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                        <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary)' }} onClick={() => downloadPDF()}>
-                          <Download size={16} /> {t.pdf_report}
-                        </button>
-                        <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', borderColor: '#25D366' }} onClick={() => window.open(getWhatsAppShareLink(), '_blank')}>
-                          <Share2 size={16} /> {t.share_whatsapp}
-                        </button>
-                      </div>
-                      <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                        <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => window.print()}>
-                          <Printer size={16} /> {t.print_instructions}
-                        </button>
-                        <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowChat(true)}>
-                          <MessageCircle size={16} /> {t.chat_assistant || "Chat Assistant"}
-                        </button>
-                      </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
+                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                      <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary)' }} onClick={() => downloadPDF()}>
+                        <Download size={16} /> {t.pdf_report}
+                      </button>
+                      <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', borderColor: '#25D366' }} onClick={() => window.open(getWhatsAppShareLink(), '_blank')}>
+                        <Share2 size={16} /> {t.share_whatsapp}
+                      </button>
                     </div>
-                  )}
+                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                      <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => window.print()}>
+                        <Printer size={16} /> {t.print_instructions}
+                      </button>
+                      <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowChat(true)}>
+                        <MessageCircle size={16} /> {t.chat_assistant || "Chat Assistant"}
+                      </button>
+                    </div>
+                  </div>
                   
                   {(userMode === 'patient' && !isSimpleMode) && (
                     <ComprehensionCheck t={t} onReview={() => {
