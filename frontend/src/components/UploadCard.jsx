@@ -75,9 +75,9 @@ export default function UploadCard({
     return (
       <div className="bg-teal-50 border border-teal-500 rounded-3xl p-8 text-center shadow-sm">
         <Timer size={48} className="mx-auto mb-4 text-teal-600 animate-[spin_3s_linear_infinite]" />
-        <h3 className="text-xl font-bold text-teal-600 mb-2">Daily Limit Reached</h3>
+        <h3 className="text-xl font-bold text-teal-600 mb-2">{t.limit_reached || "Daily Limit Reached"}</h3>
         <p className="text-4xl font-extrabold text-teal-700 my-4">{retryCountdown}s</p>
-        <p className="text-sm text-slate-500">The AI is recharging. Please try again when the timer hits zero or tomorrow.</p>
+        <p className="text-sm text-slate-500">{t.limit_desc || "The AI is recharging. Please try again when the timer hits zero or tomorrow."}</p>
       </div>
     );
   }
@@ -87,11 +87,12 @@ export default function UploadCard({
       {/* Hero Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-3 tracking-tight">
-          Making healthcare instructions <span className="text-teal-600">easy to understand</span>
+          {t.hero_title || "Making healthcare instructions"}{" "}
+          <span className="text-teal-600">{t.hero_title_accent || "easy to understand"}</span>
         </h2>
         {/* Smaller tagline font */}
         <p className="text-slate-500 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-          Upload any prescription, discharge summary, or medical document to get an accessible, plain-language breakdown instantly.
+          {t.hero_subtitle || "Upload any prescription, discharge summary, or medical document to get an accessible, plain-language breakdown instantly."}
         </p>
       </div>
 
@@ -100,7 +101,9 @@ export default function UploadCard({
         {/* Step 1 */}
         <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-2xl shadow-sm">📄</div>
-          <span className="text-xs font-semibold text-slate-500 text-center leading-tight">Upload Document</span>
+          <span className="text-xs font-semibold text-slate-500 text-center leading-tight">
+            {t.step_upload || "Upload Document"}
+          </span>
         </div>
         {/* Arrow */}
         <div className="flex items-center justify-center text-teal-300 flex-shrink-0 mb-5">
@@ -109,7 +112,9 @@ export default function UploadCard({
         {/* Step 2 */}
         <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-2xl shadow-sm">🤖</div>
-          <span className="text-xs font-semibold text-slate-500 text-center leading-tight">AI Analyzes</span>
+          <span className="text-xs font-semibold text-slate-500 text-center leading-tight">
+            {t.step_analyze || "AI Analyzes"}
+          </span>
         </div>
         {/* Arrow */}
         <div className="flex items-center justify-center text-teal-300 flex-shrink-0 mb-5">
@@ -118,7 +123,9 @@ export default function UploadCard({
         {/* Step 3 */}
         <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-2xl shadow-sm">✅</div>
-          <span className="text-xs font-semibold text-slate-500 text-center leading-tight">Safety Check</span>
+          <span className="text-xs font-semibold text-slate-500 text-center leading-tight">
+            {t.step_safety || "Safety Check"}
+          </span>
         </div>
         {/* Arrow */}
         <div className="flex items-center justify-center text-teal-300 flex-shrink-0 mb-5">
@@ -127,7 +134,9 @@ export default function UploadCard({
         {/* Step 4 */}
         <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-2xl shadow-sm">💊</div>
-          <span className="text-xs font-semibold text-slate-500 text-center leading-tight">Plain-Language Breakdown</span>
+          <span className="text-xs font-semibold text-slate-500 text-center leading-tight">
+            {t.step_breakdown || "Plain-Language Breakdown"}
+          </span>
         </div>
       </div>
 
@@ -138,10 +147,17 @@ export default function UploadCard({
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <div className="mb-14">
-          <Upload size={56} className="mx-auto text-teal-600 mb-8 opacity-90" />
-          <h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-6">{t.add_doc || "Add Clinical Document"}</h3>
-          <p className="text-slate-500 text-base">{t.upload_desc || "Upload a prescription or take a photo instantly"}</p>
+        {/* Enforced with an explicit inline style style={{ marginBottom: '8rem' }} to guarantee generous space regardless of CSS cache/overrides */}
+        <div className="mb-24" style={{ marginBottom: '8rem' }}>
+          <Upload size={56} className="mx-auto text-teal-600 opacity-90" style={{ marginBottom: '2rem' }} />
+          {/* Made the text smaller (text-xl md:text-2xl) and adjusted margin bottom */}
+          <h3 className="text-xl md:text-2xl font-bold text-slate-800" style={{ marginBottom: '1.25rem' }}>
+            {t.add_doc || "Add Clinical Document"}
+          </h3>
+          {/* Made the text smaller (text-xs md:text-sm) and centered it cleanly */}
+          <p className="text-slate-500 text-xs md:text-sm max-w-md mx-auto leading-relaxed">
+            {t.upload_desc || "Upload a prescription or take a photo instantly"}
+          </p>
         </div>
 
         {/* Action buttons — increased gap between rows and columns */}
@@ -173,8 +189,11 @@ export default function UploadCard({
 
         {/* Trust Indicators — more vertical spacing between rows */}
         <div className="flex flex-col gap-4 items-center justify-center text-xs md:text-sm text-slate-400 font-medium pt-8 border-t border-slate-100">
-          <p>Supported formats: JPG, PNG, WEBP, PDF</p>
-          <p className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-500 opacity-80"></span> Your data is analyzed securely and not stored permanently.</p>
+          <p>{t.supported_formats || "Supported formats: JPG, PNG, WEBP, PDF"}</p>
+          <p className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-teal-500 opacity-80"></span>{" "}
+            {t.privacy_note || "Your data is analyzed securely and not stored permanently."}
+          </p>
         </div>
 
         <input 

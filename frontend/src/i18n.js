@@ -75,7 +75,25 @@ const i18n = {
     gender: "Gender",
     allergies: "Known Allergies",
     allergies_placeholder: "e.g. Penicillin, Peanuts",
-    faq: "FAQ"
+    faq: "FAQ",
+    input_doc: "Clinical Document Input",
+    hero_title: "Making healthcare instructions",
+    hero_title_accent: "easy to understand",
+    hero_subtitle: "Upload any prescription, discharge summary, or medical document to get an accessible, plain-language breakdown instantly.",
+    step_upload: "Upload Document",
+    step_analyze: "AI Analyzes",
+    step_safety: "Safety Check",
+    step_breakdown: "Plain-Language Breakdown",
+    supported_formats: "Supported formats: JPG, PNG, WEBP, PDF",
+    privacy_note: "Your data is analyzed securely and not stored permanently.",
+    limit_reached: "Daily Limit Reached",
+    limit_desc: "The AI is recharging. Please try again when the timer hits zero or tomorrow.",
+    patient_profile: "Patient Profile",
+    clinical_profile: "Clinical Profile",
+    reset_profile: "Reset Profile",
+    weight: "Weight",
+    weight_placeholder: "kg",
+    guard_active: "AI Safety Guard Active"
   },
   Hindi: {
     header_title: "प्रिस्क्रिप्शन को समझने योग्य बनाना",
@@ -153,7 +171,25 @@ const i18n = {
     gender: "लिंग",
     allergies: "ज्ञात एलर्जी",
     allergies_placeholder: "उदा. पेनिसिलिन, मूंगफली",
-    faq: "सामान्य प्रश्न (FAQ)"
+    faq: "सामान्य प्रश्न (FAQ)",
+    input_doc: "नैदानिक दस्तावेज़ इनपुट",
+    hero_title: "स्वास्थ्य संबंधी निर्देशों को",
+    hero_title_accent: "समझना आसान बनाना",
+    hero_subtitle: "एक सुलभ, सरल भाषा में त्वरित विश्लेषण प्राप्त करने के लिए कोई भी प्रिस्क्रिप्शन, डिस्चार्ज सारांश या मेडिकल दस्तावेज़ अपलोड करें।",
+    step_upload: "दस्तावेज़ अपलोड करें",
+    step_analyze: "एआई विश्लेषण",
+    step_safety: "सुरक्षा जांच",
+    step_breakdown: "सरल भाषा में विवरण",
+    supported_formats: "समर्थित प्रारूप: JPG, PNG, WEBP, PDF",
+    privacy_note: "आपका डेटा सुरक्षित रूप से विश्लेषण किया जाता है और स्थायी रूप से संग्रहीत नहीं किया जाता है।",
+    limit_reached: "दैनिक सीमा समाप्त",
+    limit_desc: "एआई रिचार्ज हो रहा है। कृपया टाइमर शून्य होने पर या कल पुनः प्रयास करें।",
+    patient_profile: "रोगी प्रोफ़ाइल",
+    clinical_profile: "क्लीनिकल प्रोफ़ाइल",
+    reset_profile: "प्रोफ़ाइल रीसेट करें",
+    weight: "वजन",
+    weight_placeholder: "किग्रा",
+    guard_active: "एआई सुरक्षा गार्ड सक्रिय"
   }
 };
 

@@ -1468,31 +1468,14 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
               <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.75rem' }}>
                 {language === 'Hindi' ? "सामान्य प्रश्न (FAQ)" : "Frequently Asked Questions"}
               </h2>
-              <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+              <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.5 }}>
                 {language === 'Hindi' ? "RxLens के बारे में त्वरित और स्पष्ट उत्तर प्राप्त करें" : "Find quick, plain-language answers about prescription interpreting, safety checks, and patient profiles."}
               </p>
-              
-              {/* Search Bar */}
-              <div style={{ position: 'relative', maxWidth: '500px', margin: '0 auto' }}>
-                <input 
-                  type="text" 
-                  value={faqSearchQuery} 
-                  onChange={(e) => setFaqSearchQuery(e.target.value)} 
-                  placeholder={language === 'Hindi' ? "प्रश्न खोजें..." : "Search questions..."} 
-                  style={{ width: '100%', padding: '12px 20px 12px 45px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }}
-                  className="faq-search-input"
-                />
-                <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', opacity: 0.7 }}>🔍</span>
-              </div>
             </div>
 
             {/* Accordion List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {(FAQ_DATA[language] || FAQ_DATA.English)
-                .filter(item => 
-                  item.q.toLowerCase().includes(faqSearchQuery.toLowerCase()) || 
-                  item.a.toLowerCase().includes(faqSearchQuery.toLowerCase())
-                )
                 .map((item, idx) => {
                   const isOpen = openFaqIdx === idx;
                   return (
@@ -1554,18 +1537,6 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
                     </motion.div>
                   );
                 })}
-
-              {(FAQ_DATA[language] || FAQ_DATA.English).filter(item => 
-                item.q.toLowerCase().includes(faqSearchQuery.toLowerCase()) || 
-                item.a.toLowerCase().includes(faqSearchQuery.toLowerCase())
-              ).length === 0 && (
-                <div style={{ textAlign: 'center', padding: '3rem', opacity: 0.5 }}>
-                  <HelpCircle size={40} style={{ margin: '0 auto 1rem', display: 'block', opacity: 0.6 }} />
-                  <p style={{ fontSize: '1rem', fontWeight: 500 }}>
-                    {language === 'Hindi' ? "कोई प्रश्न नहीं मिला।" : "No questions found matching your search."}
-                  </p>
-                </div>
-              )}
             </div>
           </motion.div>
         )}
