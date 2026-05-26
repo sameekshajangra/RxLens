@@ -98,7 +98,9 @@ function App() {
   const [activeTab, setActiveTab] = useState('scanner');
   const [historySortOrder, setHistorySortOrder] = useState("newest");
 
-  
+  // Audio state — declared BEFORE the useEffect that depends on it
+  const [audioUrl, setAudioUrl] = useState(null);
+
   // Bespoke Audio Player State & Effects
   const audioRef = useRef(null);
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -173,7 +175,7 @@ function App() {
   const [loadingStatus, setLoadingStatus] = useState('Analyzing...');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  const [audioUrl, setAudioUrl] = useState(null);
+
   const [showCamera, setShowCamera] = useState(false);
   const [comprehensionStatus, setComprehensionStatus] = useState(null);
   const [history, setHistory] = useState(() => {
