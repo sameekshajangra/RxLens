@@ -86,21 +86,9 @@ DEMO_DATA = {
         ]
     },
     "environmental": {
-        "overall_impact": "High",
-        "drug_impacts": [
-            {
-                "drug": "Tamsulosin",
-                "impact": "Low",
-                "reason": "Highly specific alpha-blocker; minimal persistent biological footprint in public waterways.",
-                "disposal": "Dispose via standard pharmaceutical take-back programs."
-            },
-            {
-                "drug": "Cefpodoxime (Rovcef)",
-                "impact": "High",
-                "reason": "Cephalosporin antibiotic. Environmental discharge of antibiotics contributes directly to bacterial mutation and global antimicrobial resistance (AMR).",
-                "disposal": "Never flush unused suspension or tablets down the drain. Return to a licensed pharmacy for safe incineration."
-            }
-        ]
+        "score": "Moderate Impact",
+        "footprint": "Cefpodoxime contributes to antimicrobial resistance if disposed improperly. Tamsulosin has moderate aquatic toxicity.",
+        "disposal": "Do not flush down the toilet. Return unused antibiotics to a pharmacy take-back program to prevent environmental contamination."
     },
     "is_demo_fallback": True,
     "_pipeline": "demo"
@@ -284,8 +272,8 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Model Cascade: Lite is much faster, avoiding Vercel's strict 10s timeout on Hobby plan
-    models = ["gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
+    # Model Cascade
+    models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest", "gemini-2.0-flash-lite"]
     last_err = None
 
     for model in models:
@@ -358,18 +346,9 @@ async def extract_prescription(
 
         # Run Safety & Finalize
         drugs = parsed.get("drugs_list", [])
-        try:
-            from src.safety_engine import analyze_safety
-            safety = analyze_safety(drugs, profile_data, parsed.get("drugs_dosage"))
-            parsed["safety_alerts"] = safety.get("alerts", [])
-            parsed["polypharmacy_notes"] = safety.get("polypharmacy_notes", [])
-            parsed["environmental"] = safety.get("environmental", {})
-        except Exception as e:
-            logger.warning(f"Failed to run advanced safety engine: {e}")
-            safety = _run_safety(drugs, profile_data, lang)
-            parsed["safety_alerts"] = safety["alerts"]
-            parsed["polypharmacy_notes"] = safety["polypharmacy_notes"]
-            parsed["environmental"] = safety["environmental"]
+        safety = _run_safety(drugs, profile_data, lang)
+        parsed["safety_alerts"] = safety["alerts"]
+        parsed["polypharmacy_notes"] = safety["polypharmacy_notes"]
         
         summary = _make_summary(parsed, lang)
         

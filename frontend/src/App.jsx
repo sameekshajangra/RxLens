@@ -63,8 +63,7 @@ import MedicineTimeline from './components/MedicineTimeline';
 import './index.css';
 import i18n from './i18n';
 import html2pdf from 'html2pdf.js';
-import AudioPlayer from 'react-h5-audio-player';
-import 'react-h5-audio-player/lib/styles.css';
+
 
 // ── FAQ Data ─────────────────────────────────────────────────────────────────
 const FAQ_DATA = {
@@ -92,13 +91,6 @@ const FAQ_DATA = {
     { q: "यदि स्कैन अस्पष्ट हो तो क्या करें?", a: "बेहतर रोशनी का प्रयास करें, स्पष्ट फ़ोटो लें, परछाइयों से बचें और प्रिस्क्रिप्शन को समतल सतह पर रखकर कैप्चर करें।" },
     { q: "क्या स्वास्थ्य कार्यकर्ता आउटरीच में RxLens का उपयोग कर सकते हैं?", a: "हाँ। RxLens में स्वास्थ्य कार्यकर्ता वर्कफ़्लो शामिल हैं जिन्हें बहुभाषी रोगी संचार और सरलीकृत दवा मार्गदर्शन के लिए डिज़ाइन किया गया है।" },
   ]
-};
-
-const formatTime = (time) => {
-  if (!time || isNaN(time) || time === Infinity) return "0:00";
-  const mins = Math.floor(time / 60);
-  const secs = Math.floor(time % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
 function App() {
@@ -365,9 +357,7 @@ function App() {
     formData.append('lang', language);
     formData.append('patient_profile', JSON.stringify(patientProfile));
     formData.append('explanation_level', explanationLevel);
-    if (apiKey) {
-      formData.append('api_key', apiKey);
-    }
+    formData.append('lang', language);
 
     try {
       const res = await axios.post('/api/extract', formData, { timeout: 120000 });
@@ -437,7 +427,6 @@ function App() {
       }
 
     } catch (err) {
-      console.error('Scan error:', err);
       if (err.response?.status === 429 || (err.response?.data?.detail && (err.response.data.detail.includes('Quota') || err.response.data.detail.includes('exhausted')))) {
         setError(err.response.data.detail || 'Daily Quota Reached.');
         setRetryCountdown(60);
@@ -445,7 +434,7 @@ function App() {
         setError('⚡ AI model is temporarily busy due to high demand. All fallback models were tried. Please wait a moment and try again.');
         setRetryCountdown(30);
       } else {
-        setError(err.response?.data?.detail || err.message || 'Failed to parse prescription.');
+        setError(err.response?.data?.detail || 'Failed to parse prescription.');
       }
     } finally {
       setLoading(false);
@@ -921,75 +910,24 @@ function App() {
                           <p style={{ lineHeight: '1.6', color: 'var(--text-main)', fontSize: explanationLevel === 'simple' ? '1.15rem' : '1.05rem', fontWeight: 500, margin: 0 }}>
                             {result.summary}
                           </p>
-
-                          {isSimpleMode && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
-                              <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                                <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary)' }} onClick={() => downloadPDF()}>
-                                  <Download size={16} /> {t.pdf_report}
-                                </button>
-                                <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', borderColor: '#25D366' }} onClick={() => window.open(getWhatsAppShareLink(), '_blank')}>
-                                  <Share2 size={16} /> {t.share_whatsapp}
-                                </button>
-                              </div>
-                              <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                                <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => window.print()}>
-                                  <Printer size={16} /> {t.print_instructions}
-                                </button>
-                                <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowChat(true)}>
-                                  <MessageCircle size={16} /> {t.chat_assistant || "Chat Assistant"}
-                                </button>
-                              </div>
-                            </div>
-                          )}
                           
                           {audioUrl && (
-                            <div className="premium-audio-player" style={{ marginTop: '20px', padding: '16px', background: 'rgba(13, 148, 136, 0.04)', borderRadius: '16px', border: '1px solid rgba(13, 148, 136, 0.15)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                              <audio
-                                key={audioUrl}
-                                ref={audioRef}
-                                src={audioUrl}
-                                preload="auto"
-                                onLoadedMetadata={(e) => {
-                                  if (e.target.duration === Infinity || isNaN(e.target.duration)) {
-                                    e.target.currentTime = 1e101;
-                                    e.target.ontimeupdate = () => {
-                                      e.target.ontimeupdate = (evt) => setAudioCurrentTime(evt.target.currentTime);
-                                      e.target.currentTime = 0;
-                                      setAudioDuration(e.target.duration);
-                                    };
-                                  } else {
-                                    setAudioDuration(e.target.duration);
-                                  }
-                                }}
-                                onPlay={() => setAudioPlaying(true)}
-                                onPause={() => setAudioPlaying(false)}
-                                onTimeUpdate={(e) => setAudioCurrentTime(e.target.currentTime)}
-                                onDurationChange={(e) => { if (e.target.duration !== Infinity) setAudioDuration(e.target.duration); }}
-                                onEnded={() => setAudioPlaying(false)}
-                              />
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <Volume2 size={16} /> 🎧 {language === 'Hindi' ? "रोगी आवाज प्लेबैक (Bilingual Audio)" : "Patient Voice Playback (Bilingual Audio)"}
-                                </span>
-                                
-                                {/* Playback speed selector */}
-                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Speed:</span>
-                                  {[1, 1.25, 1.5, 2].map((rate) => (
-                                    <button
-                                      key={rate}
-                                      onClick={() => changePlaybackRate(rate)}
-                                      style={{
-                                        padding: '3px 8px',
-                                        borderRadius: '6px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 800,
-                                        border: rate === playbackRate ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.08)',
-                                        background: rate === playbackRate ? 'var(--primary)' : '#ffffff',
-                                        color: rate === playbackRate ? '#ffffff' : 'var(--text-main)',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
+                            <div className="premium-audio-player" style={{ marginTop: '20px', padding: '15px', background: 'rgba(13, 148, 136, 0.05)', borderRadius: '16px', border: '1px solid rgba(13, 148, 136, 0.2)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: '0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Volume2 size={18} color="var(--primary)" /> 🎧 रोगी आवाज प्लेबैक (Bilingual Audio)
+                                </p>
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  {[1, 1.25, 1.5, 2].map(rate => (
+                                    <button 
+                                      key={rate} 
+                                      onClick={(e) => { e.stopPropagation(); changePlaybackRate(rate); }}
+                                      style={{ 
+                                        padding: '4px 8px', fontSize: '0.75rem', fontWeight: 700, borderRadius: '6px', 
+                                        border: playbackRate === rate ? '1px solid var(--primary)' : '1px solid var(--border)',
+                                        background: playbackRate === rate ? 'var(--primary)' : '#fff',
+                                        color: playbackRate === rate ? '#fff' : 'var(--text-main)',
+                                        cursor: 'pointer'
                                       }}
                                     >
                                       {rate}x
@@ -997,60 +935,36 @@ function App() {
                                   ))}
                                 </div>
                               </div>
-
-                              {/* Progress bar and moving traveling icon */}
+                              
                               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <button
-                                  onClick={togglePlayPause}
-                                  style={{
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '50%',
-                                    background: 'var(--primary)',
-                                    color: '#ffffff',
-                                    border: 'none',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 10px rgba(13, 148, 136, 0.2)',
-                                    transition: 'all 0.2s',
-                                    flexShrink: 0
-                                  }}
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
+                                  style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
                                 >
-                                  {audioPlaying ? <Pause size={16} fill="#ffffff" /> : <Play size={16} fill="#ffffff" style={{ marginLeft: '2px' }} />}
+                                  {audioPlaying ? <Pause size={20} /> : <Play size={20} style={{ marginLeft: '2px' }} />}
                                 </button>
-
-                                {/* The progress track with traveling moving icon */}
+                                
                                 <div 
-                                  style={{ flex: 1, position: 'relative', height: '8px', background: 'rgba(13, 148, 136, 0.1)', borderRadius: '4px', cursor: 'pointer' }} 
+                                  style={{ flex: 1, height: '8px', background: 'rgba(13, 148, 136, 0.15)', borderRadius: '4px', position: 'relative', cursor: 'pointer' }}
                                   onClick={(e) => {
+                                    if (!audioRef.current || !audioDuration) return;
                                     const rect = e.currentTarget.getBoundingClientRect();
-                                    const clickX = e.clientX - rect.left;
-                                    const pct = clickX / rect.width;
-                                    if (audioRef.current && audioDuration) {
-                                      audioRef.current.currentTime = pct * audioDuration;
-                                    }
+                                    const pos = (e.clientX - rect.left) / rect.width;
+                                    audioRef.current.currentTime = pos * audioDuration;
                                   }}
                                 >
-                                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(audioCurrentTime / (audioDuration || 1)) * 100}%`, background: 'var(--primary)', borderRadius: '4px' }}></div>
-                                  <div style={{
-                                    position: 'absolute',
-                                    top: '-10px',
-                                    left: `calc(${((audioCurrentTime / (audioDuration || 1)) * 100) || 0}% - 14px)`,
-                                    fontSize: '1.4rem',
-                                    lineHeight: 1,
-                                    transition: audioPlaying ? 'none' : 'left 0.1s ease',
-                                    cursor: 'grab'
-                                  }}>
+                                  <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${audioDuration ? (audioCurrentTime / audioDuration) * 100 : 0}%`, background: 'var(--primary)', borderRadius: '4px' }}></div>
+                                  <div style={{ position: 'absolute', top: '50%', left: `${audioDuration ? (audioCurrentTime / audioDuration) * 100 : 0}%`, transform: 'translate(-50%, -50%)', fontSize: '1.2rem', transition: 'left 0.1s linear', pointerEvents: 'none' }}>
                                     🎧
                                   </div>
                                 </div>
-
-                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', minWidth: '70px', textAlign: 'right' }}>
-                                  {formatTime(audioCurrentTime)} / {formatTime(audioDuration || 0)}
-                                </span>
+                                
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, minWidth: '45px', textAlign: 'right' }}>
+                                  {Math.floor(audioCurrentTime / 60)}:{(Math.floor(audioCurrentTime % 60)).toString().padStart(2, '0')}
+                                </div>
                               </div>
+                              
+                              <audio ref={audioRef} src={audioUrl} style={{ display: 'none' }} />
                             </div>
                           )}
 
@@ -1424,73 +1338,6 @@ function App() {
                               </>
                             )}
 
-                            {/* Healthcare Worker Advanced Clinical Features - Rendered unconditionally in Section 5 */}
-                            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                  
-                                  {/* Polypharmacy Assistant */}
-                                  {(result?.data?.polypharmacy_notes && safeArray(result.data.polypharmacy_notes).length > 0) && (
-                                    <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
-                                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 12px 0', color: '#8b5cf6', fontSize: '0.95rem', fontWeight: 700 }}>
-                                        <BriefcaseMedical size={18} /> Polypharmacy Assistant
-                                      </h4>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                        {safeArray(result.data.polypharmacy_notes).map((note, idx) => {
-                                          const isStr = typeof note === 'string';
-                                          const topic = isStr ? null : note.topic;
-                                          const text = isStr ? note : note.note;
-                                          return (
-                                            <div key={idx} style={{ padding: '12px', background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
-                                              {topic && <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#6d28d9', marginBottom: '4px' }}>{topic}</div>}
-                                              <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{text}</div>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Hallucination Safeguards */}
-                                  <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
-                                    <h4 style={{ fontSize: '0.95rem', color: 'var(--danger)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', fontWeight: 700 }}>
-                                      <AlertTriangle size={18} /> AI Hallucination Safeguards
-                                    </h4>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5', margin: 0 }}>
-                                      AI Hallucination Safeguard: This analysis is powered by advanced clinical vision AI. To eliminate any risk of AI hallucinations or transcription anomalies, all extracted dosages, durations, and safety guidelines MUST be cross-verified with a licensed pharmacist or physician before clinical administration.
-                                    </p>
-                                  </div>
-
-                                  {/* Green Pharmacy Score */}
-                                  {result.data.environmental && safeArray(result.data.environmental.drug_impacts).length > 0 && (
-                                    <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.15)' }}>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: '#16a34a', margin: 0 }}>
-                                          <Leaf size={18} /> Green Pharmacy Score & Impact
-                                        </h4>
-                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 8px', borderRadius: '12px', 
-                                          background: result.data.environmental.overall_impact === 'Critical' ? '#fee2e2' : result.data.environmental.overall_impact === 'High' ? '#ffedd5' : '#dcfce3',
-                                          color: result.data.environmental.overall_impact === 'Critical' ? '#ef4444' : result.data.environmental.overall_impact === 'High' ? '#f97316' : '#22c55e'
-                                        }}>
-                                          {result.data.environmental.overall_impact} Impact
-                                        </span>
-                                      </div>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                        {safeArray(result.data.environmental.drug_impacts).map((env, idx) => (
-                                          <div key={idx} style={{ padding: '12px', background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                              <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#15803d' }}>{env.drug}</span>
-                                              <span style={{ fontSize: '0.75rem', color: env.impact === 'Critical' ? '#ef4444' : env.impact === 'High' ? '#f97316' : '#22c55e', fontWeight: 600 }}>{env.impact}</span>
-                                            </div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-main)', marginBottom: '6px' }}>{env.reason}</div>
-                                            <div style={{ fontSize: '0.75rem', color: '#166534', display: 'flex', alignItems: 'flex-start', gap: '4px', background: '#f0fdf4', padding: '6px', borderRadius: '4px' }}>
-                                              <Recycle size={12} style={{ marginTop: '2px', flexShrink: 0 }} /> {env.disposal}
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                </div>
                             {/* Detailed Patient Notes card */}
                             {result?.data?.notes && (
                               <div style={{ padding: '16px', borderRadius: '12px', background: '#ffffff', border: '1px solid rgba(0, 0, 0, 0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', marginBottom: '1.5rem' }}>
@@ -1569,6 +1416,49 @@ function App() {
                                     );
                                   })}
                                 </div>
+                              </div>
+                            )}
+
+                            {/* Healthcare Worker Mode Specific Modules */}
+                            {userMode === 'worker' && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '1.5rem', marginTop: '1.5rem' }}>
+                                {/* Polypharmacy Assistant */}
+                                {result?.data?.polypharmacy_notes && safeArray(result.data.polypharmacy_notes).length > 0 && (
+                                  <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(234, 179, 8, 0.05)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+                                    <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#b45309', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <BriefcaseMedical size={18} /> Polypharmacy De-prescribing Assistant
+                                    </div>
+                                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#4b5563', fontSize: '0.88rem', lineHeight: '1.5' }}>
+                                      {safeArray(result.data.polypharmacy_notes).map((note, idx) => (
+                                        <li key={idx} style={{ marginBottom: '6px' }}>{note}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {/* Hallucination Safeguards */}
+                                <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                                  <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#b91c1c', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <ShieldAlert size={18} /> Hallucination Safeguards Warning
+                                  </div>
+                                  <div style={{ fontSize: '0.88rem', color: '#4b5563', lineHeight: '1.5' }}>
+                                    <strong>AI-Generated Content:</strong> This extraction has been generated by an AI model and may contain errors, omissions, or "hallucinations." Always cross-reference extracted dosages and frequencies with the original uploaded prescription and the patient's medical history before making clinical decisions.
+                                  </div>
+                                </div>
+
+                                {/* Green Pharmacy Environmental Score */}
+                                {result?.data?.environmental && Object.keys(result.data.environmental).length > 0 && (
+                                  <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+                                    <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#15803d', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <Leaf size={18} /> Green Pharmacy Environmental Score
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.88rem', color: '#4b5563', lineHeight: '1.5' }}>
+                                      <div><strong>Impact Score:</strong> <span style={{ color: '#15803d', fontWeight: 600 }}>{result.data.environmental.score || 'Unknown'}</span></div>
+                                      <div><strong>Eco-Footprint:</strong> {result.data.environmental.footprint}</div>
+                                      <div><strong>Disposal Guidelines:</strong> {result.data.environmental.disposal}</div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
 
