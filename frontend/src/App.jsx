@@ -953,7 +953,8 @@ function App() {
                     <AnimatePresence>
                       {expandedSection === 'schedule' && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginTop: '1.5rem' }}>
-                          {safeArray(result.data.drugs_list).length > 0 && (
+                          {/* Visual Medication Cards Grid (Hidden in Intermediate Mode) */}
+                          {(safeArray(result.data.drugs_list).length > 0 && !isIntermediateMode) && (
                             <div className="visual-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
                               {safeArray(result.data.drugs_list).map((drug, idx) => {
                                 const dLower = drug.toLowerCase();
@@ -971,6 +972,38 @@ function App() {
                                   </div>
                                 );
                               })}
+                            </div>
+                          )}
+
+                          {/* Structured Medication Table for Detailed Mode */}
+                          {(isDetailedMode && safeArray(result.data.drugs_list).length > 0) && (
+                            <div className="desktop-table-container" style={{ marginBottom: '1.5rem', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', overflowX: 'auto' }}>
+                              <h4 style={{ margin: '0 0 12px 0', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}><Pill size={16} /> Structured Medication Table</h4>
+                              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                                <thead>
+                                  <tr style={{ borderBottom: '1.5px solid var(--border)', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                    <th style={{ padding: '10px' }}>Medication Name</th>
+                                    <th style={{ padding: '10px' }}>Dosage</th>
+                                    <th style={{ padding: '10px' }}>Frequency</th>
+                                    <th style={{ padding: '10px' }}>Duration</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {safeArray(result.data.drugs_list).map((drug, idx) => {
+                                    const dose = result.data.drugs_dosage?.[drug] || result.data.dosage || 'As directed';
+                                    return (
+                                      <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                        <td style={{ padding: '12px 10px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                          <Pill size={14} color="var(--primary)" /> {drug}
+                                        </td>
+                                        <td style={{ padding: '12px 10px' }}>{renderValue(dose)}</td>
+                                        <td style={{ padding: '12px 10px' }}>{renderValue(result.data.frequency || 'As directed')}</td>
+                                        <td style={{ padding: '12px 10px' }}>{renderValue(result.data.duration || 'N/A')}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
                             </div>
                           )}
 
@@ -1083,8 +1116,8 @@ function App() {
                             </div>
                           )}
 
-                          {/* Common Side Effects & Precautions */}
-                          {((explanationLevel === 'standard' || explanationLevel === 'detailed') && (safeArray(result.data.side_effects).length > 0 || safeArray(result.data.precautions).length > 0)) && (
+                          {/* Common Side Effects & Precautions (Intermediate and Detailed modes only) */}
+                          {((isIntermediateMode || isDetailedMode) && (safeArray(result.data.side_effects).length > 0 || safeArray(result.data.precautions).length > 0)) && (
                             <div style={{ marginBottom: '1.5rem', padding: '16px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.03)', border: '1px solid rgba(245, 158, 11, 0.15)' }}>
                               <h4 style={{ margin: '0 0 10px 0', color: '#d97706', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}><ShieldAlert size={16} /> Common Side Effects & Precautions</h4>
                               {safeArray(result.data.side_effects).length > 0 && (
@@ -1106,14 +1139,16 @@ function App() {
                             </div>
                           )}
 
-                          {/* Pharmacist Consult */}
-                          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(14, 165, 233, 0.05)', borderLeft: '4px solid var(--info)', marginBottom: result.data.explainability_sources && (result.data.explainability_sources.instructions || safeArray(result.data.explainability_sources.side_effects).length > 0 || safeArray(result.data.explainability_sources.precautions).length > 0) ? '1.5rem' : '0' }}>
-                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px 0', color: 'var(--info)' }}><Stethoscope size={16} /> Pharmacist Consultation Recommended</h4>
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>{t.pharmacist_desc || "Always consult a certified pharmacist or your primary doctor before changing any medication routines based on these results."}</p>
-                          </div>
+                          {/* Pharmacist Consult (Hidden in Simple Mode) */}
+                          {!isSimpleMode && (
+                            <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(14, 165, 233, 0.05)', borderLeft: '4px solid var(--info)', marginBottom: result.data.explainability_sources && (result.data.explainability_sources.instructions || safeArray(result.data.explainability_sources.side_effects).length > 0 || safeArray(result.data.explainability_sources.precautions).length > 0) ? '1.5rem' : '0' }}>
+                              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px 0', color: 'var(--info)' }}><Stethoscope size={16} /> Pharmacist Consultation Recommended</h4>
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>{t.pharmacist_desc || "Always consult a certified pharmacist or your primary doctor before changing any medication routines based on these results."}</p>
+                            </div>
+                          )}
 
-                          {/* Advice Explainability */}
-                          {result.data.explainability_sources && (result.data.explainability_sources.instructions || safeArray(result.data.explainability_sources.side_effects).length > 0 || safeArray(result.data.explainability_sources.precautions).length > 0) && (
+                          {/* Advice Explainability (Detailed and Worker modes only) */}
+                          {(result.data.explainability_sources && !isSimpleMode && !isIntermediateMode) && (result.data.explainability_sources.instructions || safeArray(result.data.explainability_sources.side_effects).length > 0 || safeArray(result.data.explainability_sources.precautions).length > 0) && (
                             <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.15)', fontSize: '0.9rem' }}>
                               <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary)', margin: 0, marginBottom: '12px' }}>
                                 <Stethoscope size={18} /> {t.advice_explainability_panel || "Advice Explainability Panel"}
@@ -1183,7 +1218,8 @@ function App() {
                               </div>
                             )}
 
-                            {safeArray(result.data.confusing_terms).length > 0 && (
+                            {/* Terminology list (Hidden in Intermediate Mode for simplification) */}
+                            {(safeArray(result.data.confusing_terms).length > 0 && !isIntermediateMode) && (
                               <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.15)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
                                 <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: 700, color: 'var(--info)', margin: 0, marginBottom: '12px' }}>
                                   <Info size={16} /> {t.clinical_terms_simplified}
@@ -1208,8 +1244,9 @@ function App() {
                     </div>
                   )}
 
-                  {/* Section 5: Advanced Analysis */}
-                  <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'advanced' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'advanced' ? '' : 'advanced')}>
+                  {/* Section 5: Advanced Analysis (Detailed and Worker modes only) */}
+                  {(isDetailedMode || isWorkerMode) && (
+                    <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'advanced' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'advanced' ? '' : 'advanced')}>
                       <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Activity size={20} style={{ color: 'var(--primary)' }} /> Advanced Analysis</span>
                         {expandedSection === 'advanced' ? <span style={{fontSize:'0.8rem'}}>▼</span> : <span style={{fontSize:'0.8rem'}}>▶</span>}
@@ -1300,6 +1337,7 @@ function App() {
                         )}
                       </AnimatePresence>
                     </div>
+                  )}
 
                   {!isSimpleMode && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
