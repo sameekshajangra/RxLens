@@ -49,6 +49,11 @@ Medication misinterpretation and poor adherence remain major contributors to pre
 | 🤖 **Clinical Chatbot** | "Ask RxLens" context-aware chatbot allows patients to ask follow-up questions about their specific medications. |
 | 📊 **Insights Analytics** | Interactive Recharts dashboard visualizing the frequency of specific drug classes over the patient's history. |
 | 📄 **PDF Export Engine** | Generates highly structured, clinic-ready tabular reports containing all AI intelligence and safety alerts. |
+| 👤 **Interactive Clinical Profile** | Allows patients to define conditions, allergies, age, gender, and weight to check for direct cross-reactivity and customize AI translation details. |
+| 🛡️ **AI Safety Profile & Guard** | Combines a static, deterministic clinical interaction database (e.g., Aspirin + Warfarin) with patient profile checking to eliminate critical safety hallucination risks. |
+| ⚡ **Tailored Explanation Depths** | Supports custom explanation modes (Simple, Standard, Detailed) for different patient reading comprehensions, as well as specialized Healthcare Worker workflows. |
+| 🤖 **VLM Model Cascading** | Employs built-in backend model cascades (Gemini 2.5 Flash -> Gemini 2.0 Flash -> Gemini Flash Latest) to bypass rate limits and maximize uptime automatically. |
+| 💬 **Comprehension Verification** | Prompts patient feedback loops ("Did you understand when to take this medicine?") to reinforce high-fidelity treatment adherence. |
 
 ---
 

@@ -86,7 +86,7 @@ export default function UploadCard({
     <div className="max-w-3xl mx-auto">
       {/* Hero Header */}
       <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-3 tracking-tight">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-6 tracking-tight">
           {t.hero_title || "Making healthcare instructions"}{" "}
           <span className="text-teal-600">{t.hero_title_accent || "easy to understand"}</span>
         </h2>
@@ -147,11 +147,11 @@ export default function UploadCard({
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        {/* Enforced with an explicit inline style style={{ marginBottom: '4.5rem' }} to guarantee perfect, balanced spacing regardless of CSS cache/overrides */}
-        <div className="mb-16" style={{ marginBottom: '4.5rem' }}>
-          <Upload size={56} className="mx-auto text-teal-600 opacity-90" style={{ marginBottom: '1.75rem' }} />
+        {/* Enforced with an explicit inline style style={{ marginBottom: '3rem' }} to guarantee perfect, tight spacing regardless of CSS cache/overrides */}
+        <div className="mb-12" style={{ marginBottom: '3rem' }}>
+          <Upload size={56} className="mx-auto text-teal-600 opacity-90" style={{ marginBottom: '1.5rem' }} />
           {/* Made the text smaller (text-xl md:text-2xl) and adjusted margin bottom */}
-          <h3 className="text-xl md:text-2xl font-bold text-slate-800" style={{ marginBottom: '1rem' }}>
+          <h3 className="text-xl md:text-2xl font-bold text-slate-800" style={{ marginBottom: '0.75rem' }}>
             {t.add_doc || "Add Clinical Document"}
           </h3>
           {/* Made the text smaller (text-xs md:text-sm) and centered it cleanly */}
