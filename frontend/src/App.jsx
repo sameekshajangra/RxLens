@@ -413,7 +413,7 @@ function App() {
     <div className="app-container">
       <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="header-content">
-          <h1>🩺 RxLens <span>{t.header_title}</span></h1>
+          <h1>🩺 RxLens <span style={{ whiteSpace: "nowrap" }}>{t.header_title}</span></h1>
         </div>
           <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
             <button 
@@ -1142,10 +1142,10 @@ function App() {
                   {/* Pharmacist Consultation Prompt */}
                   <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '4px solid #3b82f6' }}>
                     <h4 style={{ fontSize: '0.85rem', color: '#3b82f6', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase' }}>
-                      <Stethoscope size={16} /> {t.pharmacist_consultation}
+                      <Stethoscope size={16} /> {t.pharmacist_consultation || "Pharmacist Consultation Recommended"}
                     </h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
-                      {t.pharmacist_desc}
+                      {t.pharmacist_desc || "Always consult a certified pharmacist or your primary doctor before changing any medication routines based on these results."}
                     </p>
                   </div>
 

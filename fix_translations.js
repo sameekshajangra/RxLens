@@ -1,0 +1,96 @@
+const fs = require('fs');
+let content = fs.readFileSync('frontend/src/i18n.js', 'utf8');
+
+// Replace everything with a clean dictionary
+const newDict = `export const i18n = {
+  English: {
+    header_title: "Intelligent Prescription Decoder",
+    upload_prescription: "Upload Prescription",
+    take_photo: "Take Photo",
+    capture: "Capture",
+    scanning: "Scanning Image...",
+    analyzing: "Analyzing Prescription...",
+    clinical_summary: "Clinical Summary",
+    schedule_title: "Treatment Schedule",
+    unable_to_identify: "Unable to identify with certainty",
+    please_verify: "Please verify with a pharmacist.",
+    patient_notes: "Patient Notes",
+    ai_safety_profile: "AI Safety Profile",
+    ai_observation: "AI Safety Observation",
+    no_safety_alerts: "No immediate safety alerts detected.",
+    print_report: "Print Report",
+    download_pdf: "Download PDF",
+    whatsapp_share: "Share via WhatsApp",
+    meds_found: "Medications Found",
+    structured_medication_table: "Structured Medication Table",
+    accessibility_complexity_score: "Accessibility & Complexity",
+    clinical_terms_simplified: "Clinical Terms Simplified",
+    means: "means",
+    advice_explainability_panel: "Advice Explainability Panel",
+    ai_hallucination_desc: "This data was AI-extracted. Critical decisions MUST be validated against the original prescription.",
+    
+    // New Keys
+    explanation_level: "Explanation Level",
+    mode_simple: "Simple",
+    mode_standard: "Standard",
+    mode_detailed: "Detailed",
+    mode_patient: "Patient Mode",
+    mode_worker: "Healthcare Worker",
+    chat_assistant: "Chat Assistant",
+    
+    comprehension_title: "Did you understand when to take this medicine?",
+    comprehension_yes: "Yes, I understand",
+    comprehension_no: "No, let's review again",
+    comprehension_thanks: "Great! Stay safe and healthy.",
+    comprehension_review: "Please ask a pharmacist or doctor for more clarification.",
+    visual_cards_title: "Your Medications",
+    audio_guide: "Patient Voice Playback",
+  },
+  Hindi: {
+    header_title: "बुद्धिमान प्रिस्क्रिप्शन डिकोडर",
+    upload_prescription: "प्रिस्क्रिप्शन अपलोड करें",
+    take_photo: "फोटो लें",
+    capture: "कैप्चर",
+    scanning: "छवि स्कैन हो रही है...",
+    analyzing: "प्रिस्क्रिप्शन का विश्लेषण हो रहा है...",
+    clinical_summary: "नैदानिक सारांश",
+    schedule_title: "उपचार अनुसूची",
+    unable_to_identify: "निश्चितता के साथ पहचान करने में असमर्थ",
+    please_verify: "कृपया फार्मासिस्ट से सत्यापित करें।",
+    patient_notes: "मरीज के लिए नोट्स",
+    ai_safety_profile: "एआई सुरक्षा प्रोफ़ाइल",
+    ai_observation: "एआई सुरक्षा अवलोकन",
+    no_safety_alerts: "कोई तत्काल सुरक्षा अलर्ट नहीं पाया गया।",
+    print_report: "रिपोर्ट प्रिंट करें",
+    download_pdf: "पीडीएफ डाउनलोड करें",
+    whatsapp_share: "व्हाट्सएप शेयर",
+    meds_found: "दवाइयां मिलीं",
+    structured_medication_table: "संरचित दवा तालिका",
+    accessibility_complexity_score: "पहुंच और जटिलता",
+    clinical_terms_simplified: "सरल किए गए नैदानिक शब्द",
+    means: "का अर्थ है",
+    advice_explainability_panel: "सलाह स्पष्टीकरण",
+    ai_hallucination_desc: "यह डेटा एआई द्वारा निकाला गया है। महत्वपूर्ण निर्णयों को मूल नुस्खे से सत्यापित किया जाना चाहिए।",
+    
+    // New Keys
+    explanation_level: "स्पष्टीकरण स्तर",
+    mode_simple: "सरल",
+    mode_standard: "मानक",
+    mode_detailed: "विस्तृत",
+    mode_patient: "मरीज मोड",
+    mode_worker: "स्वास्थ्य कार्यकर्ता",
+    chat_assistant: "चैट सहायक",
+    
+    comprehension_title: "क्या आप समझ गए कि यह दवा कब लेनी है?",
+    comprehension_yes: "हाँ, मैं समझ गया",
+    comprehension_no: "नहीं, मुझे फिर से समझाएं",
+    comprehension_thanks: "बहुत बढ़िया! सुरक्षित और स्वस्थ रहें।",
+    comprehension_review: "कृपया अधिक जानकारी के लिए फार्मासिस्ट या डॉक्टर से पूछें।",
+    visual_cards_title: "आपकी दवाइयाँ",
+    audio_guide: "ऑडियो गाइड",
+  }
+};
+`;
+
+fs.writeFileSync('frontend/src/i18n.js', newDict);
+console.log("Updated i18n.js");
