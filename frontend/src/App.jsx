@@ -208,14 +208,27 @@ function App() {
     const counts = {};
     if (!Array.isArray(history)) return [];
     history.forEach(item => {
-      if (!item || !item.drug_name) return;
-      const drugs = item.drug_name.split(',');
+      if (!item) return;
+      
+      let drugs = [];
+      if (item.data && item.data.data && item.data.data.drugs_list && item.data.data.drugs_list.length > 0) {
+        drugs = item.data.data.drugs_list;
+      } else if (item.drug_name) {
+        drugs = item.drug_name.split(',');
+      }
+      
       drugs.forEach(d => {
-        const name = d.trim();
-        if (name) counts[name] = (counts[name] || 0) + 1;
+        let name = String(d).trim().toLowerCase();
+        name = name.charAt(0).toUpperCase() + name.slice(1);
+        if (name && name !== 'Unknown') {
+          counts[name] = (counts[name] || 0) + 1;
+        }
       });
     });
-    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value).slice(0, 5);
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name: name.length > 15 ? name.substring(0, 15) + '...' : name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
   };
 
   const getTimelineData = () => {

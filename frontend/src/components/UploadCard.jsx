@@ -102,22 +102,22 @@ export default function UploadCard({
       onDragOver={handleDrag}
       onDrop={handleDrop}
     >
-      <div className="mb-6">
-        <Upload size={56} className="mx-auto text-indigo-500 mb-4" />
-        <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">{t.add_doc || "Add Clinical Document"}</h3>
-        <p className="text-slate-500 text-sm">{t.upload_desc || "Upload a prescription or take a photo instantly"}</p>
+      <div className="mb-10">
+        <Upload size={64} className="mx-auto text-indigo-500 mb-6" />
+        <h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3">{t.add_doc || "Add Clinical Document"}</h3>
+        <p className="text-slate-500 text-base">{t.upload_desc || "Upload a prescription or take a photo instantly"}</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <div className="flex flex-col sm:flex-row gap-6 justify-center">
         {/* Mobile Camera Input */}
-        <label className="relative cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95">
-          <Camera size={20} />
+        <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-8 rounded-xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-95 text-lg">
+          <Camera size={24} />
           <span>{t.take_photo || "Take Photo"}</span>
           <input 
             type="file" 
             accept="image/*" 
             capture="environment" 
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            className="hidden"
             onChange={handleChange}
             disabled={loading}
           />
@@ -127,9 +127,9 @@ export default function UploadCard({
         <button 
           onClick={() => fileInputRef.current?.click()}
           disabled={loading}
-          className="bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95"
+          className="bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-4 px-8 rounded-xl flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95 text-lg"
         >
-          <Upload size={20} />
+          <Upload size={24} />
           <span>{t.upload_file || "Upload File"}</span>
         </button>
       </div>
