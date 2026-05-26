@@ -649,7 +649,7 @@ function App() {
                 </div>
               ) : result ? (
                 
-                <motion.div initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
+                <motion.div className="result-container" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
                   {/* Uncertainty Handling Banner */}
                   {(userMode === 'worker' || explanationLevel === 'detailed') && result?.data?.is_uncertain && (
                     <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.08)', border: '2px solid var(--danger)', borderRadius: '24px', padding: '2rem', textAlign: 'center' }}>
