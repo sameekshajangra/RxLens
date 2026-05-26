@@ -911,6 +911,14 @@ function App() {
                               />
                             </div>
                           )}
+
+                          {/* General prescription notes */}
+                          {result?.data?.notes && (
+                            <div style={{ marginTop: '1.25rem', padding: '16px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.15)', fontSize: '0.9rem' }}>
+                              <span style={{ fontWeight: 700, color: 'var(--primary)', display: 'block', marginBottom: '6px' }}>📝 {t.patient_notes || "Patient Notes"}:</span>
+                              <p style={{ margin: 0, color: 'var(--text-main)', lineHeight: '1.6' }}>{result.data.notes}</p>
+                            </div>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -1017,11 +1025,57 @@ function App() {
                             </div>
                           )}
 
+                          {/* Polypharmacy De-prescribing Assistant */}
+                          {(userMode === 'worker' || explanationLevel === 'detailed') && (result?.data?.polypharmacy_notes && safeArray(result.data.polypharmacy_notes).length > 0) && (
+                            <div style={{ marginBottom: '1.5rem', padding: '16px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.05)', borderLeft: '4px solid #8b5cf6' }}>
+                              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 12px 0', color: '#8b5cf6', fontSize: '0.95rem', fontWeight: 700 }}>
+                                <BriefcaseMedical size={18} /> {t.polypharmacy_review_provider || "Polypharmacy De-prescribing Review (Provider Guidance)"}
+                              </h4>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {safeArray(result.data.polypharmacy_notes).map((note, idx) => (
+                                  <div key={idx} style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.6)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
+                                    <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#6d28d9', marginBottom: '4px' }}>{note.topic}</div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{note.note}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Pharmacist Consult */}
-                          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(14, 165, 233, 0.05)', borderLeft: '4px solid var(--info)' }}>
+                          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(14, 165, 233, 0.05)', borderLeft: '4px solid var(--info)', marginBottom: result.data.explainability_sources && (result.data.explainability_sources.instructions || safeArray(result.data.explainability_sources.side_effects).length > 0 || safeArray(result.data.explainability_sources.precautions).length > 0) ? '1.5rem' : '0' }}>
                             <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px 0', color: 'var(--info)' }}><Stethoscope size={16} /> Pharmacist Consultation Recommended</h4>
                             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>{t.pharmacist_desc || "Always consult a certified pharmacist or your primary doctor before changing any medication routines based on these results."}</p>
                           </div>
+
+                          {/* Advice Explainability */}
+                          {result.data.explainability_sources && (result.data.explainability_sources.instructions || safeArray(result.data.explainability_sources.side_effects).length > 0 || safeArray(result.data.explainability_sources.precautions).length > 0) && (
+                            <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.15)', fontSize: '0.9rem' }}>
+                              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary)', margin: 0, marginBottom: '12px' }}>
+                                <Stethoscope size={18} /> {t.advice_explainability_panel || "Advice Explainability Panel"}
+                              </h4>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                {result.data.explainability_sources.instructions && (
+                                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                    <span>💡</span>
+                                    <span>Intake instructions came from: <strong>{result.data.explainability_sources.instructions}</strong></span>
+                                  </div>
+                                )}
+                                {safeArray(result.data.explainability_sources.side_effects).length > 0 && (
+                                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                    <span>⚠️</span>
+                                    <span>Side effects profile belongs to: <strong>{safeArray(result.data.explainability_sources.side_effects).join(', ')}</strong></span>
+                                  </div>
+                                )}
+                                {safeArray(result.data.explainability_sources.precautions).length > 0 && (
+                                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                    <span>🛡️</span>
+                                    <span>Precautions list belongs to: <strong>{safeArray(result.data.explainability_sources.precautions).join(', ')}</strong></span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>

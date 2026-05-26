@@ -29,6 +29,7 @@ const i18n = {
     clinical_terms_simplified: "Clinical Terms Simplified",
     means: "means",
     advice_explainability_panel: "Advice Explainability Panel",
+    polypharmacy_review_provider: "Polypharmacy De-prescribing Review (Provider Guidance)",
     ai_hallucination_desc: "This data was AI-extracted. Critical decisions MUST be validated against the original prescription.",
     
     // New Keys
@@ -125,6 +126,7 @@ const i18n = {
     clinical_terms_simplified: "सरल किए गए नैदानिक शब्द",
     means: "का अर्थ है",
     advice_explainability_panel: "सलाह स्पष्टीकरण",
+    polypharmacy_review_provider: "पॉलीफार्मेसी डी-प्रिस्क्राइबिंग समीक्षा (प्रदाता मार्गदर्शन)",
     ai_hallucination_desc: "यह डेटा एआई द्वारा निकाला गया है। महत्वपूर्ण निर्णयों को मूल नुस्खे से सत्यापित किया जाना चाहिए।",
     
     // New Keys
