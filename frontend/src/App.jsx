@@ -94,6 +94,13 @@ const FAQ_DATA = {
   ]
 };
 
+const formatTime = (time) => {
+  if (!time || isNaN(time) || time === Infinity) return "0:00";
+  const mins = Math.floor(time / 60);
+  const secs = Math.floor(time % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 function App() {
 
   const [activeTab, setActiveTab] = useState('scanner');
