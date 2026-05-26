@@ -365,7 +365,9 @@ function App() {
     formData.append('lang', language);
     formData.append('patient_profile', JSON.stringify(patientProfile));
     formData.append('explanation_level', explanationLevel);
-    formData.append('lang', language);
+    if (apiKey) {
+      formData.append('api_key', apiKey);
+    }
 
     try {
       const res = await axios.post('/api/extract', formData, { timeout: 120000 });
@@ -435,6 +437,7 @@ function App() {
       }
 
     } catch (err) {
+      console.error('Scan error:', err);
       if (err.response?.status === 429 || (err.response?.data?.detail && (err.response.data.detail.includes('Quota') || err.response.data.detail.includes('exhausted')))) {
         setError(err.response.data.detail || 'Daily Quota Reached.');
         setRetryCountdown(60);
@@ -442,7 +445,7 @@ function App() {
         setError('⚡ AI model is temporarily busy due to high demand. All fallback models were tried. Please wait a moment and try again.');
         setRetryCountdown(30);
       } else {
-        setError(err.response?.data?.detail || 'Failed to parse prescription.');
+        setError(err.response?.data?.detail || err.message || 'Failed to parse prescription.');
       }
     } finally {
       setLoading(false);

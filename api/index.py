@@ -284,8 +284,8 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Model Cascade
-    models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest", "gemini-2.0-flash-lite"]
+    # Model Cascade: Lite is much faster, avoiding Vercel's strict 10s timeout on Hobby plan
+    models = ["gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
     last_err = None
 
     for model in models:
