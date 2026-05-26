@@ -154,8 +154,8 @@ export default function UploadCard({
           <h3 className="text-xl md:text-2xl font-bold text-slate-800" style={{ marginBottom: '0.75rem' }}>
             {t.add_doc || "Add Clinical Document"}
           </h3>
-          {/* Made the text smaller (text-xs md:text-sm) and centered it cleanly */}
-          <p className="text-slate-500 text-xs md:text-sm max-w-md mx-auto leading-relaxed">
+          {/* Centered it cleanly and aligned max-width with top tagline */}
+          <p className="text-slate-500 text-xs md:text-sm max-w-xl mx-auto leading-relaxed text-center">
             {t.upload_desc || "Upload a prescription or take a photo instantly"}
           </p>
         </div>
