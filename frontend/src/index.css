@@ -166,7 +166,7 @@ h1 span {
 }
 
 .card-title {
-  font-size: 1.0rem;
+  font-size: 1rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
   display: flex;
@@ -1617,7 +1617,7 @@ html.elderly-mode .nav-item {
 }
 
 .patient-mode .card-title {
-  font-size: 1.12rem;
+  font-size: 1rem;
   margin-bottom: 1.75rem;
 }
 
@@ -1690,8 +1690,8 @@ html.elderly-mode .nav-item {
 }
 
 .healthcare-mode .card-title {
-  font-size: 0.95rem;
-  margin-bottom: 1rem;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .healthcare-mode .metric-value {

@@ -911,17 +911,51 @@ function App() {
                           <p style={{ lineHeight: '1.6', color: 'var(--text-main)', fontSize: explanationLevel === 'simple' ? '1.15rem' : '1.05rem', fontWeight: 500, margin: 0 }}>
                             {result.summary}
                           </p>
+
+                          {isSimpleMode && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
+                              <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                                <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary)' }} onClick={() => downloadPDF()}>
+                                  <Download size={16} /> {t.pdf_report}
+                                </button>
+                                <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', borderColor: '#25D366' }} onClick={() => window.open(getWhatsAppShareLink(), '_blank')}>
+                                  <Share2 size={16} /> {t.share_whatsapp}
+                                </button>
+                              </div>
+                              <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                                <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => window.print()}>
+                                  <Printer size={16} /> {t.print_instructions}
+                                </button>
+                                <button className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowChat(true)}>
+                                  <MessageCircle size={16} /> {t.chat_assistant || "Chat Assistant"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                           
                           {audioUrl && (
                             <div className="premium-audio-player" style={{ marginTop: '20px', padding: '16px', background: 'rgba(13, 148, 136, 0.04)', borderRadius: '16px', border: '1px solid rgba(13, 148, 136, 0.15)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                               <audio
+                                key={audioUrl}
                                 ref={audioRef}
                                 src={audioUrl}
-                                preload="metadata"
+                                preload="auto"
+                                onLoadedMetadata={(e) => {
+                                  if (e.target.duration === Infinity || isNaN(e.target.duration)) {
+                                    e.target.currentTime = 1e101;
+                                    e.target.ontimeupdate = () => {
+                                      e.target.ontimeupdate = (evt) => setAudioCurrentTime(evt.target.currentTime);
+                                      e.target.currentTime = 0;
+                                      setAudioDuration(e.target.duration);
+                                    };
+                                  } else {
+                                    setAudioDuration(e.target.duration);
+                                  }
+                                }}
                                 onPlay={() => setAudioPlaying(true)}
                                 onPause={() => setAudioPlaying(false)}
                                 onTimeUpdate={(e) => setAudioCurrentTime(e.target.currentTime)}
-                                onDurationChange={(e) => setAudioDuration(e.target.duration)}
+                                onDurationChange={(e) => { if (e.target.duration !== Infinity) setAudioDuration(e.target.duration); }}
                                 onEnded={() => setAudioPlaying(false)}
                               />
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -993,7 +1027,7 @@ function App() {
                                   <div style={{
                                     position: 'absolute',
                                     top: '-10px',
-                                    left: `calc(${(audioCurrentTime / (audioDuration || 1)) * 100}% - 14px)`,
+                                    left: `calc(${((audioCurrentTime / (audioDuration || 1)) * 100) || 0}% - 14px)`,
                                     fontSize: '1.4rem',
                                     lineHeight: 1,
                                     transition: audioPlaying ? 'none' : 'left 0.1s ease',
@@ -1377,9 +1411,11 @@ function App() {
                                     </tbody>
                                   </table>
                                 </div>
+                              </>
+                            )}
 
-                                {/* Healthcare Worker Advanced Clinical Features */}
-                                <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            {/* Healthcare Worker Advanced Clinical Features - Rendered unconditionally in Section 5 */}
+                            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                                   
                                   {/* Polypharmacy Assistant */}
                                   {(result?.data?.polypharmacy_notes && safeArray(result.data.polypharmacy_notes).length > 0) && (
@@ -1445,9 +1481,6 @@ function App() {
                                   )}
 
                                 </div>
-                              </>
-                            )}
-
                             {/* Detailed Patient Notes card */}
                             {result?.data?.notes && (
                               <div style={{ padding: '16px', borderRadius: '12px', background: '#ffffff', border: '1px solid rgba(0, 0, 0, 0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', marginBottom: '1.5rem' }}>
