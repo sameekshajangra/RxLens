@@ -379,99 +379,107 @@ function App() {
     if (!data) return '';
     const safeArray = (arr) => Array.isArray(arr) ? arr : [];
     
-    let html = `<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e293b; background: #ffffff; padding: 40px; max-width: 800px; margin: 0 auto;">
-      <div style="border-bottom: 3px solid #4f46e5; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+    // Parse individual drugs
+    const drugs = safeArray(data.drugs_list);
+    let drugRows = '';
+    
+    if (drugs.length > 0) {
+      drugs.forEach((d, idx) => {
+        const dosage = (data.drugs_dosage && data.drugs_dosage[d]) || data.dosage || 'N/A';
+        const freq = data.frequency || 'N/A';
+        const duration = data.duration || 'N/A';
+        
+        drugRows += `
+          <tr>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; text-align: center; color: #334155;">${idx + 1}</td>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; color: #334155;">${d}</td>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; color: #334155;">${dosage}</td>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; color: #334155;">${freq}</td>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; color: #334155;">${duration}</td>
+          </tr>
+        `;
+      });
+    } else {
+        drugRows = `
+          <tr>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; text-align: center; color: #334155;">1</td>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; color: #334155;">${data.drug || 'Unknown'}</td>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; color: #334155;">${data.dosage || 'N/A'}</td>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; color: #334155;">${data.frequency || 'N/A'}</td>
+            <td style="padding: 16px; border: 1px solid #c7d2fe; color: #334155;">${data.duration || 'N/A'}</td>
+          </tr>
+        `;
+    }
+
+    const clinicalSummary = `This prescription contains ${data.drug || 'the listed medications'}. ${data.instructions || ''} ${data.notes || ''}`;
+
+    let html = `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e293b; background: #ffffff; padding: 40px; max-width: 900px; margin: 0 auto;">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
         <div>
-          <h1 style="color: #4f46e5; margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px;">RxLens</h1>
-          <p style="color: #64748b; margin: 8px 0 0 0; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Clinical Analysis Report</p>
+          <h1 style="color: #6366f1; margin: 0; font-size: 36px; font-weight: 800; letter-spacing: -0.5px;">RxLens</h1>
+          <p style="color: #64748b; margin: 4px 0 0 0; font-size: 16px;">AI-Powered Clinical Prescription Report</p>
         </div>
-        <div style="text-align: right;">
-          <p style="margin: 0; font-size: 14px; color: #475569;"><strong>Patient:</strong> ${patientProfile.name || 'Anonymous'}</p>
-          <p style="margin: 4px 0 0 0; font-size: 14px; color: #475569;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+        <div style="text-align: right; color: #64748b; font-size: 14px; padding-top: 10px;">
+          ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
-      
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 30px;">
-        <h2 style="margin: 0 0 16px 0; color: #0f172a; font-size: 24px;">${data.drug || data.drug_name || 'Unknown Medication'}</h2>
-        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-          <div style="flex: 1; min-width: 200px;">
-            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b; text-transform: uppercase; font-weight: 700;">Dosage</p>
-            <p style="margin: 0; font-size: 16px; color: #334155; font-weight: 500;">${data.dosage || 'N/A'}</p>
-          </div>
-          <div style="flex: 1; min-width: 200px;">
-            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b; text-transform: uppercase; font-weight: 700;">Frequency</p>
-            <p style="margin: 0; font-size: 16px; color: #334155; font-weight: 500;">${data.frequency || 'N/A'}</p>
-          </div>
-        </div>
-      </div>`;
+      <div style="height: 3px; background-color: #6366f1; margin-bottom: 24px; width: 100%;"></div>
 
-    if (data.purpose) {
-      html += `<div style="margin-bottom: 30px;">
-        <h3 style="color: #334155; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px;">Primary Purpose</h3>
-        <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0;">${data.purpose}</p>
-      </div>`;
-    }
+      <!-- AI Hallucination Safeguard -->
+      <div style="border: 2px solid #ef4444; background-color: #fef2f2; padding: 16px; margin-bottom: 30px;">
+        <p style="color: #dc2626; margin: 0; font-size: 14px; font-style: italic; font-weight: 600; line-height: 1.5;">
+          AI HALLUCINATION SAFEGUARD: This report was generated by an AI vision model. AI outputs may contain inaccuracies. All medication details MUST be verified by a licensed pharmacist or physician before use. Do not self-medicate based on this report alone.
+        </p>
+      </div>
 
-    const alerts = safeArray(data.safety_alerts);
-    if (alerts.length > 0) {
-      html += `<div style="margin-bottom: 30px;">
-        <h3 style="color: #ef4444; font-size: 18px; border-bottom: 2px solid #fee2e2; padding-bottom: 8px; margin-bottom: 16px;">Safety Alerts (${alerts.length})</h3>`;
-      alerts.forEach(alert => {
-        const color = alert.severity === 'Critical' ? '#ef4444' : '#f59e0b';
-        const bg = alert.severity === 'Critical' ? '#fef2f2' : '#fffbeb';
-        const border = alert.severity === 'Critical' ? '#fecaca' : '#fde68a';
-        html += `<div style="background: ${bg}; border: 1px solid ${border}; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <strong style="color: ${color}; font-size: 15px;">${alert.issue}</strong>
-            <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">${alert.severity}</span>
-          </div>
-          <p style="margin: 0; color: #475569; font-size: 14px; line-height: 1.5;">${alert.recommendation}</p>
-        </div>`;
-      });
-      html += `</div>`;
-    }
+      <!-- Meta Info Table -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px;">
+        <tbody>
+          <tr>
+            <td style="padding: 12px 0; font-weight: 700; color: #334155; width: 25%; border-bottom: 1px solid #f1f5f9;">AI Engine:</td>
+            <td style="padding: 12px 0; color: #334155; border-bottom: 1px solid #f1f5f9;">Google Gemini Flash (Vision Language Model)</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; font-weight: 700; color: #334155; border-bottom: 1px solid #f1f5f9;">Report Type:</td>
+            <td style="padding: 12px 0; color: #334155; border-bottom: 1px solid #f1f5f9;">Prescription Digitization & Clinical Safety</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; font-weight: 700; color: #334155; border-bottom: 1px solid #f1f5f9;">Confidence:</td>
+            <td style="padding: 12px 0; color: #334155; border-bottom: 1px solid #f1f5f9;">Source grounding via multi-step pharmacist AI prompt</td>
+          </tr>
+        </tbody>
+      </table>
 
-    const sideEffects = safeArray(data.side_effects);
-    if (sideEffects.length > 0) {
-      html += `<div style="margin-bottom: 30px;">
-        <h3 style="color: #334155; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px;">Side Effects & Management</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="background: #f1f5f9;">
-              <th style="padding: 12px; text-align: left; font-size: 13px; color: #475569; border: 1px solid #e2e8f0;">Effect</th>
-              <th style="padding: 12px; text-align: left; font-size: 13px; color: #475569; border: 1px solid #e2e8f0;">Management</th>
-            </tr>
-          </thead>
-          <tbody>`;
-      sideEffects.forEach(effect => {
-        html += `<tr>
-          <td style="padding: 12px; border: 1px solid #e2e8f0; font-size: 14px; color: #334155;"><strong>${effect.effect}</strong></td>
-          <td style="padding: 12px; border: 1px solid #e2e8f0; font-size: 14px; color: #475569;">${effect.management}</td>
-        </tr>`;
-      });
-      html += `</tbody></table></div>`;
-    }
+      <!-- Prescribed Medication Regimen -->
+      <h2 style="color: #1e293b; font-size: 20px; margin-bottom: 16px;">Prescribed Medication Regimen</h2>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; border: 1px solid #6366f1;">
+        <thead>
+          <tr style="background-color: #6366f1; color: #ffffff;">
+            <th style="padding: 16px; text-align: center; font-weight: 600; border: 1px solid #c7d2fe; width: 5%;">#</th>
+            <th style="padding: 16px; text-align: left; font-weight: 600; border: 1px solid #c7d2fe; width: 30%;">Drug / Medication</th>
+            <th style="padding: 16px; text-align: left; font-weight: 600; border: 1px solid #c7d2fe; width: 20%;">Dosage</th>
+            <th style="padding: 16px; text-align: left; font-weight: 600; border: 1px solid #c7d2fe; width: 25%;">Frequency</th>
+            <th style="padding: 16px; text-align: left; font-weight: 600; border: 1px solid #c7d2fe; width: 20%;">Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${drugRows}
+        </tbody>
+      </table>
 
-    if (data.environmental && safeArray(data.environmental.drug_impacts).length > 0) {
-      html += `<div style="margin-bottom: 30px;">
-        <h3 style="color: #10b981; font-size: 18px; border-bottom: 2px solid #d1fae5; padding-bottom: 8px; margin-bottom: 16px;">Green Pharmacy Impact</h3>
-        <p style="color: #475569; font-size: 14px; margin-bottom: 12px;">Overall Impact: <strong>${data.environmental.overall_impact}</strong></p>
-        <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.6;">`;
-      safeArray(data.environmental.drug_impacts).forEach(env => {
-        html += `<li><strong>${env.drug}:</strong> ${env.handling_instructions}</li>`;
-      });
-      html += `</ul></div>`;
-    }
-
-    html += `<div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px;">
-      <p>This report is generated by RxLens AI. Always consult a certified pharmacist or your primary doctor before changing any medication routines.</p>
+      <!-- Clinical Summary -->
+      <h2 style="color: #1e293b; font-size: 20px; margin-bottom: 16px;">Clinical Summary</h2>
+      <div style="background-color: #eff6ff; border: 2px solid #6366f1; border-left-width: 6px; padding: 20px; color: #1e293b; line-height: 1.6; font-size: 15px;">
+        ${clinicalSummary}
+      </div>
     </div>
-    </div>`;
+    `;
     
     return html;
   };
-
-  const downloadPDF = useCallback(async (dataOverride = null) => {
+ const downloadPDF = useCallback(async (dataOverride = null) => {
     try {
       const dataToPrint = dataOverride || result?.data;
       if (!dataToPrint) {
