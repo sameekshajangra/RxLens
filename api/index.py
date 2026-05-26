@@ -265,8 +265,8 @@ RETURN EXACTLY THIS JSON (no extra text):
             err_msg = str(e)
             logger.warning(f"{model} failed: {err_msg}")
             last_err = e
-            # Continue cascade on Quota errors, 404s, or 400s (model not found/supported)
-            if not any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota", "404", "NOT_FOUND", "400"]):
+            # Continue cascade on Quota errors, 404s, 400s (model not found/supported), or 503 (Unavailable/Overloaded)
+            if not any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota", "404", "NOT_FOUND", "400", "503", "UNAVAILABLE", "500"]):
                 raise e
 
     raise last_err

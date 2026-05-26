@@ -85,62 +85,76 @@ export default function UploadCard({
 
   if (retryCountdown > 0) {
     return (
-      <div className="bg-indigo-50 border border-indigo-500 rounded-3xl p-8 text-center shadow-sm">
-        <Timer size={48} className="mx-auto mb-4 text-indigo-600 animate-[spin_3s_linear_infinite]" />
-        <h3 className="text-xl font-bold text-indigo-600 mb-2">Daily Limit Reached</h3>
-        <p className="text-4xl font-extrabold text-indigo-700 my-4">{retryCountdown}s</p>
+      <div className="bg-teal-50 border border-teal-500 rounded-3xl p-8 text-center shadow-sm">
+        <Timer size={48} className="mx-auto mb-4 text-teal-600 animate-[spin_3s_linear_infinite]" />
+        <h3 className="text-xl font-bold text-teal-600 mb-2">Daily Limit Reached</h3>
+        <p className="text-4xl font-extrabold text-teal-700 my-4">{retryCountdown}s</p>
         <p className="text-sm text-slate-500">The AI is recharging. Please try again when the timer hits zero or tomorrow.</p>
       </div>
     );
   }
 
   return (
-    <div 
-      className={`relative bg-white rounded-3xl p-6 md:p-10 text-center shadow-lg border-2 border-dashed transition-all duration-300 ${dragActive ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-indigo-400 hover:bg-slate-50'}`}
-      onDragEnter={handleDrag}
-      onDragLeave={handleDrag}
-      onDragOver={handleDrag}
-      onDrop={handleDrop}
-    >
-      <div className="mb-10">
-        <Upload size={64} className="mx-auto text-indigo-500 mb-6" />
-        <h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3">{t.add_doc || "Add Clinical Document"}</h3>
-        <p className="text-slate-500 text-base">{t.upload_desc || "Upload a prescription or take a photo instantly"}</p>
+    <div className="max-w-3xl mx-auto">
+      {/* Hero Header */}
+      <div className="text-center mb-8">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-4 tracking-tight">Making healthcare instructions <span className="text-teal-600">easy to understand</span></h2>
+        <p className="text-slate-500 text-lg md:text-xl">Upload any prescription, discharge summary, or medical document to get an accessible, plain-language breakdown instantly.</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-6 justify-center">
-        {/* Mobile Camera Input */}
-        <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-8 rounded-xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-95 text-lg">
-          <Camera size={24} />
-          <span>{t.take_photo || "Take Photo"}</span>
-          <input 
-            type="file" 
-            accept="image/*" 
-            capture="environment" 
-            className="hidden"
-            onChange={handleChange}
+      <div 
+        className={`relative bg-white rounded-3xl p-6 md:p-10 text-center shadow-[0_4px_20px_0_rgba(0,0,0,0.03)] border-2 transition-all duration-300 ${dragActive ? 'border-teal-500 bg-teal-50' : 'border-slate-100 border-dashed hover:border-teal-400 hover:bg-slate-50'}`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <div className="mb-10">
+          <Upload size={56} className="mx-auto text-teal-600 mb-6 opacity-90" />
+          <h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3">{t.add_doc || "Upload Prescription"}</h3>
+          <p className="text-slate-500 text-base">{t.upload_desc || "Drag and drop or click to upload your medical document"}</p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-5 justify-center mb-8">
+          {/* Mobile Camera Input */}
+          <label className="cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-semibold py-4 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-95 text-lg">
+            <Camera size={22} />
+            <span>{t.take_photo || "Take Photo"}</span>
+            <input 
+              type="file" 
+              accept="image/*" 
+              capture="environment" 
+              className="hidden"
+              onChange={handleChange}
+              disabled={loading}
+            />
+          </label>
+          
+          {/* Standard File Upload */}
+          <button 
+            onClick={() => fileInputRef.current?.click()}
             disabled={loading}
-          />
-        </label>
-        
-        {/* Standard File Upload */}
-        <button 
-          onClick={() => fileInputRef.current?.click()}
-          disabled={loading}
-          className="bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-4 px-8 rounded-xl flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95 text-lg"
-        >
-          <Upload size={24} />
-          <span>{t.upload_file || "Upload File"}</span>
-        </button>
-      </div>
+            className="bg-white border-2 border-slate-200 hover:border-teal-600 hover:bg-slate-50 text-slate-700 hover:text-teal-700 font-semibold py-4 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95 text-lg"
+          >
+            <Upload size={22} />
+            <span>{t.upload_file || "Upload File"}</span>
+          </button>
+        </div>
 
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        className="hidden" 
-        accept="image/*"
-        onChange={handleChange} 
-      />
+        {/* Trust Indicators */}
+        <div className="flex flex-col gap-2 items-center justify-center text-xs md:text-sm text-slate-400 font-medium pt-6 border-t border-slate-100">
+          <p>Supported formats: JPG, PNG, WEBP, PDF</p>
+          <p className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-500 opacity-80"></span> Your data is analyzed securely and not stored permanently.</p>
+        </div>
+
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*,.pdf"
+          onChange={handleChange} 
+        />
+      </div>
     </div>
   );
 }

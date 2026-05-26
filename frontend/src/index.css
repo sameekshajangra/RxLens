@@ -2,29 +2,29 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
   --bg: #f8fafc;
-  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-bg: #ffffff;
   --text: #0f172a;
   --text-muted: #64748b;
-  --border: rgba(226, 232, 240, 0.8);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --border: #e2e8f0;
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.03);
   --danger: #ef4444;
   --danger-glow: rgba(239, 68, 68, 0.15);
   --warning: #f59e0b;
   --warning-glow: rgba(245, 158, 11, 0.15);
-  --success: #22c55e;
-  --info: #3b82f6;
+  --success: #10b981;
+  --info: #0ea5e9;
 }
 
 .dark-mode {
   --bg: #0f172a;
-  --card-bg: rgba(30, 41, 59, 0.7);
+  --card-bg: #1e293b;
   --text: #f1f5f9;
   --text-muted: #94a3b8;
-  --border: rgba(51, 65, 85, 0.5);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --border: #334155;
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.2);
   --danger-glow: rgba(239, 68, 68, 0.25);
   --warning-glow: rgba(245, 158, 11, 0.25);
 }
@@ -43,37 +43,6 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  top: -10%;
-  left: -10%;
-  width: 60%;
-  height: 60%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
-  z-index: -1;
-  filter: blur(100px);
-  animation: move 20s infinite alternate;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  bottom: -10%;
-  right: -10%;
-  width: 70%;
-  height: 70%;
-  background: radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%);
-  z-index: -1;
-  filter: blur(120px);
-  animation: move 25s infinite alternate-reverse;
-}
-
-@keyframes move {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(150px, 150px) rotate(15deg); }
 }
 
 .app-container {
@@ -124,28 +93,23 @@ h1 span {
 /* Glass Card */
 .glass-card {
   background: var(--card-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.125);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 1.25rem;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s ease;
 }
 
 @media (min-width: 640px) {
   .glass-card {
-    border-radius: 28px;
+    border-radius: 24px;
     padding: 2.5rem;
   }
 }
 
-.glass-card {
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
 .dark-mode .glass-card {
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  box-shadow: var(--glass-shadow);
 }
 
 /* Navigation */
@@ -421,11 +385,11 @@ h1 span {
 .alert-drug-tag {
   font-size: 0.68rem;
   color: var(--primary);
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(13, 148, 136, 0.1);
   padding: 3px 10px;
   border-radius: 6px;
   font-weight: 600;
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(13, 148, 136, 0.15);
 }
 
 /* Condition Tags */
@@ -454,11 +418,11 @@ h1 span {
 .condition-tag:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(13, 148, 136, 0.05);
 }
 
 .condition-tag.active {
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(13, 148, 136, 0.1);
   border-color: var(--primary);
   color: var(--primary);
 }
@@ -643,7 +607,7 @@ h1 span {
 .stat-icon {
   width: 48px;
   height: 48px;
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(13, 148, 136, 0.1);
   color: var(--primary);
   border-radius: 12px;
   display: flex;

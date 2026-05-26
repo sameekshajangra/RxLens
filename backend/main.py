@@ -125,8 +125,10 @@ async def extract_prescription(
 
     except Exception as e:
         err_msg = str(e)
-        if "429" in err_msg or "Quota" in err_msg:
+        if "429" in err_msg or "Quota" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
             raise HTTPException(status_code=429, detail="AI is recharging! Daily limit reached. Please wait 30s.")
+        if "503" in err_msg or "UNAVAILABLE" in err_msg:
+            raise HTTPException(status_code=503, detail="AI model is temporarily overloaded. Please try again in a moment.")
         raise HTTPException(status_code=500, detail=f"AI Engine Error: {err_msg}")
 
 

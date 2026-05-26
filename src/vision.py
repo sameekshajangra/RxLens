@@ -319,11 +319,37 @@ def analyze_prescription_vision(
     ocr_succeeded = raw_text is not None
     logger.info("OCR succeeded: %s (%d chars)", ocr_succeeded, len(raw_text or ""))
 
+
+    # ── Model cascade helper ───────────────────────────────────────────
+    MODELS = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-flash-latest",
+        "gemini-2.0-flash-lite",
+    ]
+    RETRYABLE_ERRORS = ["429", "RESOURCE_EXHAUSTED", "quota", "Quota",
+                        "503", "UNAVAILABLE", "500", "404", "NOT_FOUND", "400"]
+
+    def _call_with_cascade(contents):
+        """Try each model in order, falling back on transient errors."""
+        last_err = None
+        for model in MODELS:
+            try:
+                logger.info("Trying model: %s", model)
+                resp = client.models.generate_content(model=model, contents=contents)
+                if resp.text:
+                    return resp.text
+            except Exception as exc:
+                err_str = str(exc)
+                logger.warning("%s failed: %s", model, err_str)
+                last_err = exc
+                if not any(k in err_str for k in RETRYABLE_ERRORS):
+                    raise exc  # non-transient — bail immediately
+        raise last_err  # all models exhausted
+
     try:
         if ocr_succeeded:
             # ── Step 2: Cache lookup ─────────────────────────────────
-            # We won't know the exact drug until after parsing, so we
-            # cache the full prescription result keyed on OCR text hash
             import hashlib
             text_key = hashlib.sha256(raw_text.encode()).hexdigest()[:16]
             cached = get_cached(text_key, explanation_level, lang)
@@ -333,18 +359,13 @@ def analyze_prescription_vision(
             else:
                 # ── Step 3a: Text-only Gemini call ───────────────────
                 prompt = _build_text_prompt(raw_text, lang, explanation_level, patient_profile)
-                response = client.models.generate_content(
-                    model="gemini-flash-latest",
-                    contents=prompt          # TEXT ONLY — no image bytes
-                )
-                if not response.text:
-                    raise Exception("Empty AI response")
+                text_response = _call_with_cascade(prompt)
 
-                json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+                json_match = re.search(r'\{.*\}', text_response, re.DOTALL)
                 if json_match:
                     parsed_data = json.loads(json_match.group(0))
                 else:
-                    clean = response.text.replace("```json", "").replace("```", "").strip()
+                    clean = text_response.replace("```json", "").replace("```", "").strip()
                     parsed_data = json.loads(clean)
 
                 # ── Step 4: Store in cache ────────────────────────────
@@ -359,31 +380,28 @@ def analyze_prescription_vision(
             img_bytes = img_byte_arr.getvalue()
 
             prompt = _build_vision_prompt(lang, explanation_level, patient_profile)
-            response = client.models.generate_content(
-                model="gemini-flash-latest",
-                contents=[
-                    types.Part.from_bytes(data=img_bytes, mime_type="image/png"),
-                    prompt
-                ]
-            )
-            if not response.text:
-                raise Exception("Empty AI response")
+            vis_response = _call_with_cascade([
+                types.Part.from_bytes(data=img_bytes, mime_type="image/png"),
+                prompt
+            ])
 
-            json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+            json_match = re.search(r'\{.*\}', vis_response, re.DOTALL)
             if json_match:
                 parsed_data = json.loads(json_match.group(0))
             else:
-                clean = response.text.replace("```json", "").replace("```", "").strip()
+                clean = vis_response.replace("```json", "").replace("```", "").strip()
                 parsed_data = json.loads(clean)
 
     except Exception as e:
         error_msg = str(e)
         logger.error("Vision/LLM error: %s", error_msg)
-        if any(k in error_msg for k in ["429", "RESOURCE_EXHAUSTED", "limit", "Expecting value"]):
+        # On any quota, overload, or parse error — show demo mode rather than crash
+        if any(k in error_msg for k in ["429", "RESOURCE_EXHAUSTED", "limit", "503", "UNAVAILABLE", "Expecting value"]):
             logger.info("FALLBACK: Demo mode")
             parsed_data = _DEMO_RESPONSE.copy()
         else:
             raise e
+
 
     # ── Confidence & uncertainty post-processing ────────────────────
     confidence = parsed_data.get("confidence", {})
