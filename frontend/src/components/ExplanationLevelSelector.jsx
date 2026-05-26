@@ -15,12 +15,12 @@ export default function ExplanationLevelSelector({ value, onChange, t = {} }) {
           borderRadius: '8px',
           border: '1px solid var(--border)',
           background: 'var(--card-bg)',
-          color: 'var(--text)',
+          color: 'var(--text-main)',
         }}
       >
-        <option value="simple">{t.mode_simple || "Simple"} (low literacy / elderly)</option>
-        <option value="standard">{t.mode_standard || "Standard"} (regular patients)</option>
-        <option value="detailed">{t.mode_detailed || "Detailed"} (medically curious)</option>
+        <option value="simple">{t.mode_simple || "Simple"}</option>
+        <option value="standard">{t.mode_standard || "Standard"}</option>
+        <option value="detailed">{t.mode_detailed || "Detailed"}</option>
       </select>
     </div>
   );

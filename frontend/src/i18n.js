@@ -2,6 +2,10 @@ const i18n = {
   English: {
     header_title: "Making Prescriptions Understandable",
     upload_prescription: "Upload Prescription",
+    scanner: "Scanner",
+    history: "History",
+    insights: "Insights & Reminders",
+    adherence_tab: "Medication Adherence",
     take_photo: "Take Photo",
     capture: "Capture",
     scanning: "Scanning Image...",
@@ -44,6 +48,13 @@ const i18n = {
     comprehension_review: "Please ask a pharmacist or doctor for more clarification.",
     visual_cards_title: "Your Medications",
     audio_guide: "Patient Voice Playback",
+    dose_history: "Dose History",
+    no_doses: "No doses recorded today.",
+    caregiver_notif: "Caregiver Notifications",
+    share_report: "Share adherence report with doctor or family",
+    share_btn: "Share Report",
+    share_title: "RxLens Report",
+    share_msg_gen: "Report generated at",
     
     // Missing Keys Added
     conditions: "Pre-existing Conditions",
@@ -61,6 +72,10 @@ const i18n = {
   Hindi: {
     header_title: "प्रिस्क्रिप्शन को समझने योग्य बनाना",
     upload_prescription: "प्रिस्क्रिप्शन अपलोड करें",
+    scanner: "स्कैनर",
+    history: "इतिहास",
+    insights: "अंतर्दृष्टि और अनुस्मारक",
+    adherence_tab: "दवा अनुपालन",
     take_photo: "फोटो लें",
     capture: "कैप्चर",
     scanning: "छवि स्कैन हो रही है...",
@@ -103,6 +118,13 @@ const i18n = {
     comprehension_review: "कृपया अधिक जानकारी के लिए फार्मासिस्ट या डॉक्टर से पूछें।",
     visual_cards_title: "आपकी दवाइयाँ",
     audio_guide: "ऑडियो गाइड",
+    dose_history: "खुराक का इतिहास",
+    no_doses: "आज कोई खुराक दर्ज नहीं की गई।",
+    caregiver_notif: "देखभालकर्ता सूचनाएं",
+    share_report: "डॉक्टर या परिवार के साथ रिपोर्ट साझा करें",
+    share_btn: "रिपोर्ट साझा करें",
+    share_title: "RxLens रिपोर्ट",
+    share_msg_gen: "रिपोर्ट उत्पन्न की गई",
     
     // Missing Keys Added
     conditions: "पहले से मौजूद बीमारियाँ",

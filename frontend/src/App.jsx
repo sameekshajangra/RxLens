@@ -270,6 +270,7 @@ function App() {
     formData.append('lang', language);
     formData.append('patient_profile', JSON.stringify(patientProfile));
     formData.append('explanation_level', explanationLevel);
+    formData.append('lang', language);
 
     try {
       const res = await axios.post('/api/extract', formData, { timeout: 120000 });
@@ -1216,7 +1217,7 @@ function App() {
                       <p>{item.date} • {item.dosage}</p>
                     </div>
                     <div style={{display:'flex', gap:'8px'}}>
-                      <button className="btn btn-secondary" style={{padding:'0.5rem'}} onClick={() => downloadPDF(item)}><Download size={16}/></button>
+                      <button className="btn btn-secondary" style={{padding:'0.5rem'}} onClick={(e) => { e.stopPropagation(); setResult({ data: item.data }); setActiveTab('scanner'); setTimeout(() => downloadPDF(), 500); }}><Download size={16}/></button>
                     </div>
                   </div>
                 ))}
@@ -1346,9 +1347,9 @@ function App() {
             </div>
 
             <div className="glass-card" style={{marginBottom:'20px'}}>
-              <h2 className="card-title"><Activity size={20}/> {t.dose_history}</h2>
+              <h2 className="card-title"><Activity size={20}/> {t.dose_history || "Dose History"}</h2>
               {adherenceLog.length === 0 ? (
-                <p style={{textAlign:'center',padding:'2rem',opacity:0.5}}>{t.no_doses}</p>
+                <p style={{textAlign:'center',padding:'2rem',opacity:0.5}}>{t.no_doses || "No doses recorded today."}</p>
               ) : (
                 <div style={{display:'flex',flexDirection:'column',gap:'8px',maxHeight:'300px',overflowY:'auto'}}>
                   {[...adherenceLog].reverse().slice(0,20).map((log) => (
@@ -1367,8 +1368,8 @@ function App() {
             </div>
 
             <div className="glass-card">
-              <h2 className="card-title"><Share2 size={20}/> {t.caregiver_notif}</h2>
-              <p style={{fontSize:'0.9rem',color:'var(--text-muted)',marginBottom:'15px'}}>{t.share_report}</p>
+              <h2 className="card-title"><Share2 size={20}/> {t.caregiver_notif || "Caregiver Notifications"}</h2>
+              <p style={{fontSize:'0.9rem',color:'var(--text-muted)',marginBottom:'15px'}}>{t.share_report || "Share adherence report with doctor or family"}</p>
               <button className="btn" style={{display:'flex',alignItems:'center',gap:'8px'}} onClick={() => {
                 const sc=adherenceLog.length>0?Math.round((adherenceLog.filter(l=>l.taken).length/adherenceLog.length)*100):0;
                 const msg=`${t.share_title} for ${patientProfile.name||(language === 'Hindi' ? 'रोगी' : 'Patient')}:
@@ -1378,7 +1379,7 @@ ${t.share_msg_missed}: ${adherenceLog.filter(l=>!l.taken).length}
 ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
                 if(navigator.share){navigator.share({title:t.share_title,text:msg});}
                 else{navigator.clipboard.writeText(msg);alert(language === 'Hindi' ? 'रिपोर्ट क्लिपबोर्ड पर कॉपी की गई!' : 'Report copied to clipboard!');}
-              }}><Share2 size={16}/> {t.share_btn}</button>
+              }}><Share2 size={16}/> {t.share_btn || "Share Report"}</button>
             </div>
           </motion.div>
         )}
