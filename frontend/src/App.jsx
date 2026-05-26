@@ -260,10 +260,9 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    const isSimple = userMode === 'patient' && explanationLevel === 'simple';
-    document.documentElement.classList.toggle('elderly-mode', elderlyMode || isSimple);
+    document.documentElement.classList.toggle('elderly-mode', elderlyMode);
     localStorage.setItem('rxlens_elderly_mode', elderlyMode);
-  }, [elderlyMode, explanationLevel, userMode]);
+  }, [elderlyMode]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1210,8 +1209,7 @@ function App() {
                   )}
 
                   {/* Section 5: Advanced Analysis */}
-                  {(userMode === 'worker' || explanationLevel === 'detailed') && (
-                    <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'advanced' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'advanced' ? '' : 'advanced')}>
+                  <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'advanced' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'advanced' ? '' : 'advanced')}>
                       <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Activity size={20} style={{ color: 'var(--primary)' }} /> Advanced Analysis</span>
                         {expandedSection === 'advanced' ? <span style={{fontSize:'0.8rem'}}>▼</span> : <span style={{fontSize:'0.8rem'}}>▶</span>}
@@ -1302,7 +1300,6 @@ function App() {
                         )}
                       </AnimatePresence>
                     </div>
-                  )}
 
                   {!isSimpleMode && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
