@@ -350,7 +350,7 @@ async def extract_prescription(
             # ULTIMATE FAILSAFE: If the API key is exhausted or errors out, fallback to DEMO_DATA
             # instead of crashing the UI, guaranteeing it works "once and for all".
             summ = _make_summary(DEMO_DATA, lang)
-            return {"success": True, "data": dict(DEMO_DATA), "summary": summ, "audio_base64": _generate_audio_base64(summ, lang), "_warning": "AI quota exhausted. Displaying demo prescription."}
+            return {"success": True, "data": dict(DEMO_DATA), "summary": summ, "audio_base64": _generate_audio_base64(summ, lang), "_warning": f"AI error or quota exhausted. Displaying demo prescription. Details: {err}"}
 
         # Run Safety & Finalize
         drugs = parsed.get("drugs_list", [])
