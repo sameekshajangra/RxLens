@@ -239,14 +239,16 @@ def _call_gemini_cascading(img_bytes: bytes, api_key: str, lang: str, explanatio
     profile_ctx = f"\nPatient Profile: {json.dumps(patient_profile)}" if patient_profile else ""
     
     prompt = f"""
-You are an expert clinical AI and handwriting transcriptionist. Analyze this prescription image meticulously and return structured JSON in {lang}.
+You are an elite clinical pharmacist specializing in decoding illegible doctor handwriting. Analyze this prescription image meticulously and return structured JSON in {lang}.
 {profile_ctx}
 EXPLANATION STYLE: {level_instruction}
 
-INSTRUCTIONS:
-1. Read the doctor's handwriting carefully. Identify ALL medications.
-2. Build a 'schedule' array with time-labelled doses.
-3. CRITICAL: ALL text values MUST be translated accurately into {lang}. Do not leave any English text in the values (unless it is a globally standard medical drug name). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
+CRITICAL OCR & MEDICAL INSTRUCTIONS:
+1. Handwriting Analysis: Examine the visual strokes, partial letters, and word length of each medication.
+2. Clinical Context Deduction: Use the surrounding context (dosages like '500mg', formulations like 'Tab/Cap', and frequencies like 'BD/TDS') to deduce the correct drug.
+3. Pharmacological Matching: Cross-reference your deduced letters with known global pharmaceutical databases (FDA, EMA, WHO). If the doctor misspelled the drug or used shorthand (e.g. 'Amox'), output the FULL, correctly spelled official generic or brand name.
+4. Build a 'schedule' array with time-labelled doses.
+5. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
 
 RETURN EXACTLY THIS JSON (no extra text):
 {{
