@@ -433,14 +433,19 @@ function App() {
       }
 
       if (safeResult.data.schedule?.length) {
-        const newReminders = safeArray(safeResult.data.schedule).map((item, idx) => ({
-          id: Date.now() + idx,
-          time: item.time,
-          task: item.task || item.drug,
-          drug: safeResult.data.drug,
-          enabled: true,
-          createdAt: new Date().toISOString(),
-        }));
+        const newReminders = safeArray(safeResult.data.schedule)
+          .filter(Boolean)
+          .map((item, idx) => {
+            const isStr = typeof item === 'string';
+            return {
+              id: Date.now() + idx,
+              time: isStr ? '' : (item.time || ''),
+              task: isStr ? item : (item.task || item.drug || safeResult.data.drug || 'Take medication'),
+              drug: safeResult.data.drug || '',
+              enabled: true,
+              createdAt: new Date().toISOString(),
+            };
+        });
         setReminders(prev => {
           const updated = [...prev, ...newReminders];
           try { localStorage.setItem('rxlens_reminders', JSON.stringify(updated)); } catch (e) {}

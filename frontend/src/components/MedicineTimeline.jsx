@@ -32,7 +32,10 @@ export default function MedicineTimeline({ schedule }) {
   const grouped = {};
   SLOT_CONFIG.forEach(s => { grouped[s.label] = []; });
   schedule.forEach(item => {
-    const slot = guessSlot(item.time || '');
+    if (!item) return;
+    const isString = typeof item === 'string';
+    const timeStr = isString ? item : (item.time || '');
+    const slot = guessSlot(timeStr);
     grouped[slot].push(item);
   });
 
@@ -56,12 +59,18 @@ export default function MedicineTimeline({ schedule }) {
               </div>
               <div className="timeline-content">
                 <div className="timeline-time" style={{ color: slot.textColor }}>{slot.label}</div>
-                {items.map((item, idx) => (
-                  <div key={idx} className="timeline-task">
-                    {item.time && <span style={{ color: 'var(--text-muted)', fontWeight: 500, marginRight: 6 }}>{item.time}</span>}
-                    {item.task || item.drug || 'Take medication'}
-                  </div>
-                ))}
+                {items.map((item, idx) => {
+                  if (!item) return null;
+                  const isString = typeof item === 'string';
+                  const timeText = isString ? '' : (item.time || '');
+                  const taskText = isString ? item : (item.task || item.drug || 'Take medication');
+                  return (
+                    <div key={idx} className="timeline-task">
+                      {timeText && <span style={{ color: 'var(--text-muted)', fontWeight: 500, marginRight: 6 }}>{timeText}</span>}
+                      {taskText}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
