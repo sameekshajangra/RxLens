@@ -126,11 +126,12 @@ const ImagePreProcessor = ({ imageFile, onComplete, onCancel }) => {
       cropH = completedCrop.height;
     }
 
-    const pixelRatio = window.devicePixelRatio;
-    canvas.width = cropW * scaleX * pixelRatio;
-    canvas.height = cropH * scaleY * pixelRatio;
+    // We do NOT want to multiply by window.devicePixelRatio here. 
+    // The canvas is purely for data extraction, not UI rendering.
+    // Multiplying by pixelRatio causes massive 20MB+ blobs that exceed Vercel's 4.5MB limit.
+    canvas.width = cropW * scaleX;
+    canvas.height = cropH * scaleY;
 
-    ctx.scale(pixelRatio, pixelRatio);
     ctx.imageSmoothingQuality = 'high';
 
     const cropXNatural = cropX * scaleX;
@@ -146,8 +147,8 @@ const ImagePreProcessor = ({ imageFile, onComplete, onCancel }) => {
       cropHNatural,
       0,
       0,
-      cropW * scaleX,
-      cropH * scaleY
+      cropWNatural,
+      cropHNatural
     );
 
     // Convert canvas back to a File
