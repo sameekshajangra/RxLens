@@ -86,7 +86,7 @@ export default function UploadCard({
     <div className="max-w-3xl mx-auto">
       {/* Hero Header */}
       <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-6 tracking-tight">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-10 tracking-tight">
           {t.hero_title || "Making healthcare instructions"}{" "}
           <span className="text-teal-600">{t.hero_title_accent || "easy to understand"}</span>
         </h2>
