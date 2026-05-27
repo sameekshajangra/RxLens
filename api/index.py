@@ -272,9 +272,9 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Model Cascade: Try cutting-edge 2.0 models first (strict 50 RPD limit). 
-    # If they hit quota, fallback to 1.5-flash (massive 1500 RPD limit).
-    models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite"]
+    # Model Cascade: Try gemini-flash-latest first as Google has locked the free tier limit to 0 on some older models for new keys
+    # and has entirely removed the 1.5 family from v1beta.
+    models = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
     last_err = None
 
     for model in models:
