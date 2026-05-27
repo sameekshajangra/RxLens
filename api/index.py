@@ -272,9 +272,9 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Model Cascade: Try gemini-flash-latest first as Google has locked the free tier limit to 0 on some older models for new keys
-    # and has entirely removed the 1.5 family from v1beta.
-    models = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
+    # Model Cascade: Simplified to ONLY use gemini-flash-latest to prevent 60-second Vercel Timeouts.
+    # Trying multiple locked or overloaded models takes too long.
+    models = ["gemini-flash-latest"]
     last_err = None
 
     for model in models:
