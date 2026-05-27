@@ -514,8 +514,8 @@ function App() {
       if (isAssumed) name += " (Assumed)";
       
       const dosage = result.data.drugs_dosage?.[drug] || result.data.dosage || "-";
-      const freq = result.data.frequency || "-";
-      const dur = result.data.duration || "-";
+      const freq = result.data.drugs_frequency?.[drug] || result.data.frequency || "-";
+      const dur = result.data.drugs_duration?.[drug] || result.data.duration || "-";
       
       textPlain += `${name}\t${dosage}\t${freq}\t${dur}\n`;
       textHtml += `<tr><td>${name}</td><td>${dosage}</td><td>${freq}</td><td>${dur}</td></tr>`;
@@ -556,8 +556,8 @@ function App() {
     if (drugs.length > 0) {
       drugs.forEach((d, idx) => {
         const dosage = (data.drugs_dosage && data.drugs_dosage[d]) || data.dosage || 'N/A';
-        const freq = data.frequency || 'N/A';
-        const duration = data.duration || 'N/A';
+        const freq = (data.drugs_frequency && data.drugs_frequency[d]) || data.frequency || 'N/A';
+        const duration = (data.drugs_duration && data.drugs_duration[d]) || data.duration || 'N/A';
         
         drugRows += `
           <tr>
@@ -1132,15 +1132,14 @@ function App() {
                                 </thead>
                                 <tbody>
                                   {safeArray(result.data.drugs_list).map((drug, idx) => {
-                                    const dose = result.data.drugs_dosage?.[drug] || result.data.dosage || 'As directed';
                                     return (
                                       <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                         <td style={{ padding: '12px 10px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
                                           <Pill size={14} color="var(--primary)" /> {drug}
                                         </td>
-                                        <td style={{ padding: '12px 10px' }}>{renderValue(dose)}</td>
-                                        <td style={{ padding: '12px 10px' }}>{renderValue(result.data.frequency || 'As directed')}</td>
-                                        <td style={{ padding: '12px 10px' }}>{renderValue(result.data.duration || 'N/A')}</td>
+                                        <td style={{ padding: '12px 10px' }}>{renderValue(result.data.drugs_dosage?.[drug] || 'N/A')}</td>
+                                        <td style={{ padding: '12px 10px' }}>{renderValue(result.data.drugs_frequency?.[drug] || result.data.frequency || 'As directed')}</td>
+                                        <td style={{ padding: '12px 10px' }}>{renderValue(result.data.drugs_duration?.[drug] || result.data.duration || 'N/A')}</td>
                                       </tr>
                                     );
                                   })}
