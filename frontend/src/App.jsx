@@ -64,7 +64,7 @@ import ImagePreProcessor from './components/ImagePreProcessor';
 import './index.css';
 import i18n from './i18n';
 import html2pdf from 'html2pdf.js';
-
+import imageCompression from 'browser-image-compression';
 
 // ── FAQ Data ─────────────────────────────────────────────────────────────────
 const FAQ_DATA = {
@@ -362,8 +362,26 @@ function App() {
     setComprehensionStatus(null);
     setError('');
     setLoadingStatus(t.loading_status || 'Fast-tracking VLM Engine...');
+    
+    // GUARANTEE the file is under 4.5MB before sending to Vercel
+    let payloadFile = imageFile;
+    if (payloadFile.size > 3.5 * 1024 * 1024) {
+      setLoadingStatus("Optimizing payload size...");
+      try {
+        const compressedBlob = await imageCompression(payloadFile, {
+          maxSizeMB: 3.5,
+          maxWidthOrHeight: 2500,
+          useWebWorker: true
+        });
+        payloadFile = new File([compressedBlob], payloadFile.name || 'prescription.jpg', { type: compressedBlob.type });
+      } catch (e) {
+        console.error("Final compression failed", e);
+      }
+      setLoadingStatus(t.loading_status || 'Fast-tracking VLM Engine...');
+    }
+
     const formData = new FormData();
-    formData.append('file', imageFile);
+    formData.append('file', payloadFile);
     formData.append('lang', language);
     formData.append('patient_profile', JSON.stringify(patientProfile));
     formData.append('explanation_level', explanationLevel);
