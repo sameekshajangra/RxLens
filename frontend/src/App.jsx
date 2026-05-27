@@ -478,9 +478,9 @@ function App() {
   const handleCopyTable = () => {
     if (!result?.data) return;
     
-    // Create a tab-separated string representation of the table
     const safeArray = (arr) => Array.isArray(arr) ? arr : [];
-    let text = "Medication Name\tDosage\tFrequency\tDuration\n";
+    let textPlain = "Medication Name\tDosage\tFrequency\tDuration\n";
+    let textHtml = "<table style='border-collapse: collapse;' border='1'><thead><tr><th>Medication Name</th><th>Dosage</th><th>Frequency</th><th>Duration</th></tr></thead><tbody>";
     
     safeArray(result.data.drugs_list).forEach((drug) => {
       const isAssumed = result.data.inferred_fields?.includes(drug);
@@ -491,13 +491,32 @@ function App() {
       const freq = result.data.frequency || "-";
       const dur = result.data.duration || "-";
       
-      text += `${name}\t${dosage}\t${freq}\t${dur}\n`;
+      textPlain += `${name}\t${dosage}\t${freq}\t${dur}\n`;
+      textHtml += `<tr><td>${name}</td><td>${dosage}</td><td>${freq}</td><td>${dur}</td></tr>`;
     });
     
-    navigator.clipboard.writeText(text).then(() => {
-      setTableCopied(true);
-      setTimeout(() => setTableCopied(false), 2000);
-    });
+    textHtml += "</tbody></table>";
+    
+    if (navigator.clipboard && window.ClipboardItem) {
+      const typeText = "text/plain";
+      const typeHtml = "text/html";
+      const blobText = new Blob([textPlain], { type: typeText });
+      const blobHtml = new Blob([textHtml], { type: typeHtml });
+      const data = [new ClipboardItem({ [typeText]: blobText, [typeHtml]: blobHtml })];
+      
+      navigator.clipboard.write(data).then(() => {
+        setTableCopied(true);
+        setTimeout(() => setTableCopied(false), 2000);
+      }).catch(err => {
+        console.error("Failed to copy table: ", err);
+      });
+    } else {
+      // Fallback for older browsers
+      navigator.clipboard.writeText(textPlain).then(() => {
+        setTableCopied(true);
+        setTimeout(() => setTableCopied(false), 2000);
+      });
+    }
   };
 
   const generatePDFHTML = (data) => {
