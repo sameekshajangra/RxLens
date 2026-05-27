@@ -55,7 +55,7 @@ import {
   Upload, Camera, FileText, Activity, ShieldCheck, ShieldAlert,
   Download, PlayCircle, Loader2, AlertTriangle, Info,
   CheckCircle2, Settings, Key, Globe, History, 
-  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle, Play, Pause, Printer, Volume2, HelpCircle, ChevronDown
+  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle, Play, Pause, Printer, Volume2, HelpCircle, ChevronDown, Copy
 } from 'lucide-react';
 import UploadCard from './components/UploadCard';
 import ExplanationLevelSelector from './components/ExplanationLevelSelector';
@@ -212,6 +212,7 @@ function App() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [tableCopied, setTableCopied] = useState(false);
 
   // Explainability State
   const [expandedReasons, setExpandedReasons] = useState({});
@@ -473,6 +474,31 @@ function App() {
       setChatLoading(false);
     }
   }, [chatMessage, result, language]);
+
+  const handleCopyTable = () => {
+    if (!result?.data) return;
+    
+    // Create a tab-separated string representation of the table
+    const safeArray = (arr) => Array.isArray(arr) ? arr : [];
+    let text = "Medication Name\tDosage\tFrequency\tDuration\n";
+    
+    safeArray(result.data.drugs_list).forEach((drug) => {
+      const isAssumed = result.data.inferred_fields?.includes(drug);
+      let name = drug;
+      if (isAssumed) name += " (Assumed)";
+      
+      const dosage = result.data.drugs_dosage?.[drug] || result.data.dosage || "-";
+      const freq = result.data.frequency || "-";
+      const dur = result.data.duration || "-";
+      
+      text += `${name}\t${dosage}\t${freq}\t${dur}\n`;
+    });
+    
+    navigator.clipboard.writeText(text).then(() => {
+      setTableCopied(true);
+      setTimeout(() => setTableCopied(false), 2000);
+    });
+  };
 
   const generatePDFHTML = (data) => {
     if (!data) return '';
@@ -1036,7 +1062,20 @@ function App() {
                           {/* Structured Medication Table for Detailed Mode */}
                           {(isDetailedMode && safeArray(result.data.drugs_list).length > 0) && (
                             <div className="desktop-table-container" style={{ marginBottom: '1.5rem', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', overflowX: 'auto' }}>
-                              <h4 style={{ margin: '0 0 12px 0', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}><Pill size={16} /> Structured Medication Table</h4>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <h4 style={{ margin: 0, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}>
+                                  <Pill size={16} /> Structured Medication Table
+                                </h4>
+                                <button 
+                                  onClick={handleCopyTable}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: '1px solid var(--border)' }}
+                                  title="Copy Table"
+                                >
+                                  {tableCopied ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}
+                                  {tableCopied ? "Copied" : "Copy"}
+                                </button>
+                              </div>
                               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                                 <thead>
                                   <tr style={{ borderBottom: '1.5px solid var(--border)', color: 'var(--text-muted)', fontWeight: 600 }}>
