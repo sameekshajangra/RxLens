@@ -272,8 +272,8 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Model Cascade
-    models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest", "gemini-2.0-flash-lite"]
+    # Model Cascade: Using 1.5 models first because the 2.0 quota bucket is currently exhausted
+    models = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
     last_err = None
 
     for model in models:
