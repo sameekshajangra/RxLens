@@ -279,8 +279,8 @@ RETURN EXACTLY THIS JSON (no extra text):
     ]
 
     # Model Cascade: gemini-flash-latest maps to 3.5-flash which has a 20 request limit!
-    # gemini-2.5-flash and gemini-flash-lite-latest have the 1,500 limit for free tier.
-    models = ["gemini-2.5-flash", "gemini-flash-lite-latest"]
+    # gemini-2.5-flash has the 1,500 limit for free tier.
+    models = ["gemini-2.5-flash"]
     last_err = None
 
     for model in models:

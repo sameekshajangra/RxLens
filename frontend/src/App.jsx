@@ -369,8 +369,8 @@ function App() {
       setLoadingStatus("Optimizing payload size...");
       try {
         const compressedBlob = await imageCompression(payloadFile, {
-          maxSizeMB: 1.5, // 1.5MB is more than enough for Gemini Vision
-          maxWidthOrHeight: 2000,
+          maxSizeMB: 0.4, // Drastically reduce size to prevent AI processing timeouts
+          maxWidthOrHeight: 1200,
           useWebWorker: false // Disable web worker to avoid Vite/Vercel worker bundling issues
         });
         payloadFile = new File([compressedBlob], payloadFile.name || 'prescription.jpg', { type: compressedBlob.type });
