@@ -91,8 +91,9 @@ const ImagePreProcessor = ({ imageFile, onComplete, onCancel }) => {
   };
 
   const handleComplete = async () => {
-    if (!completedCrop || !imgRef.current) {
-      // If no crop happens, just pass the original file
+    if (!completedCrop || !imgRef.current || (completedCrop.width === 100 && completedCrop.height === 100 && completedCrop.x === 0 && completedCrop.y === 0)) {
+      // If no crop happens or it's the full image, just pass the original file.
+      // This is CRITICAL to preserve EXIF orientation data from mobile cameras.
       onComplete(imageFile);
       return;
     }
@@ -219,15 +220,16 @@ const ImagePreProcessor = ({ imageFile, onComplete, onCancel }) => {
         padding: '1rem', 
         display: 'flex', 
         justifyContent: 'center',
+        alignItems: 'center',
         border: '1px solid var(--border)',
-        maxHeight: '60vh',
+        height: '400px',
         overflow: 'hidden'
       }}>
         <ReactCrop 
           crop={crop} 
           onChange={(_, percentCrop) => setCrop(percentCrop)} 
           onComplete={(c) => setCompletedCrop(c)}
-          style={{ maxHeight: '100%' }}
+          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', maxWidth: '100%', maxHeight: '100%' }}
         >
           <img 
             ref={imgRef}
@@ -235,8 +237,10 @@ const ImagePreProcessor = ({ imageFile, onComplete, onCancel }) => {
             onLoad={onImageLoad} 
             alt="Prescription" 
             style={{ 
-              maxHeight: '100%', 
-              width: 'auto', 
+              maxWidth: '100%',
+              maxHeight: '360px',
+              width: 'auto',
+              height: 'auto',
               objectFit: 'contain',
               borderRadius: '8px',
               display: 'block'
