@@ -276,9 +276,9 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Model Cascade: Simplified to ONLY use gemini-flash-latest to prevent 60-second Vercel Timeouts.
-    # Trying multiple locked or overloaded models takes too long.
-    models = ["gemini-flash-latest"]
+    # Model Cascade: gemini-flash-latest maps to 3.5-flash which has a 20 request limit!
+    # gemini-2.5-flash and gemini-flash-lite-latest have the 1,500 limit for free tier.
+    models = ["gemini-2.5-flash", "gemini-flash-lite-latest"]
     last_err = None
 
     for model in models:
