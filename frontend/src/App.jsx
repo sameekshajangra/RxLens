@@ -365,17 +365,20 @@ function App() {
     
     // GUARANTEE the file is under 4.5MB before sending to Vercel
     let payloadFile = imageFile;
-    if (payloadFile.size > 3.5 * 1024 * 1024) {
+    if (payloadFile.size > 1.5 * 1024 * 1024) {
       setLoadingStatus("Optimizing payload size...");
       try {
         const compressedBlob = await imageCompression(payloadFile, {
-          maxSizeMB: 3.5,
-          maxWidthOrHeight: 2500,
-          useWebWorker: true
+          maxSizeMB: 1.5, // 1.5MB is more than enough for Gemini Vision
+          maxWidthOrHeight: 2000,
+          useWebWorker: false // Disable web worker to avoid Vite/Vercel worker bundling issues
         });
         payloadFile = new File([compressedBlob], payloadFile.name || 'prescription.jpg', { type: compressedBlob.type });
       } catch (e) {
         console.error("Final compression failed", e);
+        setError('Image compression failed. The file may be too large to upload securely.');
+        setLoading(false);
+        return;
       }
       setLoadingStatus(t.loading_status || 'Fast-tracking VLM Engine...');
     }
@@ -391,16 +394,9 @@ function App() {
       const res = await axios.post('/api/extract', formData, { timeout: 120000 });
 
       // ── Validate response is proper JSON with expected shape ────────────
-      // When backend isn't running (e.g. Firebase hosting without the Python API),
-      // axios parses the HTML 404/index.html as a string → crash on result.data
       const raw = res.data;
       if (!raw || typeof raw !== 'object' || !raw.data) {
-        // Backend not reachable or returned unexpected format
-        throw new Error(
-          'Backend API is not reachable. The live demo frontend is hosted on Firebase, ' +
-          'but the Python backend needs to be running separately. ' +
-          'To test locally: run the FastAPI backend and use npm run dev.'
-        );
+        throw new Error('Backend API is not reachable or returned an unexpected format.');
       }
 
       // ── Normalise so result.data is always a safe object ───────────────
@@ -419,17 +415,16 @@ function App() {
 
       setResult(safeResult);
 
-      // Store scan into local history
       const entry = {
         drug_name: safeResult.data.drug || safeResult.data.drug_name || '',
         dosage: safeResult.data.dosage || '',
         date: new Date().toLocaleString(),
         safety_alert_count: safeArray(safeResult.data.safety_alerts).length,
-        data: safeResult // Save the complete payload for viewing and downloading
+        data: safeResult
       };
       setHistory(prev => {
         const updated = [...prev, entry];
-        try { localStorage.setItem('rxlens_history', JSON.stringify(updated)); } catch (e) { console.error('Storage full', e); }
+        try { localStorage.setItem('rxlens_history', JSON.stringify(updated)); } catch (e) {}
         return updated;
       });
 
@@ -437,7 +432,6 @@ function App() {
         setAudioUrl(`data:audio/mpeg;base64,${safeResult.audio_base64}`);
       }
 
-      // Auto-generate reminders from schedule
       if (safeResult.data.schedule?.length) {
         const newReminders = safeArray(safeResult.data.schedule).map((item, idx) => ({
           id: Date.now() + idx,
@@ -449,20 +443,25 @@ function App() {
         }));
         setReminders(prev => {
           const updated = [...prev, ...newReminders];
-          try { localStorage.setItem('rxlens_reminders', JSON.stringify(updated)); } catch (e) { console.error('Storage full', e); }
+          try { localStorage.setItem('rxlens_reminders', JSON.stringify(updated)); } catch (e) {}
           return updated;
         });
       }
 
     } catch (err) {
-      if (err.response?.status === 429 || (err.response?.data?.detail && (err.response.data.detail.includes('Quota') || err.response.data.detail.includes('exhausted')))) {
-        setError(err.response.data.detail || 'Daily Quota Reached.');
+      console.error("API Error:", err);
+      if (err.response?.status === 413) {
+        setError('Error: The image is too large for the server. Try cropping it more.');
+      } else if (err.response?.status === 504) {
+        setError('Error: Vercel serverless function timed out. The AI took too long to respond. Try again.');
+      } else if (err.response?.status === 429 || (err.response?.data?.detail && (err.response.data.detail.includes('Quota') || err.response.data.detail.includes('exhausted')))) {
+        setError(err.response?.data?.detail || 'Daily Quota Reached.');
         setRetryCountdown(60);
-      } else if (err.response?.status === 503 || (err.response?.data?.detail && (err.response.data.detail.includes('503') || err.response.data.detail.includes('UNAVAILABLE') || err.response.data.detail.includes('overloaded') || err.response.data.detail.includes('high demand')))) {
-        setError('⚡ AI model is temporarily busy due to high demand. All fallback models were tried. Please wait a moment and try again.');
+      } else if (err.response?.status === 503 || (err.response?.data?.detail && (err.response.data.detail.includes('503') || err.response.data.detail.includes('UNAVAILABLE') || err.response.data.detail.includes('overloaded')))) {
+        setError('⚡ AI model is temporarily busy due to high demand. Please wait a moment and try again.');
         setRetryCountdown(30);
       } else {
-        setError(err.response?.data?.detail || 'Failed to parse prescription.');
+        setError(err.response?.data?.detail || err.message || 'Failed to parse prescription.');
       }
     } finally {
       setLoading(false);
