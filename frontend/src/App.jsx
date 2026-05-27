@@ -413,6 +413,10 @@ function App() {
         },
       };
 
+      if (raw._warning) {
+        setError(raw._warning);
+      }
+
       setResult(safeResult);
 
       const entry = {
