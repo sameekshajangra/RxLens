@@ -1875,22 +1875,22 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
         )}
       </AnimatePresence>
         </div>
+        
+        {/* Footer */}
+        <footer style={{
+          textAlign: 'center',
+          padding: '1.5rem 1rem 1rem',
+          marginTop: '2rem',
+          borderTop: '1px solid var(--border)',
+        }}>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0 0 4px', opacity: 0.75 }}>
+            ⚕️ Research prototype. Not a medical device. Always consult a licensed pharmacist.
+          </p>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0, opacity: 0.6 }}>
+            Created by Sameeksha Sharma
+          </p>
+        </footer>
       </div>
-
-      {/* Footer */}
-      <footer style={{
-        textAlign: 'center',
-        padding: '1.5rem 1rem 1rem',
-        marginTop: '2rem',
-        borderTop: '1px solid var(--border)',
-      }}>
-        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0 0 4px', opacity: 0.75 }}>
-          ⚕️ Research prototype. Not a medical device. Always consult a licensed pharmacist.
-        </p>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0, opacity: 0.6 }}>
-          Created by Sameeksha Sharma
-        </p>
-      </footer>
     </div>
   );
 }
