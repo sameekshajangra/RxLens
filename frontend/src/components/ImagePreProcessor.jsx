@@ -34,13 +34,13 @@ const ImagePreProcessor = ({ imageFile, onComplete, onCancel }) => {
 
   const onImageLoad = useCallback((e) => {
     const { width, height } = e.currentTarget;
-    // Set a smart default crop (10% padding around edges)
+    // Default to selecting the entire image, so no accidental cropping happens
     const defaultCrop = {
       unit: '%',
-      x: 10,
-      y: 10,
-      width: 80,
-      height: 80
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100
     };
     setCrop(defaultCrop);
     setCompletedCrop(defaultCrop); // Initialize completed crop so we can process without user interaction if they just hit next
