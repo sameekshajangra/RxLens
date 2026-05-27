@@ -15,10 +15,11 @@
     "axios": "^1.16.0",
     "framer-motion": "^12.38.0",
     "html2pdf.js": "^0.14.0",
-    "lucide-react": "^1.14.0",
+    "lucide-react": "^1.16.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-h5-audio-player": "^3.10.2",
+    "react-image-crop": "^11.0.10",
     "react-webcam": "^7.2.0",
     "recharts": "^3.8.1"
   },

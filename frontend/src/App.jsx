@@ -60,6 +60,7 @@ import {
 import UploadCard from './components/UploadCard';
 import ExplanationLevelSelector from './components/ExplanationLevelSelector';
 import MedicineTimeline from './components/MedicineTimeline';
+import ImagePreProcessor from './components/ImagePreProcessor';
 import './index.css';
 import i18n from './i18n';
 import html2pdf from 'html2pdf.js';
@@ -170,6 +171,7 @@ function App() {
   const [isApiKeySetInEnv, setIsApiKeySetInEnv] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [imageFile, setImageFile] = useState(null);
+  const [pendingImage, setPendingImage] = useState(null); // Used to show pre-processing UI
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('Analyzing...');
@@ -340,8 +342,7 @@ function App() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      setPendingImage(file);
       resetState();
     }
   };
@@ -863,13 +864,25 @@ function App() {
                 )}
                 {retryCountdown > 0 ? (
                   <UploadCard retryCountdown={retryCountdown} t={t} />
+                ) : pendingImage ? (
+                  <ImagePreProcessor 
+                    imageFile={pendingImage}
+                    onComplete={(croppedFile) => {
+                      setImageFile(croppedFile);
+                      setImagePreview(URL.createObjectURL(croppedFile));
+                      setPendingImage(null);
+                    }}
+                    onCancel={() => {
+                      setPendingImage(null);
+                      resetState();
+                    }}
+                  />
                 ) : !imagePreview ? (
                   <UploadCard 
                     loading={loading} 
                     t={t} 
                     onImageCapture={(file) => {
-                      setImageFile(file);
-                      setImagePreview(URL.createObjectURL(file));
+                      setPendingImage(file);
                       resetState();
                     }}
                   />
