@@ -288,8 +288,13 @@ RETURN EXACTLY THIS JSON (no extra text):
             err_msg = str(e)
             logger.warning(f"{model} failed: {err_msg}")
             last_err = e
-            # Continue cascade on Quota errors, 404s, 400s (model not found/supported), or 503 (Unavailable/Overloaded)
-            if not any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota", "404", "NOT_FOUND", "400", "503", "UNAVAILABLE", "500"]):
+            
+            # Immediately fail if it's a Quota / Rate Limit issue so we don't trigger a 504 Timeout
+            if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota"]):
+                raise e
+                
+            # Continue cascade only on specific errors (e.g., model overloaded, not found, or temporary server errors)
+            if not any(k in err_msg for k in ["404", "NOT_FOUND", "400", "503", "UNAVAILABLE", "500"]):
                 raise e
 
     raise last_err
