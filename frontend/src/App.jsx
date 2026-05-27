@@ -923,7 +923,7 @@ function App() {
                             <div className="premium-audio-player" style={{ marginTop: '20px', padding: '15px', background: 'rgba(13, 148, 136, 0.05)', borderRadius: '16px', border: '1px solid rgba(13, 148, 136, 0.2)' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                 <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: '0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <Volume2 size={18} color="var(--primary)" /> 🎧 रोगी आवाज प्लेबैक (Bilingual Audio)
+                                  <Volume2 size={18} color="var(--primary)" /> 🎧 {language === 'Hindi' ? 'ऑडियो सारांश' : 'Audio Summary'}
                                 </p>
                                 <div style={{ display: 'flex', gap: '4px' }}>
                                   {[1, 1.25, 1.5, 2].map(rate => (
