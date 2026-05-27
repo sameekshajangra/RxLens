@@ -272,8 +272,9 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Model Cascade: Using 1.5 models first because the 2.0 quota bucket is currently exhausted
-    models = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
+    # Model Cascade: Try cutting-edge 2.0 models first (strict 50 RPD limit). 
+    # If they hit quota, fallback to 1.5-flash (massive 1500 RPD limit).
+    models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite"]
     last_err = None
 
     for model in models:
@@ -289,12 +290,8 @@ RETURN EXACTLY THIS JSON (no extra text):
             logger.warning(f"{model} failed: {err_msg}")
             last_err = e
             
-            # Immediately fail if it's a Quota / Rate Limit issue so we don't trigger a 504 Timeout
-            if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota"]):
-                raise e
-                
-            # Continue cascade only on specific errors (e.g., model overloaded, not found, or temporary server errors)
-            if not any(k in err_msg for k in ["404", "NOT_FOUND", "400", "503", "UNAVAILABLE", "500"]):
+            # Continue cascade on Quota (429), Model overload (503), Model Not Found (404/400)
+            if not any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota", "404", "NOT_FOUND", "400", "503", "UNAVAILABLE", "500"]):
                 raise e
 
     raise last_err
