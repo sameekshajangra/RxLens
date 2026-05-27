@@ -343,7 +343,9 @@ function App() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setPendingImage(file);
+      // Disabled the crop tool per user request
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
       resetState();
     }
   };
