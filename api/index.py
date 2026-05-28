@@ -309,8 +309,12 @@ RETURN EXACTLY THIS JSON (no extra text):
             err_msg = str(e)
             logger.warning(f"{model_name} failed: {err_msg}")
             last_err = e
-            # Break early if not transient
-            if not any(k in err_msg for k in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
+            # If it's a quota error (429), break immediately. 
+            # Google Free Tier quota is project-wide, so fallback models will just hit the same wall and extend the penalty timeout.
+            if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
+                break
+            # If it's a 503 UNAVAILABLE, we can try the next model.
+            if not any(k in err_msg for k in ["503", "UNAVAILABLE"]):
                 break
     raise last_err
 
