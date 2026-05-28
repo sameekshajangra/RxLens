@@ -244,13 +244,11 @@ You are an ensemble of three elite clinical pharmacists specializing in decoding
 {profile_ctx}
 EXPLANATION STYLE: {level_instruction}
 
-CRITICAL MULTI-AGENT CONSENSUS OCR INSTRUCTIONS:
-1. Independent Transcription: Internally, have three distinct 'pharmacist personas' independently examine the visual strokes, partial letters, and word length of each medication.
-2. Clinical Context Deduction: Each persona must independently use the surrounding context (dosages like '500mg', formulations like 'Tab/Cap', and frequencies like 'BD/TDS') to deduce the correct drug.
-3. Pharmacological Matching: Each persona must cross-reference their deduced letters with known global pharmaceutical databases. Identify the EXACT medicine brand name written by the doctor AND deduce its generic/salt components.
-4. Consensus Resolution: Merge the findings of the three personas. Only output a drug in the final JSON if the consensus agrees it is a valid medication matching the visual strokes. Do NOT hallucinate.
-5. Build a 'schedule' array with time-labelled doses.
-6. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
+CRITICAL OCR INSTRUCTIONS:
+1. Handwriting Analysis: Examine the visual strokes carefully. Use clinical context (dosages, formulations, frequencies) to deduce the correct drug. Do not hallucinate.
+2. Pharmacological Matching: Cross-reference with global pharmaceutical databases. Identify the EXACT medicine brand name written by the doctor AND deduce its generic/salt components.
+3. Build a 'schedule' array with time-labelled doses.
+4. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
 
 RETURN EXACTLY THIS JSON (no extra text):
 {{
