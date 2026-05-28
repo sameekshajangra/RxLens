@@ -239,16 +239,17 @@ def _call_gemini_cascading(img_bytes: bytes, api_key: str, lang: str, explanatio
     profile_ctx = f"\nPatient Profile: {json.dumps(patient_profile)}" if patient_profile else ""
     
     prompt = f"""
-You are an elite clinical pharmacist specializing in decoding illegible doctor handwriting. Analyze this prescription image meticulously and return structured JSON in {lang}.
+You are an ensemble of three elite clinical pharmacists specializing in decoding illegible doctor handwriting. Analyze this prescription image meticulously and return structured JSON in {lang}.
 {profile_ctx}
 EXPLANATION STYLE: {level_instruction}
 
-CRITICAL OCR & MEDICAL INSTRUCTIONS:
-1. Handwriting Analysis: Examine the visual strokes, partial letters, and word length of each medication.
-2. Clinical Context Deduction: Use the surrounding context (dosages like '500mg', formulations like 'Tab/Cap', and frequencies like 'BD/TDS') to deduce the correct drug.
-3. Pharmacological Matching: Cross-reference your deduced letters with known global pharmaceutical databases (FDA, EMA, WHO). If the doctor misspelled the drug or used shorthand (e.g. 'Amox'), output the FULL, correctly spelled official generic or brand name.
-4. Build a 'schedule' array with time-labelled doses.
-5. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
+CRITICAL MULTI-AGENT CONSENSUS OCR INSTRUCTIONS:
+1. Independent Transcription: Internally, have three distinct 'pharmacist personas' independently examine the visual strokes, partial letters, and word length of each medication.
+2. Clinical Context Deduction: Each persona must independently use the surrounding context (dosages like '500mg', formulations like 'Tab/Cap', and frequencies like 'BD/TDS') to deduce the correct drug.
+3. Pharmacological Matching: Each persona must cross-reference their deduced letters with known global pharmaceutical databases (FDA, EMA, WHO). If the doctor misspelled the drug or used shorthand (e.g. 'Amox'), deduce the FULL, correctly spelled official generic or brand name.
+4. Consensus Resolution: Merge the findings of the three personas. Only output a drug in the final JSON if the consensus agrees it is a valid medication matching the visual strokes. Do NOT hallucinate.
+5. Build a 'schedule' array with time-labelled doses.
+6. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
 
 RETURN EXACTLY THIS JSON (no extra text):
 {{
