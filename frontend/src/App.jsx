@@ -1650,7 +1650,6 @@ function App() {
                 <div className="glass-card" style={{textAlign:'center', padding:'4rem', borderColor: 'var(--danger)'}}>
                   <AlertTriangle size={48} style={{margin:'0 auto 1rem', color: 'var(--danger)'}} />
                   <p style={{color: 'var(--danger)', fontWeight: 600}}>{typeof error === 'string' ? error : JSON.stringify(error)}</p>
-                  <p style={{fontSize: '0.85rem', marginTop: '1rem'}}>Check your internet or wait for the quota to reset.</p>
                 </div>
               ) : (
                 <div className="glass-card" style={{textAlign:'center', opacity:0.5, padding:'4rem'}}>
