@@ -287,12 +287,12 @@ RETURN EXACTLY THIS JSON (no extra text):
 
     # Try a cascade of Gemini models in case the primary is throttled or unavailable.
     # We wrap each call in a strict 25s timeout so it NEVER hits Vercel's 60s hard limit.
-    model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
+    # Try a cascade of Gemini models (25s each, total 50s) to avoid Vercel's 60s limit.
+    model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash"]
     last_err = None
     for model_name in model_candidates:
         try:
-            logger.info(f"Attempting {model_name}...")
-            # We use the asyncio.wait_for wrapper around the async genai call
+            logger.info(f"Attempting {model_name} with 25s timeout...")
             response = await asyncio.wait_for(
                 client.aio.models.generate_content(model=model_name, contents=contents),
                 timeout=25.0
@@ -302,17 +302,16 @@ RETURN EXACTLY THIS JSON (no extra text):
                 res_json["_pipeline"] = f"vision_{model_name}"
                 return res_json
         except asyncio.TimeoutError:
-            err_msg = f"{model_name} timed out after 25s (image too complex or AI overloaded)."
+            err_msg = "Image is too complex or contains too many prescriptions to process within Vercel's 60-second limit. Please try scanning 1-2 prescriptions at a time."
             logger.warning(err_msg)
             last_err = Exception(err_msg)
         except Exception as e:
             err_msg = str(e)
             logger.warning(f"{model_name} failed: {err_msg}")
             last_err = e
-            # If the error is not a transient 503/UNAVAILABLE, break early.
+            # Break early if not transient
             if not any(k in err_msg for k in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
                 break
-    # If all candidates failed, raise the last error.
     raise last_err
 
 # ── API Routes ───────────────────────────────────────────────────────────────
@@ -375,8 +374,10 @@ async def extract_prescription(
                 detail = "Gemini API rate limit reached. Please wait 30-60 seconds and try again."
             elif is_503:
                 detail = "503 UNAVAILABLE: The AI model is currently experiencing high demand. Please try again."
+            elif "too complex" in err:
+                detail = err
             else:
-                detail = "AI processing failed. Please ensure the image is clear."
+                detail = f"AI processing failed. Please ensure the image is clear. (Error: {err})"
             raise HTTPException(status_code=503, detail=detail)
 
         # Run Safety & Finalize
