@@ -258,6 +258,11 @@ RETURN EXACTLY THIS JSON (no extra text):
   "drugs_dosage": {{"Drug 1": "Dose 1"}},
   "drugs_frequency": {{"Drug 1": "Freq 1"}},
   "drugs_duration": {{"Drug 1": "Duration 1"}},
+  "clinical_notes": {{
+    "complaints": "Extracted chief complaints (c/o), e.g., 'Giddiness and restlessness'. Leave empty if none.",
+    "diagnosis_impression": "Extracted Impression/Diagnosis (Imp), e.g., 'Hypoglycemia'. Leave empty if none.",
+    "vitals_examination": "Extracted On Examination (o/e) vitals, e.g., 'BP: 110/70, PR: 60 bpm'. Leave empty if none."
+  }},
   "dosage": "dosage summary",
   "frequency": "frequency summary",
   "duration": "total duration",

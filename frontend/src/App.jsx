@@ -1176,6 +1176,48 @@ function App() {
                     </AnimatePresence>
                   </div>
 
+                  {/* Section 2.5: Clinical Notes */}
+                  {result?.data?.clinical_notes && (result.data.clinical_notes.complaints || result.data.clinical_notes.diagnosis_impression || result.data.clinical_notes.vitals_examination) && (
+                    <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'clinical' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'clinical' ? '' : 'clinical')}>
+                      <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <Activity size={20} style={{ color: 'var(--primary)' }} /> 
+                          Clinical Notes
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {expandedSection === 'clinical' ? <span style={{fontSize:'0.8rem'}}>▼</span> : <span style={{fontSize:'0.8rem'}}>▶</span>}
+                        </div>
+                      </h2>
+                      
+                      <AnimatePresence>
+                        {expandedSection === 'clinical' && (
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginTop: '1.5rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              {result.data.clinical_notes.complaints && (
+                                <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '8px', borderLeft: '4px solid var(--primary)' }}>
+                                  <strong style={{ display: 'block', marginBottom: '4px', color: 'var(--text-main)', fontSize: '0.85rem', textTransform: 'uppercase' }}>Complaints (c/o)</strong>
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{result.data.clinical_notes.complaints}</span>
+                                </div>
+                              )}
+                              {result.data.clinical_notes.diagnosis_impression && (
+                                <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '8px', borderLeft: '4px solid var(--warning)' }}>
+                                  <strong style={{ display: 'block', marginBottom: '4px', color: 'var(--text-main)', fontSize: '0.85rem', textTransform: 'uppercase' }}>Impression / Diagnosis (Imp)</strong>
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{result.data.clinical_notes.diagnosis_impression}</span>
+                                </div>
+                              )}
+                              {result.data.clinical_notes.vitals_examination && (
+                                <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '8px', borderLeft: '4px solid var(--danger)' }}>
+                                  <strong style={{ display: 'block', marginBottom: '4px', color: 'var(--text-main)', fontSize: '0.85rem', textTransform: 'uppercase' }}>Vitals & Examination (o/e)</strong>
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{result.data.clinical_notes.vitals_examination}</span>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+
                   {/* Section 3: Instructions & Warnings */}
                   <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'instructions' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'instructions' ? '' : 'instructions')}>
                     <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
