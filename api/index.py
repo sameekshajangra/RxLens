@@ -288,16 +288,26 @@ RETURN EXACTLY THIS JSON (no extra text):
     # Do NOT sleep or retry inside the backend, as it will cause a 504 Gateway Timeout.
     # Fail fast and let the frontend UI handle the retry countdown.
     
-    try:
-        logger.info("Attempting gemini-2.5-flash...")
-        response = client.models.generate_content(model="gemini-2.5-flash", contents=contents)
-        if response.text:
-            res_json = _extract_json(response.text)
-            res_json["_pipeline"] = "vision_gemini-2.5-flash"
-            return res_json
-    except Exception as e:
-        logger.warning(f"AI generation failed: {str(e)}")
-        raise e
+    # Try a cascade of Gemini models in case the primary is throttled or unavailable.
+    model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
+    last_err = None
+    for model_name in model_candidates:
+        try:
+            logger.info(f"Attempting {model_name}...")
+            response = client.models.generate_content(model=model_name, contents=contents)
+            if response.text:
+                res_json = _extract_json(response.text)
+                res_json["_pipeline"] = f"vision_{model_name}"
+                return res_json
+        except Exception as e:
+            err_msg = str(e)
+            logger.warning(f"{model_name} failed: {err_msg}")
+            last_err = e
+            # If the error is not a transient 503/UNAVAILABLE, break early.
+            if not any(k in err_msg for k in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
+                break
+    # If all candidates failed, raise the last error.
+    raise last_err
 
 # ── API Routes ───────────────────────────────────────────────────────────────
 
