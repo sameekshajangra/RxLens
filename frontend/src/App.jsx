@@ -466,8 +466,8 @@ function App() {
       } else if (err.response?.status === 429 || (err.response?.data?.detail && (err.response.data.detail.includes('Quota') || err.response.data.detail.includes('exhausted')))) {
         setError(err.response?.data?.detail || 'Daily Quota Reached.');
         setRetryCountdown(60);
-      } else if (err.response?.status === 503 || (err.response?.data?.detail && (err.response.data.detail.includes('503') || err.response.data.detail.includes('UNAVAILABLE') || err.response.data.detail.includes('overloaded')))) {
-        setError('⚡ AI model is temporarily busy due to high demand. Please wait a moment and try again.');
+      } else if (err.response?.status === 503) {
+        setError(err.response?.data?.detail || '⚡ AI model is temporarily busy. Please wait a moment and try again.');
         setRetryCountdown(30);
       } else {
         setError(err.response?.data?.detail || err.message || 'Failed to parse prescription.');

@@ -231,6 +231,7 @@ LEVEL_HINTS = {
 }
 
 def _call_gemini_cascading(img_bytes: bytes, api_key: str, lang: str, explanation_level: str, patient_profile: dict | None) -> dict:
+    import time
     from google import genai
     from google.genai import types
 
@@ -284,27 +285,35 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Model Cascade: gemini-flash-latest maps to 3.5-flash which has a 20 request limit!
-    # gemini-2.5-flash has the 1,500 limit for free tier.
-    models = ["gemini-2.5-flash"]
-    last_err = None
+    # Retry with backoff for transient 429 rate-limit errors.
+    # Vercel has a 60s hard timeout, so we can afford 2 retries: wait 5s then 15s = 20s overhead max.
+    MAX_RETRIES = 2
+    BACKOFF_SECS = [5, 15]
 
-    for model in models:
+    last_err = None
+    for attempt in range(1 + MAX_RETRIES):
         try:
-            logger.info(f"Attempting {model}...")
-            response = client.models.generate_content(model=model, contents=contents)
+            logger.info(f"Attempting gemini-2.5-flash (attempt {attempt + 1})...")
+            response = client.models.generate_content(model="gemini-2.5-flash", contents=contents)
             if response.text:
                 res_json = _extract_json(response.text)
-                res_json["_pipeline"] = f"vision_{model}"
+                res_json["_pipeline"] = f"vision_gemini-2.5-flash"
                 return res_json
         except Exception as e:
             err_msg = str(e)
-            logger.warning(f"{model} failed: {err_msg}")
+            logger.warning(f"Attempt {attempt + 1} failed: {err_msg}")
             last_err = e
-            
-            # Continue cascade on Quota (429), Model overload (503), Model Not Found (404/400)
-            if not any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota", "404", "NOT_FOUND", "400", "503", "UNAVAILABLE", "500"]):
-                raise e
+
+            # Only retry on transient rate-limit (429) errors
+            is_rate_limit = any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED"])
+            if is_rate_limit and attempt < MAX_RETRIES:
+                wait = BACKOFF_SECS[attempt]
+                logger.info(f"Rate limited. Waiting {wait}s before retry...")
+                time.sleep(wait)
+                continue
+
+            # Non-retryable error — raise immediately
+            raise e
 
     raise last_err
 
@@ -354,11 +363,14 @@ async def extract_prescription(
                 parsed["overall_confidence"] = round(sum(scores)/len(scores), 2) if scores else None
         except Exception as e:
             err = str(e)
-            logger.error(f"All AI models failed or rate limited: {err}")
-            # ULTIMATE FAILSAFE: If the API key is exhausted or errors out, fallback to DEMO_DATA
-            # instead of crashing the UI, guaranteeing it works "once and for all".
-            summ = _make_summary(DEMO_DATA, lang)
-            return {"success": True, "data": dict(DEMO_DATA), "summary": summ, "audio_base64": _generate_audio_base64(summ, lang), "_warning": f"AI error or quota exhausted. Displaying demo prescription. Details: {err}"}
+            logger.error(f"All AI attempts failed: {err}")
+            # Return a clear error — NEVER return fake demo data as real results.
+            is_quota = any(k in err for k in ["429", "RESOURCE_EXHAUSTED", "quota"])
+            if is_quota:
+                detail = "Gemini API rate limit reached. Please wait 30-60 seconds and try again."
+            else:
+                detail = f"AI processing failed: {err}"
+            raise HTTPException(status_code=503, detail=detail)
 
         # Run Safety & Finalize
         drugs = parsed.get("drugs_list", [])
