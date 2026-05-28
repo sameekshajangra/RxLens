@@ -230,8 +230,9 @@ LEVEL_HINTS = {
     "detailed": "Provide full clinical depth: pharmacological class, mechanism, contraindications, clinical interactions.",
 }
 
-def _call_gemini_cascading(img_bytes: bytes, api_key: str, lang: str, explanation_level: str, patient_profile: dict | None) -> dict:
+async def _call_gemini_cascading(img_bytes: bytes, api_key: str, lang: str, explanation_level: str, patient_profile: dict | None) -> dict:
     import time
+    import asyncio
     from google import genai
     from google.genai import types
 
@@ -284,21 +285,26 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Vercel serverless functions have a strict 60s timeout. 
-    # Do NOT sleep or retry inside the backend, as it will cause a 504 Gateway Timeout.
-    # Fail fast and let the frontend UI handle the retry countdown.
-    
     # Try a cascade of Gemini models in case the primary is throttled or unavailable.
+    # We wrap each call in a strict 25s timeout so it NEVER hits Vercel's 60s hard limit.
     model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
     last_err = None
     for model_name in model_candidates:
         try:
             logger.info(f"Attempting {model_name}...")
-            response = client.models.generate_content(model=model_name, contents=contents)
+            # We use the asyncio.wait_for wrapper around the async genai call
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(model=model_name, contents=contents),
+                timeout=25.0
+            )
             if response.text:
                 res_json = _extract_json(response.text)
                 res_json["_pipeline"] = f"vision_{model_name}"
                 return res_json
+        except asyncio.TimeoutError:
+            err_msg = f"{model_name} timed out after 25s (image too complex or AI overloaded)."
+            logger.warning(err_msg)
+            last_err = Exception(err_msg)
         except Exception as e:
             err_msg = str(e)
             logger.warning(f"{model_name} failed: {err_msg}")
@@ -318,6 +324,11 @@ def root():
 @app.get("/api/config")
 def get_config():
     return {"api_key_configured": bool(os.getenv("GEMINI_API_KEY"))}
+
+@app.get("/api/history")
+def get_history():
+    # Return empty history for now to prevent 404 errors.
+    return []
 
 @app.post("/api/extract")
 async def extract_prescription(
@@ -348,7 +359,7 @@ async def extract_prescription(
 
         # LLM Processing with Cascading
         try:
-            parsed = _call_gemini_cascading(img_bytes, key, lang, explanation_level, profile_data)
+            parsed = await _call_gemini_cascading(img_bytes, key, lang, explanation_level, profile_data)
             parsed = _normalize(parsed)
             if "overall_confidence" not in parsed:
                 scores = [v for v in parsed.get("confidence", {}).values() if isinstance(v, (int, float))]
