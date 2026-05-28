@@ -304,11 +304,11 @@ RETURN EXACTLY THIS JSON (no extra text):
             logger.warning(f"Attempt {attempt + 1} failed: {err_msg}")
             last_err = e
 
-            # Only retry on transient rate-limit (429) errors
-            is_rate_limit = any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED"])
-            if is_rate_limit and attempt < MAX_RETRIES:
+            # Retry on transient rate-limit (429) or temporary server errors (503/500/UNAVAILABLE)
+            is_transient = any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "503", "UNAVAILABLE", "500"])
+            if is_transient and attempt < MAX_RETRIES:
                 wait = BACKOFF_SECS[attempt]
-                logger.info(f"Rate limited. Waiting {wait}s before retry...")
+                logger.info(f"Transient error (rate limit / 503). Waiting {wait}s before retry...")
                 time.sleep(wait)
                 continue
 
@@ -366,10 +366,14 @@ async def extract_prescription(
             logger.error(f"All AI attempts failed: {err}")
             # Return a clear error — NEVER return fake demo data as real results.
             is_quota = any(k in err for k in ["429", "RESOURCE_EXHAUSTED", "quota"])
+            is_503 = any(k in err for k in ["503", "UNAVAILABLE"])
+            
             if is_quota:
                 detail = "Gemini API rate limit reached. Please wait 30-60 seconds and try again."
+            elif is_503:
+                detail = "503 UNAVAILABLE: The AI model is currently experiencing high demand. Please try again."
             else:
-                detail = f"AI processing failed: {err}"
+                detail = "AI processing failed. Please ensure the image is clear."
             raise HTTPException(status_code=503, detail=detail)
 
         # Run Safety & Finalize
