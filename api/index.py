@@ -288,8 +288,7 @@ RETURN EXACTLY THIS JSON (no extra text):
     # Try a cascade of Gemini models in case the primary is throttled or unavailable.
     # We wrap each call in a strict 25s timeout so it NEVER hits Vercel's 60s hard limit.
     # Try a cascade of Gemini models (25s each, total 50s) to avoid Vercel's 60s limit.
-    # Added gemini-1.5-flash to give one more fallback option for rate limits.
-    model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash"]
     last_err = None
     for model_name in model_candidates:
         try:
