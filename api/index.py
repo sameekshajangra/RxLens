@@ -289,7 +289,7 @@ RETURN EXACTLY THIS JSON (no extra text):
     # We wrap each call in a strict 25s timeout so it NEVER hits Vercel's 60s hard limit.
     # We wrap the entire cascade in a retry loop to absorb 429 Quota errors.
     # A single 15-second sleep fits well within Vercel's 60s limit and often clears rolling 15RPM limits.
-    model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash"]
+    model_candidates = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-flash-latest"]
     last_err = None
     
     for attempt in range(2): # Try cascade up to 2 times
@@ -340,6 +340,19 @@ def root():
 @app.get("/api/config")
 def get_config():
     return {"api_key_configured": bool(os.getenv("GEMINI_API_KEY"))}
+
+@app.get("/api/test_gemini")
+async def test_gemini():
+    from google import genai
+    try:
+        key = os.getenv("GEMINI_API_KEY")
+        if not key:
+            return {"error": "No API key found in env"}
+        client = genai.Client(api_key=key)
+        response = client.models.generate_content(model="gemini-2.0-flash", contents=["Reply with 'hello'"])
+        return {"success": True, "text": response.text}
+    except Exception as e:
+        return {"error": str(e), "type": str(type(e))}
 
 @app.get("/api/history")
 def get_history():
