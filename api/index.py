@@ -287,35 +287,48 @@ RETURN EXACTLY THIS JSON (no extra text):
 
     # Try a cascade of Gemini models in case the primary is throttled or unavailable.
     # We wrap each call in a strict 25s timeout so it NEVER hits Vercel's 60s hard limit.
-    # Try a cascade of Gemini models (25s each, total 50s) to avoid Vercel's 60s limit.
+    # We wrap the entire cascade in a retry loop to absorb 429 Quota errors.
+    # A single 15-second sleep fits well within Vercel's 60s limit and often clears rolling 15RPM limits.
     model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash"]
     last_err = None
-    for model_name in model_candidates:
-        try:
-            logger.info(f"Attempting {model_name} with 25s timeout...")
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(model=model_name, contents=contents),
-                timeout=25.0
-            )
-            if response.text:
-                res_json = _extract_json(response.text)
-                res_json["_pipeline"] = f"vision_{model_name}"
-                return res_json
-        except asyncio.TimeoutError:
-            err_msg = "Image is too complex or contains too many prescriptions to process within Vercel's 60-second limit. Please try scanning 1-2 prescriptions at a time."
-            logger.warning(err_msg)
-            last_err = Exception(err_msg)
-        except Exception as e:
-            err_msg = str(e)
-            logger.warning(f"{model_name} failed: {err_msg}")
-            last_err = e
-            # If it's a quota error (429), break immediately. 
-            # Google Free Tier quota is project-wide, so fallback models will just hit the same wall and extend the penalty timeout.
-            if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
-                break
-            # If it's a 503 UNAVAILABLE, we can try the next model.
-            if not any(k in err_msg for k in ["503", "UNAVAILABLE"]):
-                break
+    
+    for attempt in range(2): # Try cascade up to 2 times
+        for model_name in model_candidates:
+            try:
+                logger.info(f"Attempting {model_name} (Attempt {attempt+1})...")
+                response = await asyncio.wait_for(
+                    client.aio.models.generate_content(model=model_name, contents=contents),
+                    timeout=25.0
+                )
+                if response.text:
+                    res_json = _extract_json(response.text)
+                    res_json["_pipeline"] = f"vision_{model_name}"
+                    return res_json
+            except asyncio.TimeoutError:
+                err_msg = "Image is too complex or contains too many prescriptions to process within Vercel's 60-second limit. Please try scanning 1-2 prescriptions at a time."
+                logger.warning(err_msg)
+                last_err = Exception(err_msg)
+            except Exception as e:
+                err_msg = str(e)
+                logger.warning(f"{model_name} failed: {err_msg}")
+                last_err = e
+                # If it's a quota error (429), break the inner model loop so we can sleep and retry.
+                if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
+                    break
+                # If it's a 503 UNAVAILABLE, we can try the next model immediately.
+                if not any(k in err_msg for k in ["503", "UNAVAILABLE"]):
+                    break
+        
+        # If we broke out of the inner loop due to a quota error, sleep and retry.
+        if last_err and any(k in str(last_err) for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
+            if attempt == 0:
+                logger.info("Quota exhausted. Sleeping for 15 seconds before final retry to bypass rate limit...")
+                await asyncio.sleep(15)
+            else:
+                break # Failed twice, give up
+        else:
+            break # Not a quota error, do not retry
+
     raise last_err
 
 # ── API Routes ───────────────────────────────────────────────────────────────
