@@ -285,37 +285,20 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Retry with backoff for transient 429 rate-limit errors.
-    # Vercel has a 60s hard timeout, so we can afford 2 retries: wait 5s then 15s = 20s overhead max.
-    MAX_RETRIES = 2
-    BACKOFF_SECS = [5, 15]
-
-    last_err = None
-    for attempt in range(1 + MAX_RETRIES):
-        try:
-            logger.info(f"Attempting gemini-2.5-flash (attempt {attempt + 1})...")
-            response = client.models.generate_content(model="gemini-2.5-flash", contents=contents)
-            if response.text:
-                res_json = _extract_json(response.text)
-                res_json["_pipeline"] = f"vision_gemini-2.5-flash"
-                return res_json
-        except Exception as e:
-            err_msg = str(e)
-            logger.warning(f"Attempt {attempt + 1} failed: {err_msg}")
-            last_err = e
-
-            # Retry on transient rate-limit (429) or temporary server errors (503/500/UNAVAILABLE)
-            is_transient = any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "503", "UNAVAILABLE", "500"])
-            if is_transient and attempt < MAX_RETRIES:
-                wait = BACKOFF_SECS[attempt]
-                logger.info(f"Transient error (rate limit / 503). Waiting {wait}s before retry...")
-                time.sleep(wait)
-                continue
-
-            # Non-retryable error — raise immediately
-            raise e
-
-    raise last_err
+    # Vercel serverless functions have a strict 60s timeout. 
+    # Do NOT sleep or retry inside the backend, as it will cause a 504 Gateway Timeout.
+    # Fail fast and let the frontend UI handle the retry countdown.
+    
+    try:
+        logger.info("Attempting gemini-2.5-flash...")
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=contents)
+        if response.text:
+            res_json = _extract_json(response.text)
+            res_json["_pipeline"] = "vision_gemini-2.5-flash"
+            return res_json
+    except Exception as e:
+        logger.warning(f"AI generation failed: {str(e)}")
+        raise e
 
 # ── API Routes ───────────────────────────────────────────────────────────────
 
