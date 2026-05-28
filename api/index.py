@@ -389,26 +389,45 @@ async def extract_prescription(
         # LLM Processing with Cascading
         try:
             parsed = await _call_gemini_cascading(img_bytes, key, lang, explanation_level, profile_data)
-            parsed = _normalize(parsed)
-            if "overall_confidence" not in parsed:
-                scores = [v for v in parsed.get("confidence", {}).values() if isinstance(v, (int, float))]
-                parsed["overall_confidence"] = round(sum(scores)/len(scores), 2) if scores else None
         except Exception as e:
             err = str(e)
-            logger.error(f"All AI attempts failed: {err}")
-            # Return a clear error — NEVER return fake demo data as real results.
+            logger.error(f"First AI attempt failed: {err}")
             is_quota = any(k in err for k in ["429", "RESOURCE_EXHAUSTED", "quota"])
-            is_503 = any(k in err for k in ["503", "UNAVAILABLE"])
             
-            if is_quota:
-                detail = "Gemini API rate limit reached. Please wait 30-60 seconds and try again."
-            elif is_503:
-                detail = "503 UNAVAILABLE: The AI model is currently experiencing high demand. Please try again."
-            elif "too complex" in err:
-                detail = err
+            # ULTIMATE FALLBACK: If user provided a custom API key and it's out of quota, 
+            # seamlessly swap to the server's backup API key to "make it work anyhow"
+            server_key = os.getenv("GEMINI_API_KEY")
+            if is_quota and api_key and server_key and api_key != server_key:
+                logger.warning("User API key out of quota! Falling back to server backup key...")
+                try:
+                    parsed = await _call_gemini_cascading(img_bytes, server_key, lang, explanation_level, profile_data)
+                except Exception as fallback_e:
+                    err = str(fallback_e)
+                    is_quota = any(k in err for k in ["429", "RESOURCE_EXHAUSTED", "quota"])
+                    is_503 = any(k in err for k in ["503", "UNAVAILABLE"])
+                    if is_quota:
+                        raise HTTPException(status_code=503, detail="Gemini API rate limit reached. Please wait 30-60 seconds and try again.")
+                    elif is_503:
+                        raise HTTPException(status_code=503, detail="503 UNAVAILABLE: The AI model is currently experiencing high demand. Please try again.")
+                    elif "too complex" in err:
+                        raise HTTPException(status_code=503, detail=err)
+                    else:
+                        raise HTTPException(status_code=503, detail=f"AI processing failed. Please ensure the image is clear. (Error: {err})")
             else:
-                detail = f"AI processing failed. Please ensure the image is clear. (Error: {err})"
-            raise HTTPException(status_code=503, detail=detail)
+                is_503 = any(k in err for k in ["503", "UNAVAILABLE"])
+                if is_quota:
+                    raise HTTPException(status_code=503, detail="Gemini API rate limit reached. Please wait 30-60 seconds and try again.")
+                elif is_503:
+                    raise HTTPException(status_code=503, detail="503 UNAVAILABLE: The AI model is currently experiencing high demand. Please try again.")
+                elif "too complex" in err:
+                    raise HTTPException(status_code=503, detail=err)
+                else:
+                    raise HTTPException(status_code=503, detail=f"AI processing failed. Please ensure the image is clear. (Error: {err})")
+
+        parsed = _normalize(parsed)
+        if "overall_confidence" not in parsed:
+            scores = [v for v in parsed.get("confidence", {}).values() if isinstance(v, (int, float))]
+            parsed["overall_confidence"] = round(sum(scores)/len(scores), 2) if scores else None
 
         # Run Safety & Finalize
         drugs = parsed.get("drugs_list", [])
