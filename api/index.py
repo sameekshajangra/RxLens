@@ -247,15 +247,15 @@ EXPLANATION STYLE: {level_instruction}
 CRITICAL MULTI-AGENT CONSENSUS OCR INSTRUCTIONS:
 1. Independent Transcription: Internally, have three distinct 'pharmacist personas' independently examine the visual strokes, partial letters, and word length of each medication.
 2. Clinical Context Deduction: Each persona must independently use the surrounding context (dosages like '500mg', formulations like 'Tab/Cap', and frequencies like 'BD/TDS') to deduce the correct drug.
-3. Pharmacological Matching: Each persona must cross-reference their deduced letters with known global pharmaceutical databases (FDA, EMA, WHO). If the doctor misspelled the drug or used shorthand (e.g. 'Amox'), deduce the FULL, correctly spelled official generic or brand name.
+3. Pharmacological Matching: Each persona must cross-reference their deduced letters with known global pharmaceutical databases. Identify the EXACT medicine brand name written by the doctor AND deduce its generic/salt components.
 4. Consensus Resolution: Merge the findings of the three personas. Only output a drug in the final JSON if the consensus agrees it is a valid medication matching the visual strokes. Do NOT hallucinate.
 5. Build a 'schedule' array with time-labelled doses.
 6. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
 
 RETURN EXACTLY THIS JSON (no extra text):
 {{
-  "drug": "all medications comma-separated",
-  "drugs_list": ["Drug 1", "Drug 2"],
+  "drug": "All medications comma-separated. Format MUST be 'BrandName (GenericSalt)' if a brand name is written, else just 'GenericSalt'.",
+  "drugs_list": ["BrandName 1 (GenericSalt 1)", "BrandName 2 (GenericSalt 2)"],
   "drugs_dosage": {{"Drug 1": "Dose 1"}},
   "drugs_frequency": {{"Drug 1": "Freq 1"}},
   "drugs_duration": {{"Drug 1": "Duration 1"}},
