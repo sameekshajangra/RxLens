@@ -248,7 +248,8 @@ CRITICAL OCR INSTRUCTIONS:
 1. Handwriting Analysis: Examine the visual strokes carefully. Use clinical context (dosages, formulations, frequencies) to deduce the correct drug. Do not hallucinate.
 2. Pharmacological Matching: Cross-reference with global pharmaceutical databases. Identify the EXACT medicine brand name written by the doctor AND deduce its generic/salt components.
 3. Build a 'schedule' array with time-labelled doses.
-4. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
+4. Confidence Scoring: Score your confidence from 0.0 to 1.0. Do NOT artificially lower the score just because the handwriting is cursive; if you successfully matched the drug to a known database, score it >0.95.
+5. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
 
 RETURN EXACTLY THIS JSON (no extra text):
 {{
@@ -270,8 +271,8 @@ RETURN EXACTLY THIS JSON (no extra text):
   "side_effects": ["Effect 1"],
   "precautions": ["Precaution 1"],
   "schedule": [{{"time": "08:00 AM", "task": "description"}}],
-  "confidence": {{"drug": 0.9}},
-  "overall_confidence": 0.9,
+  "confidence": {{"drug": 0.98}},
+  "overall_confidence": 0.98,
   "is_uncertain": false,
   "accessibility_analysis": {{"score": "Medium", "jargon_density": "Low", "readability": "6th Grade Level", "reason": ""}},
   "explainability_sources": {{"instructions": "source of instructions", "side_effects": ["source 1"], "precautions": ["source 2"]}}
