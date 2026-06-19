@@ -96,7 +96,14 @@ const FAQ_DATA = {
 
 function App() {
 
-  const [activeTab, setActiveTab] = useState('scanner');
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem('rxlens_active_tab') || 'scanner';
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem('rxlens_active_tab', activeTab);
+  }, [activeTab]);
+
   const [historySortOrder, setHistorySortOrder] = useState("newest");
 
   // Audio state — declared BEFORE the useEffect that depends on it
@@ -527,7 +534,7 @@ function App() {
               id: Date.now() + idx,
               time: isStr ? '' : (item.time || ''),
               task: isStr ? item : (item.task || item.drug || safeResult.data.drug || 'Take medication'),
-              drug: safeResult.data.drug || '',
+              drug: isStr ? '' : (item.drug || (item.task ? item.task.split(' ')[0] : null) || (safeResult.data.drugs_list && safeResult.data.drugs_list.length > 0 ? safeResult.data.drugs_list[0] : safeResult.data.drug) || 'Medication'),
               enabled: true,
               createdAt: new Date().toISOString(),
             };
