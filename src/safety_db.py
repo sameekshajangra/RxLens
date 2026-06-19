@@ -10,120 +10,198 @@ DRUG_INTERACTIONS = {
     # --- Bleeding Risk ---
     frozenset({"Aspirin", "Warfarin"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both medications thin the blood — combined they severely increase the risk of dangerous internal bleeding.",
+        "suggested_action": "Do not take together. Consult your doctor immediately.",
         "message": "High risk of internal bleeding. These medications should not be taken together without strict medical supervision."
     },
     frozenset({"Aspirin", "Ibuprofen"}): {
         "severity": "Warning",
+        "severity_tier": "moderate",
+        "why_it_matters": "Both irritate the stomach lining — combined they increase the risk of stomach ulcers and bleeding.",
+        "suggested_action": "Avoid combining them if possible, or consult your doctor about taking a stomach protector.",
         "message": "Increased risk of stomach ulcers and bleeding. Ibuprofen may also interfere with Aspirin's heart-protective benefits."
     },
     frozenset({"Aspirin", "Clopidogrel"}): {
         "severity": "Warning",
+        "severity_tier": "moderate",
+        "why_it_matters": "Both prevent blood clotting — combined they increase your overall bleeding risk.",
+        "suggested_action": "Monitor closely for easy bruising or bleeding gums, and inform your doctor.",
         "message": "Dual antiplatelet therapy increases bleeding risk. Monitor for signs of bruising or bleeding."
     },
     frozenset({"Warfarin", "Ibuprofen"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Ibuprofen disrupts the stomach lining while Warfarin thins the blood — combined they dramatically increase bleeding risk.",
+        "suggested_action": "Do not mix. Ask your doctor for a safer pain reliever like Paracetamol.",
         "message": "NSAIDs dramatically increase bleeding risk when combined with Warfarin. Avoid this combination."
     },
     frozenset({"Warfarin", "Naproxen"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Naproxen irritates the stomach and Warfarin thins the blood — combined they carry a very high risk of stomach bleeding.",
+        "suggested_action": "Avoid this combination completely. Consult your doctor for pain relief alternatives.",
         "message": "Naproxen + Warfarin significantly increases the risk of GI bleeding."
     },
 
     # --- Cardiac Risk ---
     frozenset({"Sildenafil", "Nitroglycerin"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both strongly lower blood pressure — combined they can cause a sudden, fatal drop in blood pressure.",
+        "suggested_action": "Never take together. Seek emergency help if taken together and you feel dizzy or faint.",
         "message": "Dangerous drop in blood pressure. This combination can be fatal."
     },
     frozenset({"Azithromycin", "Amiodarone"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both affect the heart's electrical system — combined they can trigger life-threatening irregular heartbeats.",
+        "suggested_action": "Do not take together. Contact your doctor immediately to change the antibiotic.",
         "message": "Risk of serious heart rhythm disturbances (QT prolongation). Can cause fatal arrhythmia."
     },
     frozenset({"Ciprofloxacin", "Amiodarone"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both drugs alter the heart's rhythm — combined they increase the risk of a dangerous irregular heartbeat.",
+        "suggested_action": "Consult your doctor immediately for an alternative antibiotic.",
         "message": "Both drugs prolong the QT interval. Combined use risks life-threatening cardiac arrhythmia."
     },
     frozenset({"Metoprolol", "Verapamil"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both slow down the heart rate — combined they can cause the heart to beat dangerously slowly.",
+        "suggested_action": "Consult your doctor urgently; your dosages may need close monitoring or adjustment.",
         "message": "Both drugs slow heart rate. Combined use can cause severe bradycardia or heart block."
     },
     frozenset({"Atenolol", "Verapamil"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both reduce heart rate and blood pressure — combined they can cause a severe drop in heart rate.",
+        "suggested_action": "Consult your doctor urgently before taking both.",
         "message": "Combined beta-blocker and calcium channel blocker can cause dangerous bradycardia."
     },
     frozenset({"Digoxin", "Amiodarone"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Amiodarone causes Digoxin to build up in the body — combined they can lead to Digoxin poisoning.",
+        "suggested_action": "Consult your doctor immediately to adjust the Digoxin dosage.",
         "message": "Amiodarone increases Digoxin levels, risking toxicity. Digoxin dose must be reduced."
     },
 
     # --- Metabolic Risk ---
     frozenset({"Metformin", "Alcohol"}): {
         "severity": "Warning",
+        "severity_tier": "moderate",
+        "why_it_matters": "Both strain the liver and alter metabolism — combined they risk a serious condition called lactic acidosis.",
+        "suggested_action": "Limit or avoid alcohol consumption while on Metformin.",
         "message": "Increased risk of lactic acidosis, a serious metabolic complication."
     },
     frozenset({"Metformin", "Contrast Dye"}): {
         "severity": "Warning",
+        "severity_tier": "moderate",
+        "why_it_matters": "Contrast dye stresses the kidneys, affecting how Metformin is cleared — combined they risk lactic acidosis.",
+        "suggested_action": "Stop Metformin before the scan and wait 48 hours after to restart, as directed by your doctor.",
         "message": "Temporarily stop Metformin before and after contrast dye procedures to prevent lactic acidosis."
     },
 
     # --- Liver Toxicity ---
     frozenset({"Paracetamol", "Alcohol"}): {
         "severity": "Warning",
+        "severity_tier": "moderate",
+        "why_it_matters": "Both are processed by the liver — combined they significantly increase the chance of liver damage.",
+        "suggested_action": "Do not drink alcohol while taking Paracetamol.",
         "message": "Increased risk of liver toxicity. Avoid alcohol when taking Paracetamol."
     },
     frozenset({"Methotrexate", "Ibuprofen"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Ibuprofen stops the body from clearing Methotrexate — combined they can lead to severe bone marrow toxicity.",
+        "suggested_action": "Avoid NSAIDs. Talk to your doctor about safer pain relief options.",
         "message": "NSAIDs reduce Methotrexate clearance, risking severe toxicity including bone marrow suppression."
     },
 
     # --- Serotonin Syndrome ---
     frozenset({"Fluoxetine", "Tramadol"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both increase serotonin levels in the brain — combined they can trigger a dangerous condition called Serotonin Syndrome.",
+        "suggested_action": "Consult your doctor immediately. Do not take together without strict medical supervision.",
         "message": "Risk of Serotonin Syndrome — a potentially fatal condition. Watch for agitation, confusion, rapid heart rate."
     },
     frozenset({"Sertraline", "Tramadol"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both raise serotonin levels — combined they can cause life-threatening Serotonin Syndrome.",
+        "suggested_action": "Consult your doctor immediately for an alternative pain medication.",
         "message": "Risk of Serotonin Syndrome. This combination should be avoided."
     },
 
     # --- Kidney Risk ---
     frozenset({"Lisinopril", "Ibuprofen"}): {
         "severity": "Warning",
+        "severity_tier": "moderate",
+        "why_it_matters": "Ibuprofen reduces blood flow to the kidneys while Lisinopril alters kidney function — combined they can cause kidney damage.",
+        "suggested_action": "Avoid regular use of Ibuprofen. Consult your doctor for safer pain relief.",
         "message": "NSAIDs can reduce the effectiveness of ACE inhibitors and increase kidney damage risk."
     },
     frozenset({"Lisinopril", "Potassium"}): {
         "severity": "Warning",
+        "severity_tier": "moderate",
+        "why_it_matters": "Lisinopril already makes the body hold onto potassium — adding supplements can push potassium to dangerously high levels.",
+        "suggested_action": "Do not take potassium supplements unless explicitly prescribed by your doctor.",
         "message": "ACE inhibitors already increase potassium levels. Adding potassium supplements risks hyperkalemia."
     },
 
     # --- Antibiotic Interactions ---
     frozenset({"Ciprofloxacin", "Antacid"}): {
         "severity": "Warning",
+        "severity_tier": "mild",
+        "why_it_matters": "Antacids bind to the antibiotic in your stomach — combined they prevent the antibiotic from working.",
+        "suggested_action": "Space doses 2 hours apart.",
         "message": "Antacids reduce Ciprofloxacin absorption by up to 90%. Take Ciprofloxacin 2 hours before antacids."
     },
     frozenset({"Doxycycline", "Antacid"}): {
         "severity": "Warning",
+        "severity_tier": "mild",
+        "why_it_matters": "Antacids and dairy block the antibiotic from entering your system — combined they make the antibiotic ineffective.",
+        "suggested_action": "Take Doxycycline 1 hour before or 2 hours after antacids and dairy.",
         "message": "Antacids and dairy products significantly reduce Doxycycline absorption."
     },
     frozenset({"Azithromycin", "Antacid"}): {
         "severity": "Warning",
+        "severity_tier": "mild",
+        "why_it_matters": "Antacids reduce how much antibiotic your body absorbs — combined they can cause the infection treatment to fail.",
+        "suggested_action": "Space doses at least 2 hours apart.",
         "message": "Take Azithromycin 1 hour before or 2 hours after antacids for proper absorption."
     },
     frozenset({"Metronidazole", "Alcohol"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Alcohol combined with Metronidazole causes a violent physical reaction including severe vomiting and flushed skin.",
+        "suggested_action": "Do not drink alcohol while taking this antibiotic and for 3 days after stopping.",
         "message": "Causes severe nausea, vomiting, and flushing (disulfiram-like reaction). Absolutely avoid alcohol."
     },
 
     # --- Sedation Risk ---
     frozenset({"Diazepam", "Alcohol"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both heavily depress the nervous system — combined they can stop your breathing completely.",
+        "suggested_action": "Never drink alcohol while taking Diazepam.",
         "message": "Combined CNS depression can cause fatal respiratory failure. Never mix benzodiazepines with alcohol."
     },
     frozenset({"Alprazolam", "Alcohol"}): {
         "severity": "Critical",
+        "severity_tier": "severe",
+        "why_it_matters": "Both slow down brain activity and breathing — combined they carry a very high risk of accidental death.",
+        "suggested_action": "Never consume alcohol with Alprazolam.",
         "message": "Severe respiratory depression risk. This combination has caused many accidental deaths."
     },
     frozenset({"Cetirizine", "Diazepam"}): {
         "severity": "Warning",
+        "severity_tier": "moderate",
+        "why_it_matters": "Both cause significant drowsiness — combined they can severely impair your alertness and reaction times.",
+        "suggested_action": "Do not drive or operate heavy machinery. Consider a non-drowsy allergy medicine.",
         "message": "Both cause drowsiness. Combined sedation may impair driving and daily activities."
     },
 }

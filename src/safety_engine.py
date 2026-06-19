@@ -68,6 +68,9 @@ class ClinicalSafetyEngine:
                 self.alerts.append({
                     "type": "Drug-Drug Interaction",
                     "severity": info["severity"],
+                    "severity_tier": info.get("severity_tier", "moderate"),
+                    "why_it_matters": info.get("why_it_matters", ""),
+                    "suggested_action": info.get("suggested_action", ""),
                     "message": info["message"],
                     "involved_drugs": drugs_found,
                     "reason": f"Alert triggered because both {drugs_found[0]} and {drugs_found[1] if len(drugs_found) > 1 else 'another drug'} were found in the prescription. These drugs have a known dangerous interaction in our clinical database."
