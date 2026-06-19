@@ -164,7 +164,7 @@ RETURN EXACTLY THIS JSON:
     "side_effects": ["Effect 1"],
     "precautions": ["Precaution 1"],
     "schedule": [
-        {{"time": "HH:MM AM/PM", "task": "action in {lang}"}}
+        {{"time": "HH:MM AM/PM", "task": "action in {lang}", "drug_name": "Specific drug for this task"}}
     ],
     "confidence": {{
         "drug": 0.0,
@@ -224,7 +224,7 @@ def _build_vision_prompt(lang: str, explanation_level: str, patient_profile: dic
         "side_effects": ["Effect 1"],
         "precautions": ["Precaution 1"],
         "schedule": [
-            {{"time": "HH:MM AM/PM", "task": "Action description in {lang}"}}
+            {{"time": "HH:MM AM/PM", "task": "Action description in {lang}", "drug_name": "Specific drug name"}}
         ],
         "confidence": {{
             "drug": 0.0,

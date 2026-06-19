@@ -530,11 +530,22 @@ function App() {
           .filter(Boolean)
           .map((item, idx) => {
             const isStr = typeof item === 'string';
+            const getIndividualDrug = () => {
+              if (isStr) return '';
+              if (item.drug_name) return item.drug_name;
+              if (item.drug) return item.drug;
+              if (item.task && safeResult.data.drugs_list && safeArray(safeResult.data.drugs_list).length > 0) {
+                const found = safeArray(safeResult.data.drugs_list).find(d => item.task.toLowerCase().includes(d.toLowerCase()));
+                if (found) return found;
+              }
+              return safeArray(safeResult.data.drugs_list).length > 0 ? safeResult.data.drugs_list[0] : (safeResult.data.drug || 'Medication');
+            };
+
             return {
               id: Date.now() + idx,
               time: isStr ? '' : (item.time || ''),
-              task: isStr ? item : (item.task || item.drug || safeResult.data.drug || 'Take medication'),
-              drug: isStr ? '' : (item.drug || (item.task ? item.task.split(' ')[0] : null) || (safeResult.data.drugs_list && safeResult.data.drugs_list.length > 0 ? safeResult.data.drugs_list[0] : safeResult.data.drug) || 'Medication'),
+              task: isStr ? item : (item.task || item.drug_name || safeResult.data.drug || 'Take medication'),
+              drug: getIndividualDrug(),
               enabled: true,
               createdAt: new Date().toISOString(),
             };
