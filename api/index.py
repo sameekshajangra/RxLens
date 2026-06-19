@@ -171,20 +171,25 @@ def _generate_audio_base64(text: str, lang: str) -> str:
         logger.warning(f"Audio generation failed: {e}")
         return ""
 
-def _compress_image_for_vision(img: Image.Image) -> bytes:
-    """Resize to max 1280px and compress for fast LLM uploads."""
+def _compress_image_for_vision(img: Image.Image, aggressive: bool = False) -> bytes:
+    """Resize and compress the image for fast LLM uploads.
+    If *aggressive* is True we downscale more aggressively (max 800px, quality 70) to fit very large/complex images.
+    """
     img = img.copy()
     if img.mode != 'RGB':
         img = img.convert('RGB')
     
-    max_dim = 1280
+    # Normal vs aggressive settings
+    max_dim = 500 if aggressive else 800
+    quality = 65 if aggressive else 80
+    
     if max(img.width, img.height) > max_dim:
         img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
     
     buf = io.BytesIO()
-    quality = 85
     img.save(buf, format="JPEG", quality=quality)
-    while buf.tell() > 2000000 and quality > 30: # max 2MB
+    # Ensure we stay under 2 MB even after aggressive compression
+    while buf.tell() > 2000000 and quality > 30:
         buf.seek(0)
         buf.truncate()
         quality -= 10
@@ -246,11 +251,14 @@ You are an ensemble of three elite clinical pharmacists specializing in decoding
 EXPLANATION STYLE: {level_instruction}
 
 CRITICAL OCR INSTRUCTIONS:
-1. Handwriting Analysis: Examine the visual strokes carefully. Use clinical context (dosages, formulations, frequencies) to deduce the correct drug. Do not hallucinate.
-2. Pharmacological Matching: Cross-reference with global pharmaceutical databases. Identify the EXACT medicine brand name written by the doctor AND deduce its generic/salt components.
-3. Build a 'schedule' array with time-labelled doses.
-4. Confidence Scoring: Score your confidence from 0.0 to 1.0. Do NOT artificially lower the score just because the handwriting is cursive; if you successfully matched the drug to a known database, score it >0.95.
-5. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
+1. Handwriting Analysis: Scan the visual strokes efficiently. Pay attention to context clues like 'Rx', 'c/o', 'O/E'. Direct JSON extraction is required; do NOT generate internal transcription reasoning.
+2. Pharmacological Matching: Cross-reference the visual strokes with global pharmaceutical databases. Identify the EXACT medicine brand name written by the doctor AND deduce its generic/salt components.
+3. Spelling Correction: Doctors often misspell drug names or use extreme shorthand (e.g., 'Amox 500', 'Para', 'Azithro'). Correct these to the standard pharmacological spelling.
+4. Clinical Context: Use the diagnosed condition (if written) to narrow down ambiguous drug names.
+5. Build a 'schedule' array with time-labelled doses.
+6. Confidence Scoring: Score your confidence from 0.0 to 1.0. If you successfully matched the drug to a known database, score it >0.95.
+7. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
+8. Lab Tests & Investigations: Doctors often prescribe lab tests (e.g., CBC, LFT, KFT, RBS, HIV, HBsAg, S. Cholesterol). Identify ANY recommended lab tests. Expand their abbreviations to their full clinical names (e.g., 'CBC' -> 'Complete Blood Count').
 
 RETURN EXACTLY THIS JSON (no extra text):
 {{
@@ -264,6 +272,7 @@ RETURN EXACTLY THIS JSON (no extra text):
     "diagnosis_impression": "Extracted Impression/Diagnosis (Imp), e.g., 'Hypoglycemia'. Leave empty if none.",
     "vitals_examination": "Extracted On Examination (o/e) vitals, e.g., 'BP: 110/70, PR: 60 bpm'. Leave empty if none."
   }},
+  "recommended_tests": ["Complete Blood Count (CBC)", "Liver Function Test (LFT)"],
   "dosage": "dosage summary",
   "frequency": "frequency summary",
   "duration": "total duration",
@@ -292,42 +301,31 @@ RETURN EXACTLY THIS JSON (no extra text):
     model_candidates = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-flash-latest"]
     last_err = None
     
-    for attempt in range(2): # Try cascade up to 2 times
-        for model_name in model_candidates:
-            try:
-                logger.info(f"Attempting {model_name} (Attempt {attempt+1})...")
-                response = await asyncio.wait_for(
-                    client.aio.models.generate_content(model=model_name, contents=contents),
-                    timeout=25.0
-                )
-                if response.text:
-                    res_json = _extract_json(response.text)
-                    res_json["_pipeline"] = f"vision_{model_name}"
-                    return res_json
-            except asyncio.TimeoutError:
-                err_msg = "Image is too complex or contains too many prescriptions to process within Vercel's 60-second limit. Please try scanning 1-2 prescriptions at a time."
-                logger.warning(err_msg)
-                last_err = Exception(err_msg)
-            except Exception as e:
-                err_msg = str(e)
-                logger.warning(f"{model_name} failed: {err_msg}")
-                last_err = e
-                # If it's a quota error (429), break the inner model loop so we can sleep and retry.
-                if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
-                    break
-                # If it's a 503 UNAVAILABLE, we can try the next model immediately.
-                if not any(k in err_msg for k in ["503", "UNAVAILABLE"]):
-                    break
-        
-        # If we broke out of the inner loop due to a quota error, sleep and retry.
-        if last_err and any(k in str(last_err) for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
-            if attempt == 0:
-                logger.info("Quota exhausted. Sleeping for 15 seconds before final retry to bypass rate limit...")
-                await asyncio.sleep(15)
-            else:
-                break # Failed twice, give up
-        else:
-            break # Not a quota error, do not retry
+    for model_name in model_candidates:
+        try:
+            logger.info(f"Attempting {model_name}...")
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(model=model_name, contents=contents),
+                timeout=290.0
+            )
+            if response.text:
+                res_json = _extract_json(response.text)
+                res_json["_pipeline"] = f"vision_{model_name}"
+                return res_json
+        except asyncio.TimeoutError:
+            err_msg = "Image is too complex or contains too many prescriptions. Please try scanning 1-2 prescriptions at a time."
+            logger.warning(err_msg)
+            raise Exception(err_msg)
+        except Exception as e:
+            err_msg = str(e)
+            logger.warning(f"{model_name} failed: {err_msg}")
+            last_err = e
+            # If it's a quota error (429), break immediately so we can fallback to the server key
+            if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
+                break
+            # If it's a 503 UNAVAILABLE, we can try the next model immediately.
+            if not any(k in err_msg for k in ["503", "UNAVAILABLE"]):
+                break
 
     raise last_err
 
@@ -379,50 +377,47 @@ async def extract_prescription(
             try: profile_data = json.loads(patient_profile)
             except: pass
 
-        key = api_key or os.getenv("GEMINI_API_KEY")
-        if not key or key == "DEMO_MODE":
+        # Determine which API key to use
+        user_key = api_key or os.getenv("GEMINI_API_KEY")
+        server_key = os.getenv("SERVER_GEMINI_API_KEY")
+        if not user_key or user_key == "DEMO_MODE":
             summ = _make_summary(DEMO_DATA, lang)
             return {"success": True, "data": dict(DEMO_DATA), "summary": summ, "audio_base64": _generate_audio_base64(summ, lang)}
 
-        img_bytes = _compress_image_for_vision(img)
 
-        # LLM Processing with Cascading
+        # LLM Processing with Cascading (now uses corrected keys and retry logic)
+
         try:
-            parsed = await _call_gemini_cascading(img_bytes, key, lang, explanation_level, profile_data)
-        except Exception as e:
-            err = str(e)
-            logger.error(f"First AI attempt failed: {err}")
-            is_quota = any(k in err for k in ["429", "RESOURCE_EXHAUSTED", "quota"])
-            
-            # ULTIMATE FALLBACK: If user provided a custom API key and it's out of quota, 
-            # seamlessly swap to the server's backup API key to "make it work anyhow"
-            server_key = os.getenv("GEMINI_API_KEY")
-            if is_quota and api_key and server_key and api_key != server_key:
-                logger.warning("User API key out of quota! Falling back to server backup key...")
-                try:
-                    parsed = await _call_gemini_cascading(img_bytes, server_key, lang, explanation_level, profile_data)
-                except Exception as fallback_e:
-                    err = str(fallback_e)
-                    is_quota = any(k in err for k in ["429", "RESOURCE_EXHAUSTED", "quota"])
-                    is_503 = any(k in err for k in ["503", "UNAVAILABLE"])
-                    if is_quota:
-                        raise HTTPException(status_code=503, detail="Gemini API rate limit reached. Please wait 30-60 seconds and try again.")
-                    elif is_503:
-                        raise HTTPException(status_code=503, detail="503 UNAVAILABLE: The AI model is currently experiencing high demand. Please try again.")
-                    elif "too complex" in err:
-                        raise HTTPException(status_code=503, detail=err)
-                    else:
-                        raise HTTPException(status_code=503, detail=f"AI processing failed. Please ensure the image is clear. (Error: {err})")
-            else:
-                is_503 = any(k in err for k in ["503", "UNAVAILABLE"])
-                if is_quota:
+            img_bytes = _compress_image_for_vision(img)
+            try:
+                parsed = await _call_gemini_cascading(img_bytes, user_key, lang, explanation_level, profile_data)
+            except Exception as e:
+                err_msg = str(e)
+                logger.error(f"First AI attempt failed: {err_msg}")
+                is_quota = any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"])
+                is_503 = any(k in err_msg for k in ["503", "UNAVAILABLE"])
+                
+                if is_quota and server_key and user_key != server_key:
+                    logger.info("User quota exhausted – instantly retrying with server backup key.")
+                    try:
+                        parsed = await _call_gemini_cascading(img_bytes, server_key, lang, explanation_level, profile_data)
+                    except Exception as fallback_e:
+                        fallback_err = str(fallback_e)
+                        if any(k in fallback_err for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
+                            raise HTTPException(status_code=503, detail="Gemini API rate limit reached. Please wait 30-60 seconds and try again.")
+                        raise HTTPException(status_code=503, detail=fallback_err)
+                elif is_quota:
                     raise HTTPException(status_code=503, detail="Gemini API rate limit reached. Please wait 30-60 seconds and try again.")
                 elif is_503:
                     raise HTTPException(status_code=503, detail="503 UNAVAILABLE: The AI model is currently experiencing high demand. Please try again.")
-                elif "too complex" in err:
-                    raise HTTPException(status_code=503, detail=err)
+                elif "too complex" in err_msg.lower():
+                    raise HTTPException(status_code=503, detail="Image is too complex or contains too many prescriptions. Please try scanning 1-2 prescriptions at a time.")
                 else:
-                    raise HTTPException(status_code=503, detail=f"AI processing failed. Please ensure the image is clear. (Error: {err})")
+                    raise HTTPException(status_code=503, detail=f"AI processing failed. Please ensure the image is clear. (Error: {err_msg})")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"AI processing failed. Please ensure the image is clear. (Error: {str(e)})")
 
         parsed = _normalize(parsed)
         if "overall_confidence" not in parsed:

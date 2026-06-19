@@ -59,7 +59,8 @@ async def extract_prescription(
     api_key: str = Form(None), 
     lang: str = Form("English"),
     patient_profile: str = Form(None),
-    explanation_level: str = Form("standard")  # simple | standard | detailed
+    explanation_level: str = Form("standard"),  # simple | standard | detailed
+    past_medications: str = Form(None)
 ):
     try:
         # Read image
@@ -83,7 +84,8 @@ async def extract_prescription(
         parsed_data = analyze_prescription_vision(
             img, api_key=api_key, lang=lang,
             patient_profile=profile_data,
-            explanation_level=explanation_level
+            explanation_level=explanation_level,
+            past_medications=past_medications
         )
         
         if not parsed_data:

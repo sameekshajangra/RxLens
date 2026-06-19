@@ -136,7 +136,8 @@ Developing AI for healthcare requires immense responsibility. RxLens is designed
   <a href="https://render.com/deploy?repo=https://github.com/sameekshajangra/RxLens"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render"/></a>
 </p>
 
-- **Frontend:** Automatically deploy to Vercel via `vercel.json` routing.
+- **Frontend (Primary):** Automatically deploy to Vercel via `vercel.json` routing (proxies `/api` to Render).
+- **Frontend (Alternative):** Configured for Firebase Hosting via `firebase.json` (`npm run deploy`).
 - **Backend:** Automatically deploy to Render via `render.yaml`.
 
 ---

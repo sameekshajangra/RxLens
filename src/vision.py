@@ -294,7 +294,8 @@ _DEMO_RESPONSE = {
 
 def analyze_prescription_vision(
     image, api_key=None, lang='English',
-    patient_profile=None, explanation_level='standard'
+    patient_profile=None, explanation_level='standard',
+    past_medications=None
 ):
     """
     Split pipeline:
@@ -427,7 +428,7 @@ def analyze_prescription_vision(
         extracted_drugs = [d.strip() for d in parsed_data["drug"].split(",") if d.strip()]
 
     dosage_info = parsed_data.get("drugs_dosage", {})
-    safety_data = analyze_safety(extracted_drugs, patient_profile, dosage_info)
+    safety_data = analyze_safety(extracted_drugs, patient_profile, dosage_info, past_medications)
     parsed_data["safety_alerts"] = safety_data.get("alerts", [])
     parsed_data["polypharmacy_notes"] = safety_data.get("polypharmacy_notes", [])
     parsed_data["environmental"] = safety_data.get("environmental", {})

@@ -24,10 +24,11 @@ def normalize_drug_name(name):
 
 
 class ClinicalSafetyEngine:
-    def __init__(self, drugs, patient_profile=None):
+    def __init__(self, drugs, patient_profile=None, past_medications=None):
         """
-        :param drugs: List of drug names found in the prescription
+        :param drugs: List of drug names found in the current prescription
         :param patient_profile: Dictionary with keys like 'age', 'allergies', 'conditions'
+        :param past_medications: JSON string of past prescriptions
         """
         # Resolve brand names to generics
         raw_pairs = [normalize_drug_name(d) for d in drugs if d.strip()]
@@ -54,26 +55,59 @@ class ClinicalSafetyEngine:
 
         self.profile = patient_profile or {}
         self.alerts = []
+        
+        self.past_drugs = set()
+        self.past_records = []
+        if past_medications:
+            import json
+            try:
+                history_list = json.loads(past_medications)
+                self.past_records = history_list
+                for record in history_list:
+                    # extract drugs from record
+                    if "data" in record and "data" in record["data"]:
+                        r_drugs = record["data"]["data"].get("drugs_list", [])
+                        if not r_drugs and record["data"]["data"].get("drug"):
+                            r_drugs = [d.strip() for d in record["data"]["data"]["drug"].split(",") if d.strip()]
+                    elif "drug_name" in record:
+                        r_drugs = [d.strip() for d in record["drug_name"].split(",") if d.strip()]
+                    else:
+                        r_drugs = []
+                    
+                    for rd in r_drugs:
+                        disp, gen = normalize_drug_name(rd)
+                        self.past_drugs.add(disp)
+                        self.past_drugs.add(gen)
+            except Exception as e:
+                pass
 
-    def _drug_in_set(self, drug_name):
-        """Case-insensitive check if a drug name matches any in the prescription."""
+    def _drug_in_set(self, drug_name, include_past=False):
+        """Case-insensitive check if a drug name matches any in the prescription or optionally past history."""
         drug_lower = drug_name.lower()
-        return any(d.lower() == drug_lower for d in self.all_drug_names)
+        if any(d.lower() == drug_lower for d in self.all_drug_names):
+            return True
+        if include_past and any(d.lower() == drug_lower for d in self.past_drugs):
+            return True
+        return False
 
     def check_interactions(self):
         """Check for dangerous drug-drug combinations."""
         for interaction_set, info in DRUG_INTERACTIONS.items():
-            if all(self._drug_in_set(d) for d in interaction_set):
+            if all(self._drug_in_set(d, include_past=True) for d in interaction_set):
                 drugs_found = list(interaction_set)
+                
+                # If one drug is from past and one from current, it's a longitudinal interaction!
+                is_longitudinal = any(not self._drug_in_set(d) for d in drugs_found)
+                
                 self.alerts.append({
-                    "type": "Drug-Drug Interaction",
+                    "type": "Longitudinal Drug Interaction" if is_longitudinal else "Drug-Drug Interaction",
                     "severity": info["severity"],
                     "severity_tier": info.get("severity_tier", "moderate"),
                     "why_it_matters": info.get("why_it_matters", ""),
-                    "suggested_action": info.get("suggested_action", ""),
-                    "message": info["message"],
+                    "suggested_action": info.get("suggested_action", "Consult your doctor."),
+                    "message": info["message"] + (" (Detected across visits)" if is_longitudinal else ""),
                     "involved_drugs": drugs_found,
-                    "reason": f"Alert triggered because both {drugs_found[0]} and {drugs_found[1] if len(drugs_found) > 1 else 'another drug'} were found in the prescription. These drugs have a known dangerous interaction in our clinical database."
+                    "reason": f"Alert triggered because both {drugs_found[0]} and {drugs_found[1] if len(drugs_found) > 1 else 'another drug'} were found. These drugs have a known dangerous interaction."
                 })
 
     def check_contraindications(self):
@@ -127,7 +161,7 @@ class ClinicalSafetyEngine:
     def check_duplicates(self):
         """Check for duplicate drug classes (e.g., taking two NSAIDs or two acetaminophen products)."""
         found_classes = {}
-        for drug in self.all_drug_names:
+        for drug in (self.all_drug_names | self.past_drugs):
             for drug_class, drugs_in_class in DRUG_CLASSES.items():
                 if any(drug.lower() == d.lower() for d in drugs_in_class):
                     if drug_class not in found_classes:
@@ -136,22 +170,26 @@ class ClinicalSafetyEngine:
 
         for drug_class, drugs in found_classes.items():
             if len(drugs) > 1:
-                # Special high-severity for acetaminophen stacking
+                # Determine if this is longitudinal duplicate therapy
+                current_drugs_in_class = [d for d in drugs if any(d.lower() == cd.lower() for cd in self.all_drug_names)]
+                past_drugs_in_class = [d for d in drugs if d not in current_drugs_in_class]
+                is_longitudinal = len(current_drugs_in_class) > 0 and len(past_drugs_in_class) > 0
+                
                 if drug_class == "Acetaminophen":
                     self.alerts.append({
-                        "type": "Duplicate Medication",
+                        "type": "Longitudinal Duplicate Therapy" if is_longitudinal else "Duplicate Medication",
                         "severity": "Critical",
                         "message": f"⚠️ ACETAMINOPHEN STACKING DETECTED: Multiple paracetamol/acetaminophen-containing drugs ({', '.join(drugs)}) found. Combined use may exceed safe daily limits and cause severe liver toxicity.",
                         "involved_drugs": list(drugs),
-                        "reason": f"Alert triggered because {', '.join(drugs)} all contain the same active ingredient (Paracetamol/Acetaminophen). Taking them together risks exceeding the safe daily limit of 4000mg, causing liver damage."
+                        "reason": f"Alert triggered because {', '.join(drugs)} all contain the same active ingredient. Taking them together risks exceeding the safe limit."
                     })
-                else:
+                elif len(current_drugs_in_class) > 0:
                     self.alerts.append({
-                        "type": "Duplicate Medication",
+                        "type": "Longitudinal Duplicate Therapy" if is_longitudinal else "Duplicate Medication",
                         "severity": "Warning",
                         "message": f"Multiple drugs from the same class ({drug_class}) detected: {', '.join(drugs)}. This may increase risk of side effects.",
                         "involved_drugs": list(drugs),
-                        "reason": f"Alert triggered because {', '.join(drugs)} all belong to the {drug_class} drug class. Taking multiple drugs from the same class amplifies side effects without additional benefit."
+                        "reason": f"Alert triggered because {', '.join(drugs)} all belong to the {drug_class} class."
                     })
 
     def check_age_warnings(self):
@@ -303,13 +341,14 @@ class ClinicalSafetyEngine:
         }
 
 
-def analyze_safety(drugs, profile=None, dosage_info=None):
+def analyze_safety(drugs, profile=None, dosage_info=None, past_medications=None):
     """
     Main entry point for safety analysis.
     :param drugs: List of drug name strings
     :param profile: Patient profile dict (age, allergies, conditions)
     :param dosage_info: Optional dict mapping drug names to dosage strings
+    :param past_medications: JSON string of past prescriptions
     :returns: Dictionary with alerts, polypharmacy, and environmental data
     """
-    engine = ClinicalSafetyEngine(drugs, profile)
+    engine = ClinicalSafetyEngine(drugs, profile, past_medications)
     return engine.run_all_checks(dosage_info)

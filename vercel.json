@@ -3,8 +3,8 @@
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "functions": {
-    "api/index.py": {
-      "maxDuration": 60,
+    "api/**.py": {
+      "maxDuration": 300,
       "memory": 1024
     }
   },

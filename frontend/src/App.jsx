@@ -286,6 +286,80 @@ function App() {
     }
   }, [retryCountdown]);
 
+  // Request Notification permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Poll for due reminders (Local PWA Offline Notifications)
+  useEffect(() => {
+    const checkReminders = () => {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      
+      const saved = localStorage.getItem('rxlens_reminders');
+      if (!saved) return;
+      
+      try {
+        const remindersList = JSON.parse(saved);
+        remindersList.forEach(reminder => {
+          if (!reminder.enabled || !reminder.time) return;
+          
+          const timeMatch = reminder.time.match(/(\d+):(\d+)\s*(AM|PM)?/i) || reminder.time.match(/(\d+)\s*(AM|PM)/i);
+          if (timeMatch) {
+            let h, m, ampm;
+            if (timeMatch.length === 4) {
+              [ , h, m, ampm ] = timeMatch;
+            } else if (timeMatch.length === 3) {
+              [ , h, ampm ] = timeMatch;
+              m = 0;
+            } else {
+              return;
+            }
+            
+            h = parseInt(h);
+            m = parseInt(m);
+            if (ampm && ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+            if (ampm && ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+            
+            if (h === currentHour && m === currentMinute) {
+               const lastFiredKey = `notif_fired_${reminder.id}_${now.toDateString()}`;
+               if (!localStorage.getItem(lastFiredKey)) {
+                  localStorage.setItem(lastFiredKey, 'true');
+                  const title = 'RxLens Reminder';
+                  const options = {
+                    body: `Time for your medication: ${reminder.task || reminder.drug}`,
+                    icon: '/favicon.svg'
+                  };
+                  if ('Notification' in window && Notification.permission === 'granted') {
+                     if (navigator.serviceWorker) {
+                       navigator.serviceWorker.ready.then(reg => {
+                          reg.showNotification(title, options);
+                       });
+                     } else {
+                       new Notification(title, options);
+                     }
+                  }
+               }
+            }
+          }
+        });
+      } catch (e) {
+        console.error("Failed to parse reminders for notifications", e);
+      }
+    };
+    
+    // Check every 30 seconds
+    const interval = setInterval(checkReminders, 30000);
+    // Initial check
+    setTimeout(checkReminders, 2000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const getDrugFrequencyData = () => {
     const counts = {};
     if (!Array.isArray(history)) return [];
@@ -388,10 +462,18 @@ function App() {
     formData.append('lang', language);
     formData.append('patient_profile', JSON.stringify(patientProfile));
     formData.append('explanation_level', explanationLevel);
-    formData.append('lang', language);
+    
+    try {
+      const pastHistory = localStorage.getItem('rxlens_history');
+      if (pastHistory) {
+        formData.append('past_medications', pastHistory);
+      }
+    } catch (e) {
+      console.error('Failed to get history from localStorage', e);
+    }
 
     try {
-      const res = await axios.post('/api/extract', formData, { timeout: 120000 });
+      const res = await axios.post('/api/extract', formData, { timeout: 300000 });
 
       // ── Validate response is proper JSON with expected shape ────────────
       const raw = res.data;
@@ -1211,6 +1293,36 @@ function App() {
                                   <span style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{result.data.clinical_notes.vitals_examination}</span>
                                 </div>
                               )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+
+                  {/* Section 2.6: Recommended Tests */}
+                  {safeArray(result?.data?.recommended_tests).length > 0 && (
+                    <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'tests' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'tests' ? '' : 'tests')}>
+                      <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <Stethoscope size={20} style={{ color: 'var(--primary)' }} /> 
+                          Recommended Tests
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ background: 'var(--bg)', color: 'var(--text-main)', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--border)' }}>{safeArray(result.data.recommended_tests).length} Tests</span>
+                          {expandedSection === 'tests' ? <span style={{fontSize:'0.8rem'}}>▼</span> : <span style={{fontSize:'0.8rem'}}>▶</span>}
+                        </div>
+                      </h2>
+                      <AnimatePresence>
+                        {expandedSection === 'tests' && (
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginTop: '1.5rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              {result.data.recommended_tests.map((test, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--bg-card)', borderRadius: '8px', borderLeft: '4px solid var(--primary)' }}>
+                                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)' }}></div>
+                                  <span style={{ color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 500 }}>{test}</span>
+                                </div>
+                              ))}
                             </div>
                           </motion.div>
                         )}
