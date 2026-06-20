@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Camera, Upload, CheckCircle2, AlertTriangle, Pill, Loader2, X } from 'lucide-react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
