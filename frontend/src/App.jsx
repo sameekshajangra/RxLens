@@ -61,6 +61,7 @@ import UploadCard from './components/UploadCard';
 import ExplanationLevelSelector from './components/ExplanationLevelSelector';
 import MedicineTimeline from './components/MedicineTimeline';
 import ImagePreProcessor from './components/ImagePreProcessor';
+import PillVerification from './components/PillVerification';
 import './index.css';
 import i18n from './i18n';
 import html2pdf from 'html2pdf.js';
@@ -1774,6 +1775,12 @@ function App() {
                       setTimeout(() => handleChatSend(question), 500);
                     }} />
                   )}
+                  
+                  <PillVerification 
+                    prescriptionData={result.data}
+                    language={language}
+                    apiKey={apiKey}
+                  />
                   
                 </motion.div>
               ) : error ? (

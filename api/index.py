@@ -454,3 +454,65 @@ async def chat(question: str=Form(...), context: str=Form(""), lang: str=Form("E
         return {"answer": res.text or "I'm not sure."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/verify_pill")
+async def verify_pill(
+    file: UploadFile = File(...),
+    prescription_data: str = Form(...),
+    api_key: str = Form(None),
+    lang: str = Form("English")
+):
+    try:
+        from google import genai
+        from google.genai import types
+        
+        contents_bytes = await file.read()
+        try:
+            img = Image.open(io.BytesIO(contents_bytes))
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid image file.")
+            
+        img_bytes = _compress_image_for_vision(img)
+        
+        key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("SERVER_GEMINI_API_KEY")
+        if not key or key == "DEMO_MODE":
+            # Dummy demo response
+            return {
+                "match": False,
+                "mismatch_reason": "Demo Mode: The prescription is for Losartan, but the bottle label says Lisinopril. This is a sound-alike mismatch.",
+                "detected_drug": "Lisinopril",
+                "detected_strength": "10mg"
+            }
+            
+        client = genai.Client(api_key=key)
+        
+        prompt = f"""
+You are an expert clinical pharmacist.
+The user has been prescribed the following medications: {prescription_data}
+
+Here is an image of the dispensed pill bottle, strip, or medication packaging.
+Carefully read the label and cross-check it against the prescribed medications.
+Check for the right drug name and right strength/dosage. Pay special attention to sound-alike drugs (e.g., Losartan vs Lisinopril) or incorrect strengths (e.g., 500mg instead of 250mg).
+
+Return EXACTLY THIS JSON (no extra text, no markdown block):
+{{
+  "match": true/false,
+  "mismatch_reason": "Explain the discrepancy clearly in {lang} if match is false. Leave empty if match is true.",
+  "detected_drug": "Name of the drug found on the bottle label",
+  "detected_strength": "Strength/dosage found on the label"
+}}
+"""
+        model_contents = [
+            types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
+            prompt
+        ]
+        
+        # We can use gemini-2.5-flash as it is fast and capable of vision
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=model_contents)
+        res_json = _extract_json(response.text)
+        
+        return res_json
+        
+    except Exception as e:
+        logger.error(f"Pill verification failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
