@@ -62,6 +62,7 @@ import ExplanationLevelSelector from './components/ExplanationLevelSelector';
 import MedicineTimeline from './components/MedicineTimeline';
 import ImagePreProcessor from './components/ImagePreProcessor';
 import PillVerification from './components/PillVerification';
+import ConfidenceVerification from './components/ConfidenceVerification';
 import './index.css';
 import i18n from './i18n';
 import html2pdf from 'html2pdf.js';
@@ -184,6 +185,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('Analyzing...');
   const [result, setResult] = useState(null);
+  const [draftResult, setDraftResult] = useState(null);
   const [error, setError] = useState('');
 
   const [showCamera, setShowCamera] = useState(false);
@@ -482,31 +484,61 @@ function App() {
 
     try {
       const res = await axios.post('/api/extract', formData, { timeout: 300000 });
-
-      // ── Validate response is proper JSON with expected shape ────────────
       const raw = res.data;
       if (!raw || typeof raw !== 'object' || !raw.data) {
         throw new Error('Backend API is not reachable or returned an unexpected format.');
       }
-
-      // ── Normalise so result.data is always a safe object ───────────────
-      const safeResult = {
-        ...raw,
-        data: {
-          drugs_list: [],
-          safety_alerts: [],
-          schedule: [],
-          uncertainty_warnings: [],
-          confusing_terms: [],
-          polypharmacy_notes: [],
-          ...(raw.data || {}),
-        },
-      };
-
+      
       if (raw._warning) {
         setError(raw._warning);
       }
+      
+      setDraftResult(raw.data);
 
+    } catch (err) {
+      console.error("API Error:", err);
+      if (err.response?.status === 413) {
+        setError('Error: The image is too large for the server. Try cropping it more.');
+      } else if (err.response?.status === 504) {
+        setError('Error: Vercel serverless function timed out. The AI took too long to respond. Try again.');
+      } else if (err.response?.status === 429 || (err.response?.data?.detail && (err.response.data.detail.includes('Quota') || err.response.data.detail.includes('exhausted')))) {
+        setError(err.response?.data?.detail || 'Daily Quota Reached.');
+        setRetryCountdown(60);
+      } else if (err.response?.status === 503) {
+        setError(err.response?.data?.detail || '⚡ AI model is temporarily busy. Please wait a moment and try again.');
+        setRetryCountdown(30);
+      } else {
+        setError(err.response?.data?.detail || err.message || 'Failed to parse prescription.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [imageFile, language, patientProfile, explanationLevel]);
+
+  const handleAnalyzeConfirm = async (finalizedData) => {
+    setLoadingStatus('Running clinical safety checks...');
+    setLoading(true);
+    setError(null);
+    setDraftResult(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('data', JSON.stringify(finalizedData));
+      formData.append('lang', language);
+      formData.append('patient_profile', JSON.stringify(patientProfile));
+      
+      const res = await axios.post('/api/analyze', formData);
+      const raw = res.data;
+      
+      const safeResult = {
+        ...raw,
+        data: {
+          ...finalizedData,
+          safety_alerts: raw.data.safety_alerts || [],
+          polypharmacy_notes: raw.data.polypharmacy_notes || []
+        }
+      };
+      
       setResult(safeResult);
 
       const entry = {
@@ -536,10 +568,11 @@ function App() {
               if (item.drug_name) return item.drug_name;
               if (item.drug) return item.drug;
               if (item.task && safeResult.data.drugs_list && safeArray(safeResult.data.drugs_list).length > 0) {
-                const found = safeArray(safeResult.data.drugs_list).find(d => item.task.toLowerCase().includes(d.toLowerCase()));
+                const drugs = safeArray(safeResult.data.drugs_list).map(d => typeof d === 'object' ? d.value : d);
+                const found = drugs.find(d => item.task.toLowerCase().includes(d.toLowerCase()));
                 if (found) return found;
               }
-              return safeArray(safeResult.data.drugs_list).length > 0 ? safeResult.data.drugs_list[0] : (safeResult.data.drug || 'Medication');
+              return safeArray(safeResult.data.drugs_list).length > 0 ? (typeof safeResult.data.drugs_list[0] === 'object' ? safeResult.data.drugs_list[0].value : safeResult.data.drugs_list[0]) : (safeResult.data.drug || 'Medication');
             };
 
             return {
@@ -559,24 +592,14 @@ function App() {
       }
 
     } catch (err) {
-      console.error("API Error:", err);
-      if (err.response?.status === 413) {
-        setError('Error: The image is too large for the server. Try cropping it more.');
-      } else if (err.response?.status === 504) {
-        setError('Error: Vercel serverless function timed out. The AI took too long to respond. Try again.');
-      } else if (err.response?.status === 429 || (err.response?.data?.detail && (err.response.data.detail.includes('Quota') || err.response.data.detail.includes('exhausted')))) {
-        setError(err.response?.data?.detail || 'Daily Quota Reached.');
-        setRetryCountdown(60);
-      } else if (err.response?.status === 503) {
-        setError(err.response?.data?.detail || '⚡ AI model is temporarily busy. Please wait a moment and try again.');
-        setRetryCountdown(30);
-      } else {
-        setError(err.response?.data?.detail || err.message || 'Failed to parse prescription.');
-      }
+      console.error("Analyze Error:", err);
+      setError(err.response?.data?.detail || err.message || 'Failed to analyze prescription.');
+      // restore draft result so user can try again
+      setDraftResult(finalizedData);
     } finally {
       setLoading(false);
     }
-  }, [imageFile, language, patientProfile, explanationLevel]);
+  };
 
   const handleChatSend = useCallback(async (overrideMsg = null) => {
     const msgToSend = overrideMsg || chatMessage;
@@ -1589,20 +1612,21 @@ function App() {
                                     </thead>
                                     <tbody>
                                       {safeArray(result.data.drugs_list).map((drug, idx) => {
-                                        const dose = result.data.drugs_dosage?.[drug] || result.data.dosage || 'As directed';
-                                        const individualConf = result.data.confidence?.[drug] != null 
-                                          ? result.data.confidence[drug] 
+                                        const doseObj = result.data.drugs_dosage?.[drug.value || drug] || result.data.dosage || 'As directed';
+                                        const dose = typeof doseObj === 'object' ? doseObj.value : doseObj;
+                                        const individualConf = result.data.confidence?.[drug.value || drug] != null 
+                                          ? result.data.confidence[drug.value || drug] 
                                           : (result.data.confidence?.drug || 0.9);
                                         const level = getConfidenceLevel(individualConf);
 
                                         return (
                                           <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                             <td style={{ padding: '14px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                              <Pill size={16} color="var(--primary)" /> {drug}
+                                              <Pill size={16} color="var(--primary)" /> {drug.value || drug}
                                             </td>
                                             <td style={{ padding: '14px 12px' }}>{renderValue(dose)}</td>
-                                            <td style={{ padding: '14px 12px' }}>{renderValue(result.data.frequency || 'As directed')}</td>
-                                            <td style={{ padding: '14px 12px' }}>{renderValue(result.data.duration || 'N/A')}</td>
+                                            <td style={{ padding: '14px 12px' }}>{renderValue((result.data.drugs_frequency?.[drug.value || drug]?.value) || result.data.frequency || 'As directed')}</td>
+                                            <td style={{ padding: '14px 12px' }}>{renderValue((result.data.drugs_duration?.[drug.value || drug]?.value) || result.data.duration || 'N/A')}</td>
                                             <td style={{ padding: '14px 12px', textAlign: 'right', fontWeight: 700, color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)' }}>
                                               {Math.round(individualConf * 100)}%
                                             </td>

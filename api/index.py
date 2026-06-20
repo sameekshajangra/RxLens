@@ -15,6 +15,20 @@ import io
 import re
 import logging
 import base64
+import difflib
+try:
+    from src.safety_db import BRAND_TO_GENERIC, DRUG_CLASSES, CONTRAINDICATIONS
+except ImportError:
+    BRAND_TO_GENERIC = {}
+    DRUG_CLASSES = {}
+    CONTRAINDICATIONS = {}
+import difflib
+try:
+    from src.safety_db import BRAND_TO_GENERIC, DRUG_CLASSES, CONTRAINDICATIONS
+except ImportError:
+    BRAND_TO_GENERIC = {}
+    DRUG_CLASSES = {}
+    CONTRAINDICATIONS = {}
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,10 +53,10 @@ app.add_middleware(
 # ── Demo fallback data (used when all cascades fail) ────────────────────────
 DEMO_DATA = {
     "drug": "Tamsulosin, Cefpodoxime (Rovcef)",
-    "drugs_list": ["Tamsulosin", "Cefpodoxime (Rovcef)"],
-    "drugs_dosage": {"Tamsulosin": "0.4mg", "Cefpodoxime (Rovcef)": "200mg"},
-    "drugs_frequency": {"Tamsulosin": "Once daily", "Cefpodoxime (Rovcef)": "Twice daily (BDS)"},
-    "drugs_duration": {"Tamsulosin": "30 days", "Cefpodoxime (Rovcef)": "Unclear (likely 5-7 days)"},
+    "drugs_list": [{"value": "Tamsulosin", "confidence": "HIGH"}, {"value": "Cefpodoxime (Rovcef)", "confidence": "HIGH"}],
+    "drugs_dosage": {"Tamsulosin": {"value": "0.4mg", "confidence": "HIGH"}, "Cefpodoxime (Rovcef)": {"value": "200mg", "confidence": "HIGH"}},
+    "drugs_frequency": {"Tamsulosin": {"value": "Once daily", "confidence": "HIGH"}, "Cefpodoxime (Rovcef)": {"value": "Twice daily (BDS)", "confidence": "HIGH"}},
+    "drugs_duration": {"Tamsulosin": {"value": "30 days", "confidence": "HIGH"}, "Cefpodoxime (Rovcef)": {"value": "Unclear (likely 5-7 days)", "confidence": "LOW"}},
     "dosage": "Tamsulosin: 0.4mg once daily; Cefpodoxime: 200mg twice daily",
     "frequency": "Tamsulosin: Once daily; Cefpodoxime: Twice daily (BDS)",
     "duration": "Tamsulosin: 30 days; Cefpodoxime: Unclear (likely 5-7 days for antibiotics)",
@@ -97,6 +111,42 @@ DEMO_DATA = {
 }
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
+
+def _validate_drug_confidence(parsed_data: dict):
+    # Collect all known drugs
+    known_drugs = set([k.lower() for k in BRAND_TO_GENERIC.keys()])
+    for d_list in DRUG_CLASSES.values():
+        for d in d_list:
+            known_drugs.add(d.lower())
+    for d_list in CONTRAINDICATIONS.values():
+        for d in d_list.get("drugs", []):
+            known_drugs.add(d.lower())
+            
+    drugs_list = parsed_data.get("drugs_list", [])
+    for idx, d_obj in enumerate(drugs_list):
+        if not isinstance(d_obj, dict):
+            # Convert to dict if it came back as string
+            d_obj = {"value": str(d_obj), "confidence": "LOW"}
+            drugs_list[idx] = d_obj
+            
+        val = d_obj.get("value", "")
+        if not val: continue
+        
+        # strip brand/generic like "Brand (Generic)"
+        parts = val.replace("(", " ").replace(")", " ").split()
+        
+        # Fuzzy match
+        is_known = False
+        for p in parts:
+            if len(p) < 3: continue
+            matches = difflib.get_close_matches(p.lower(), known_drugs, n=1, cutoff=0.8)
+            if matches:
+                is_known = True
+                break
+        
+        if not is_known:
+            d_obj["confidence"] = "LOW"
 
 def _extract_json(text: str) -> dict:
     text = text.strip()
@@ -256,7 +306,7 @@ CRITICAL OCR INSTRUCTIONS:
 3. Spelling Correction: Doctors often misspell drug names or use extreme shorthand (e.g., 'Amox 500', 'Para', 'Azithro'). Correct these to the standard pharmacological spelling.
 4. Clinical Context: Use the diagnosed condition (if written) to narrow down ambiguous drug names.
 5. Build a 'schedule' array with time-labelled doses.
-6. Confidence Scoring: Score your confidence from 0.0 to 1.0. If you successfully matched the drug to a known database, score it >0.95.
+6. Confidence Scoring: For each field return confidence as HIGH, MEDIUM, or LOW based on handwriting legibility and ambiguity.
 7. ALL text values MUST be translated accurately into {lang} (except standard medical drug names). If lang is Hindi, the schedule tasks, notes, instructions, and side effects MUST all be strictly in Hindi.
 8. Lab Tests & Investigations: Doctors often prescribe lab tests (e.g., CBC, LFT, KFT, RBS, HIV, HBsAg, S. Cholesterol). Identify ANY recommended lab tests. Expand their abbreviations to their full clinical names (e.g., 'CBC' -> 'Complete Blood Count').
 
@@ -424,21 +474,41 @@ async def extract_prescription(
             scores = [v for v in parsed.get("confidence", {}).values() if isinstance(v, (int, float))]
             parsed["overall_confidence"] = round(sum(scores)/len(scores), 2) if scores else None
 
-        # Run Safety & Finalize
-        drugs = parsed.get("drugs_list", [])
+        # Validate drugs confidence
+        _validate_drug_confidence(parsed)
+        
+        return {"success": True, "data": parsed}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/analyze")
+async def analyze_prescription(
+    data: str = Form(...),
+    lang: str = Form("English"),
+    patient_profile: str = Form(None)
+):
+    try:
+        parsed = json.loads(data)
+        profile_data = None
+        if patient_profile:
+            try: profile_data = json.loads(patient_profile)
+            except: pass
+            
+        # extract just the string names for safety engine
+        drugs = [d.get("value", "") if isinstance(d, dict) else str(d) for d in parsed.get("drugs_list", [])]
+        
         safety = _run_safety(drugs, profile_data, lang)
         parsed["safety_alerts"] = safety["alerts"]
         parsed["polypharmacy_notes"] = safety["polypharmacy_notes"]
         
         summary = _make_summary(parsed, lang)
-        
-        # Generate Audio Base64
         audio_b64 = _generate_audio_base64(summary, lang)
         
         return {"success": True, "data": parsed, "summary": summary, "audio_base64": audio_b64}
-
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
