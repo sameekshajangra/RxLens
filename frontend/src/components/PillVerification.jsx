@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Camera, Upload, CheckCircle2, AlertTriangle, Pill, Loader2, X } from 'lucide-react';
+import { Camera, Upload, CheckCircle2, AlertTriangle, Pill, Loader2, X, HelpCircle } from 'lucide-react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
 import imageCompression from 'browser-image-compression';
@@ -67,7 +67,6 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
 
       const formData = new FormData();
       formData.append('file', payloadFile);
-      // Ensure prescriptionData is passed as string
       formData.append('prescription_data', typeof prescriptionData === 'string' ? prescriptionData : JSON.stringify(prescriptionData));
       formData.append('lang', language);
       if (apiKey) {
@@ -84,6 +83,16 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
     }
   };
 
+  const getStatusConfig = (status) => {
+    if (status === 'match') {
+      return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', icon: <CheckCircle2 className="w-5 h-5 text-green-600" />, label: 'MATCH' };
+    }
+    if (status === 'mismatch') {
+      return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: <AlertTriangle className="w-5 h-5 text-red-600" />, label: 'MISMATCH' };
+    }
+    return { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-600', icon: <HelpCircle className="w-5 h-5 text-slate-400" />, label: 'NOT FOUND' };
+  };
+
   return (
     <div className="pill-verification bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-6">
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-slate-200 flex items-center gap-3">
@@ -91,7 +100,7 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
           <Pill className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-bold text-slate-800 text-lg">Pill Verification</h3>
+          <h3 className="font-bold text-slate-800 text-lg">Verify What Pharmacy Gave You</h3>
           <p className="text-sm text-slate-600">Cross-check dispensed meds with the prescription.</p>
         </div>
       </div>
@@ -104,7 +113,7 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
               className="flex-1 flex flex-col items-center justify-center gap-2 py-6 px-4 border-2 border-dashed border-slate-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors text-slate-600"
             >
               <Upload className="w-8 h-8 text-blue-500" />
-              <span className="font-medium">Upload Photo</span>
+              <span className="font-medium">Upload Bottle/Strip</span>
               <span className="text-xs text-slate-400">JPG, PNG</span>
             </button>
             <input
@@ -179,7 +188,7 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
         {loading && (
           <div className="flex flex-col items-center justify-center py-8 text-indigo-600">
             <Loader2 className="w-8 h-8 animate-spin mb-3" />
-            <p className="font-medium">Cross-checking with prescription...</p>
+            <p className="font-medium">Comparing label against prescription...</p>
           </div>
         )}
 
@@ -195,42 +204,53 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`p-5 rounded-xl border ${result.match ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
+              className="space-y-3"
             >
-              <div className="flex items-start gap-4">
-                {result.match ? (
-                  <div className="bg-green-100 p-2 rounded-full text-green-600 shrink-0">
-                    <CheckCircle2 className="w-6 h-6" />
-                  </div>
-                ) : (
-                  <div className="bg-red-100 p-2 rounded-full text-red-600 shrink-0">
-                    <AlertTriangle className="w-6 h-6" />
-                  </div>
-                )}
+              {['drug', 'strength', 'quantity'].map((fieldKey) => {
+                const fieldData = result[fieldKey];
+                if (!fieldData) return null;
+                const config = getStatusConfig(fieldData.status);
                 
-                <div>
-                  <h4 className={`text-lg font-bold mb-1 ${result.match ? 'text-green-800' : 'text-red-800'}`}>
-                    {result.match ? 'Match Verified' : 'MISMATCH DETECTED'}
-                  </h4>
-                  
-                  {!result.match && result.mismatch_reason && (
-                    <p className="text-red-700 font-medium mb-3">{result.mismatch_reason}</p>
-                  )}
-                  
-                  <div className={`text-sm ${result.match ? 'text-green-700' : 'text-red-700'} bg-white/50 p-3 rounded-lg border ${result.match ? 'border-green-100' : 'border-red-100'}`}>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <span className="opacity-70 text-xs uppercase tracking-wider block mb-0.5">Detected Drug</span>
-                        <span className="font-semibold">{result.detected_drug || 'Unknown'}</span>
+                return (
+                  <div key={fieldKey} className={`p-4 rounded-xl border flex items-start gap-4 ${config.bg} ${config.border}`}>
+                    <div className="mt-1">{config.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          {fieldKey === 'drug' ? 'Drug Name' : fieldKey}
+                        </span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${config.text} bg-white/60`}>
+                          {config.label}
+                        </span>
                       </div>
-                      <div>
-                        <span className="opacity-70 text-xs uppercase tracking-wider block mb-0.5">Detected Strength</span>
-                        <span className="font-semibold">{result.detected_strength || 'Unknown'}</span>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Prescribed</p>
+                          <p className="font-medium text-slate-800">{fieldData.prescribed_value || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">On Bottle</p>
+                          <p className={`font-medium ${fieldData.status === 'mismatch' ? 'text-red-700' : 'text-slate-800'}`}>
+                            {fieldData.bottle_value || 'Not listed'}
+                          </p>
+                        </div>
                       </div>
+                      
+                      {fieldData.status === 'not-found' && (
+                        <p className="text-xs text-slate-500 mt-2">
+                          * Couldn't verify this from the label. Often normal for quantities.
+                        </p>
+                      )}
+                      {fieldData.status === 'mismatch' && (
+                        <p className="text-xs font-bold text-red-600 mt-2">
+                          ⚠ Mismatch: prescription says {fieldData.prescribed_value}, bottle says {fieldData.bottle_value}
+                        </p>
+                      )}
                     </div>
                   </div>
-                </div>
-              </div>
+                );
+              })}
             </motion.div>
           )}
         </AnimatePresence>

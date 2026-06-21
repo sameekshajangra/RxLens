@@ -535,6 +535,7 @@ async def verify_pill(
     try:
         from google import genai
         from google.genai import types
+        import re
         
         contents_bytes = await file.read()
         try:
@@ -544,44 +545,155 @@ async def verify_pill(
             
         img_bytes = _compress_image_for_vision(img)
         
+        # Parse prescription data
+        try:
+            presc = json.loads(prescription_data)
+        except:
+            presc = {}
+            
+        def _normalize(name):
+            if not name: return ""
+            name = str(name).lower()
+            salts = ["hydrochloride", "hcl", "sulfate", "sodium", "calcium", "potassium", "maleate"]
+            for salt in salts:
+                name = name.replace(salt, "").strip()
+            name = re.sub(r'[^a-z0-9 ]', '', name)
+            
+            # Map brand to generic if exists
+            for brand, generic in BRAND_TO_GENERIC.items():
+                if brand.lower() in name:
+                    return generic.lower()
+            return name.strip()
+            
+        def _get_status(bottle_val, presc_val):
+            if not bottle_val or bottle_val.lower() in ["none", "null", "n/a", "unknown", "missing"]:
+                return "not-found"
+            if not presc_val:
+                return "not-found"
+            
+            b_norm = _normalize(bottle_val)
+            p_norm = _normalize(presc_val)
+            
+            if b_norm in p_norm or p_norm in b_norm:
+                return "match"
+                
+            # For strength/quantity, simple string inclusion is usually enough
+            b_clean = re.sub(r'[^0-9]', '', str(bottle_val))
+            p_clean = re.sub(r'[^0-9]', '', str(presc_val))
+            if b_clean and p_clean and (b_clean == p_clean or b_clean in p_clean or p_clean in b_clean):
+                return "match"
+                
+            return "mismatch"
+            
         key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("SERVER_GEMINI_API_KEY")
         if not key or key == "DEMO_MODE":
-            # Dummy demo response
+            # Dummy demo response - deterministic mismatch
             return {
-                "match": False,
-                "mismatch_reason": "Demo Mode: The prescription is for Losartan, but the bottle label says Lisinopril. This is a sound-alike mismatch.",
-                "detected_drug": "Lisinopril",
-                "detected_strength": "10mg"
+                "drug": {
+                    "bottle_value": "Lisinopril",
+                    "prescribed_value": "Losartan",
+                    "status": "mismatch"
+                },
+                "strength": {
+                    "bottle_value": "10mg",
+                    "prescribed_value": "50mg",
+                    "status": "mismatch"
+                },
+                "quantity": {
+                    "bottle_value": None,
+                    "prescribed_value": "30",
+                    "status": "not-found"
+                }
             }
             
         client = genai.Client(api_key=key)
         
-        prompt = f"""
-You are an expert clinical pharmacist.
-The user has been prescribed the following medications: {prescription_data}
-
-Here is an image of the dispensed pill bottle, strip, or medication packaging.
-Carefully read the label and cross-check it against the prescribed medications.
-Check for the right drug name and right strength/dosage. Pay special attention to sound-alike drugs (e.g., Losartan vs Lisinopril) or incorrect strengths (e.g., 500mg instead of 250mg).
-
-Return EXACTLY THIS JSON (no extra text, no markdown block):
-{{
-  "match": true/false,
-  "mismatch_reason": "Explain the discrepancy clearly in {lang} if match is false. Leave empty if match is true.",
-  "detected_drug": "Name of the drug found on the bottle label",
-  "detected_strength": "Strength/dosage found on the label"
-}}
+        prompt = """
+Extract drug name, strength, quantity, and manufacturer from this medication label. 
+Return EXACTLY THIS JSON (no extra text, no markdown block). If a field is missing, return null for that field.
+{
+  "drug_name": "...",
+  "strength": "...",
+  "quantity": "...",
+  "manufacturer": "..."
+}
 """
         model_contents = [
             types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
             prompt
         ]
         
-        # We can use gemini-2.5-flash as it is fast and capable of vision
         response = client.models.generate_content(model="gemini-2.5-flash", contents=model_contents)
         res_json = _extract_json(response.text)
         
-        return res_json
+        # Now do deterministic comparison
+        bottle_drug = res_json.get("drug_name")
+        bottle_strength = res_json.get("strength")
+        bottle_quantity = res_json.get("quantity")
+        
+        # Get prescribed values
+        drugs_list = presc.get("drugs_list", [])
+        presc_drug = ""
+        presc_strength = ""
+        presc_qty = ""
+        
+        if drugs_list:
+            # use the first drug as primary target for now
+            first_drug = drugs_list[0]
+            presc_drug = first_drug.get("value", first_drug) if isinstance(first_drug, dict) else str(first_drug)
+            
+            # get strength from dosage
+            dosage_dict = presc.get("drugs_dosage", {})
+            dose_val = dosage_dict.get(presc_drug) or dosage_dict.get(first_drug)
+            if dose_val:
+                presc_strength = dose_val.get("value", dose_val) if isinstance(dose_val, dict) else str(dose_val)
+                
+            # get quantity from duration * frequency (approximate, or just use duration)
+            duration_dict = presc.get("drugs_duration", {})
+            dur_val = duration_dict.get(presc_drug) or duration_dict.get(first_drug)
+            if dur_val:
+                presc_qty = dur_val.get("value", dur_val) if isinstance(dur_val, dict) else str(dur_val)
+        
+        # Check against all drugs if first one doesn't match
+        drug_status = "mismatch"
+        matched_presc_drug = presc_drug
+        matched_presc_strength = presc_strength
+        
+        for d in drugs_list:
+            d_val = d.get("value", d) if isinstance(d, dict) else str(d)
+            if _get_status(bottle_drug, d_val) == "match":
+                drug_status = "match"
+                matched_presc_drug = d_val
+                
+                # update strength comparison for this matched drug
+                dose_val = presc.get("drugs_dosage", {}).get(d_val)
+                if dose_val:
+                    matched_presc_strength = dose_val.get("value", dose_val) if isinstance(dose_val, dict) else str(dose_val)
+                break
+                
+        if drug_status != "match":
+             drug_status = _get_status(bottle_drug, matched_presc_drug)
+                
+        strength_status = _get_status(bottle_strength, matched_presc_strength)
+        qty_status = _get_status(bottle_quantity, presc_qty)
+        
+        return {
+            "drug": {
+                "bottle_value": bottle_drug,
+                "prescribed_value": matched_presc_drug,
+                "status": drug_status
+            },
+            "strength": {
+                "bottle_value": bottle_strength,
+                "prescribed_value": matched_presc_strength,
+                "status": strength_status
+            },
+            "quantity": {
+                "bottle_value": bottle_quantity,
+                "prescribed_value": presc_qty,
+                "status": qty_status
+            }
+        }
         
     except Exception as e:
         logger.error(f"Pill verification failed: {str(e)}")
