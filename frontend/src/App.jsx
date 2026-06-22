@@ -522,7 +522,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [imageFile, language, patientProfile, explanationLevel]);
+  };
 
   const handleExportFhir = async () => {
     if (!result?.data) return;
@@ -1248,7 +1248,7 @@ function App() {
                             {/* Safety Disclaimer */}
                             <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.3)', marginBottom: '1rem', fontSize: '0.82rem', color: 'var(--text-muted)', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                               <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
-                              <span><strong style={{ color: '#b45309' }}>Important Disclaimer:</strong> These are <em>informational</em> price comparisons only. Prices are indicative and may vary. <strong>Never substitute any medication without consulting your doctor or pharmacist first.</strong> Generic substitution is only appropriate when your doctor agrees.</span>
+                              <span><strong style={{ color: '#b45309' }}>{t.cost_savings_disclaimer || "Important Disclaimer:"}</strong> {t.cost_savings_disclaimer_body || "These are informational price comparisons only. Prices are indicative and may vary. Never substitute any medication without consulting your doctor or pharmacist first. Generic substitution is only appropriate when your doctor agrees."}</span>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                               {safeArray(result.data.drugs_list)
@@ -1544,19 +1544,19 @@ function App() {
                           {/* Healthcare Worker Adherence Risk & Interaction Notes */}
                           {userMode === 'worker' && (
                             <div style={{ marginBottom: '1.5rem', padding: '16px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
-                              <h4 style={{ margin: '0 0 10px 0', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}><ShieldAlert size={16} /> Healthcare Worker Risk Assessment</h4>
+                              <h4 style={{ margin: '0 0 10px 0', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}><ShieldAlert size={16} /> {t.healthcare_worker_risk || "Healthcare Worker Risk Assessment"}</h4>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
                                 <div>
-                                  <strong style={{ color: 'var(--text-main)' }}>Adherence Risk Profile:</strong>
+                                  <strong style={{ color: 'var(--text-main)' }}>{t.adherence_risk_profile || "Adherence Risk Profile:"}</strong>
                                   <span style={{ marginLeft: '6px', padding: '2px 8px', borderRadius: '6px', background: safeArray(result.data.drugs_list).length >= 4 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: safeArray(result.data.drugs_list).length >= 4 ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>
-                                    {safeArray(result.data.drugs_list).length >= 4 ? 'HIGH (Polypharmacy Detected)' : 'LOW'}
+                                    {safeArray(result.data.drugs_list).length >= 4 ? (t.high_polypharmacy || 'HIGH (Polypharmacy Detected)') : (t.low_burden || 'LOW')}
                                   </span>
                                 </div>
                                 <div>
                                   <span style={{ color: 'var(--text-muted)' }}>
                                     {safeArray(result.data.drugs_list).length >= 4 
-                                      ? "⚠️ Patient is prescribed 4 or more medications. High risk of pill fatigue, duplication, and missing doses."
-                                      : "✓ Patient has low pill burden. Standard follow-up recommended."}
+                                      ? (t.high_risk_msg || "⚠️ Patient is prescribed 4 or more medications. High risk of pill fatigue, duplication, and missing doses.")
+                                      : (t.low_risk_msg || "✓ Patient has low pill burden. Standard follow-up recommended.")}
                                   </span>
                                 </div>
                               </div>
@@ -1566,10 +1566,10 @@ function App() {
                           {/* Common Side Effects & Precautions (Intermediate and Detailed modes only) */}
                           {((isIntermediateMode || isDetailedMode) && (safeArray(result.data.side_effects).length > 0 || safeArray(result.data.precautions).length > 0)) && (
                             <div style={{ marginBottom: '1.5rem', padding: '16px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.03)', border: '1px solid rgba(245, 158, 11, 0.15)' }}>
-                              <h4 style={{ margin: '0 0 10px 0', color: '#d97706', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}><ShieldAlert size={16} /> Common Side Effects & Precautions</h4>
+                              <h4 style={{ margin: '0 0 10px 0', color: '#d97706', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 700 }}><ShieldAlert size={16} /> {t.common_side_effects || "Common Side Effects & Precautions"}</h4>
                               {safeArray(result.data.side_effects).length > 0 && (
                                 <div style={{ marginBottom: '8px' }}>
-                                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>Side Effects:</strong>
+                                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>{t.side_effects || "Side Effects:"}</strong>
                                   <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                     {safeArray(result.data.side_effects).map((eff, i) => <li key={i}>{eff}</li>)}
                                   </ul>
@@ -1577,7 +1577,7 @@ function App() {
                               )}
                               {safeArray(result.data.precautions).length > 0 && (
                                 <div>
-                                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>Precautions:</strong>
+                                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>{t.precautions || "Precautions:"}</strong>
                                   <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                     {safeArray(result.data.precautions).map((prec, i) => <li key={i}>{prec}</li>)}
                                   </ul>
@@ -1589,7 +1589,7 @@ function App() {
                           {/* Pharmacist Consult (Hidden in Simple Mode) */}
                           {!isSimpleMode && (
                             <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(14, 165, 233, 0.05)', borderLeft: '4px solid var(--info)', marginBottom: result.data.explainability_sources && (result.data.explainability_sources.instructions || safeArray(result.data.explainability_sources.side_effects).length > 0 || safeArray(result.data.explainability_sources.precautions).length > 0) ? '1.5rem' : '0' }}>
-                              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px 0', color: 'var(--info)' }}><Stethoscope size={16} /> Pharmacist Consultation Recommended</h4>
+                              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px 0', color: 'var(--info)' }}><Stethoscope size={16} /> {t.pharmacist_consultation || "Pharmacist Consultation Recommended"}</h4>
                               <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>{t.pharmacist_desc || "Always consult a certified pharmacist or your primary doctor before changing any medication routines based on these results."}</p>
                             </div>
                           )}
