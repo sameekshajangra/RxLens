@@ -166,4 +166,4 @@ npm install && npm run dev
 - **Larger Pharmacist-Validated Benchmark:** Expanding the current N=20 pilot evaluation into a comprehensive, multi-region journal study with fine-grained edit-distance metrics.
 - **Persistent Encrypted Accounts:** Secure cloud synchronization for patient profiles, allowing historical tracking across multiple devices.
 - **Multi-Language Support & ABDM Integration:** Adding support for more regional languages and integrating with India's Ayushman Bharat Digital Mission (ABDM) via ABHA ID.
-- **Predictive ML:** Predict the statistical likelihood of treatment abandonment based on drug side-effect profiles.
+
