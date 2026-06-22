@@ -124,31 +124,7 @@ function App() {
     return `${Math.floor(s / 60)}:${(Math.floor(s % 60)).toString().padStart(2, '0')}`;
   };
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handlePlay = () => setAudioPlaying(true);
-    const handlePause = () => setAudioPlaying(false);
-    const handleTimeUpdate = () => setAudioCurrentTime(audio.currentTime);
-    const handleDurationChange = () => setAudioDuration(audio.duration);
-    const handleEnded = () => setAudioPlaying(false);
-
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('durationchange', handleDurationChange);
-    audio.addEventListener('ended', handleEnded);
-
-    return () => {
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('durationchange', handleDurationChange);
-      audio.removeEventListener('ended', handleEnded);
-    };
-  }, [audioUrl]);
-
+  // Audio event listeners are now attached directly to the <audio> element
   const togglePlayPause = () => {
     if (!audioRef.current) return;
     if (audioPlaying) {
@@ -314,6 +290,9 @@ function App() {
               summary: res.data.summary,
               audio_base64: res.data.audio_base64
             }));
+            if (res.data.audio_base64) {
+              setAudioUrl(`data:audio/mpeg;base64,${res.data.audio_base64}`);
+            }
           }
         } catch (err) {
           console.error("Translation failed:", err);
@@ -1232,8 +1211,8 @@ function App() {
                                     audioRef.current.currentTime = pos * audioDuration;
                                   }}
                                 >
-                                  <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${audioDuration ? (audioCurrentTime / audioDuration) * 100 : 0}%`, background: 'var(--primary)', borderRadius: '4px' }}></div>
-                                  <div style={{ position: 'absolute', top: '50%', left: `${audioDuration ? (audioCurrentTime / audioDuration) * 100 : 0}%`, transform: 'translate(-50%, -50%)', fontSize: '1.2rem', transition: 'left 0.1s linear', pointerEvents: 'none' }}>
+                                  <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${(audioDuration && isFinite(audioDuration)) ? (audioCurrentTime / audioDuration) * 100 : 0}%`, background: 'var(--primary)', borderRadius: '4px' }}></div>
+                                  <div style={{ position: 'absolute', top: '50%', left: `${(audioDuration && isFinite(audioDuration)) ? (audioCurrentTime / audioDuration) * 100 : 0}%`, transform: 'translate(-50%, -50%)', fontSize: '1.2rem', transition: 'left 0.1s linear', pointerEvents: 'none' }}>
                                     🎧
                                   </div>
                                 </div>
@@ -1243,7 +1222,29 @@ function App() {
                                 </div>
                               </div>
                               
-                              <audio ref={audioRef} src={audioUrl} style={{ display: 'none' }} />
+                              <audio 
+                                ref={audioRef} 
+                                src={audioUrl} 
+                                style={{ display: 'none' }} 
+                                onPlay={() => setAudioPlaying(true)}
+                                onPause={() => setAudioPlaying(false)}
+                                onTimeUpdate={(e) => setAudioCurrentTime(e.target.currentTime)}
+                                onDurationChange={(e) => {
+                                  if (isFinite(e.target.duration)) {
+                                    setAudioDuration(e.target.duration);
+                                  }
+                                }}
+                                onEnded={() => setAudioPlaying(false)}
+                                onLoadedMetadata={(e) => {
+                                  if (e.target.duration === Infinity) {
+                                    // Hack for Chrome base64 audio bug
+                                    e.target.currentTime = 1e101;
+                                    e.target.currentTime = 0;
+                                  } else if (isFinite(e.target.duration)) {
+                                    setAudioDuration(e.target.duration);
+                                  }
+                                }}
+                              />
                             </div>
                           )}
 
