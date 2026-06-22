@@ -2292,12 +2292,16 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
               <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', marginBottom: '1rem' }}>
                 <FlaskConical size={28} />
               </div>
-              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.75rem' }}>Benchmarks</h2>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.75rem' }}>
+                {language === 'Hindi' ? 'बेंचमार्क' : 'Benchmarks'}
+              </h2>
               <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.5 }}>
-                Pilot evaluation of RxLens vs. August AI, GPT-5.5 &amp; Gemini (direct) on N=20 real, anonymized Indian handwritten prescriptions.
+                {language === 'Hindi'
+                  ? 'N=20 वास्तविक, गुमनाम भारतीय हस्तलिखित नुस्खों पर RxLens बनाम August AI, GPT-5.5 और Gemini (सीधे) का मूल्यांकन।'
+                  : 'Pilot evaluation of RxLens vs. August AI, GPT-5.5 & Gemini (direct) on N=20 real, anonymized Indian handwritten prescriptions.'}
               </p>
             </div>
-            <Benchmarks />
+            <Benchmarks language={language} />
           </motion.div>
         )}
 
