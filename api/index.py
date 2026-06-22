@@ -594,6 +594,7 @@ async def verify_pill(
                     "prescribed_value": "Losartan",
                     "status": "mismatch"
                 },
+                "salts": "Lisinopril Dihydrate",
                 "strength": {
                     "bottle_value": "10mg",
                     "prescribed_value": "50mg",
@@ -609,10 +610,11 @@ async def verify_pill(
         client = genai.Client(api_key=key)
         
         prompt = """
-Extract drug name, strength, quantity, and manufacturer from this medication label. 
+Extract drug name, salts present (active ingredients), strength, quantity, and manufacturer from this medication label. 
 Return EXACTLY THIS JSON (no extra text, no markdown block). If a field is missing, return null for that field.
 {
   "drug_name": "...",
+  "salts": "...",
   "strength": "...",
   "quantity": "...",
   "manufacturer": "..."

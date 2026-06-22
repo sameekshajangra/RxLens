@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Camera, Upload, CheckCircle2, AlertTriangle, Pill, Loader2, X, HelpCircle } from 'lucide-react';
+import { Camera, Upload, CheckCircle2, AlertTriangle, Pill, Loader2, X, HelpCircle, ChevronDown } from 'lucide-react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
 import imageCompression from 'browser-image-compression';
@@ -9,6 +9,7 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -96,18 +97,14 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
   };
 
   return (
-    <div className="pill-verification bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-6">
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-slate-200 flex items-center gap-3">
-        <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
-          <Pill className="w-5 h-5" />
-        </div>
-        <div>
-          <h3 className="font-bold text-slate-800 text-lg">Verify What Pharmacy Gave You</h3>
-          <p className="text-sm text-slate-600">Cross-check dispensed meds with the prescription.</p>
-        </div>
-      </div>
-
-      <div className="p-6">
+    <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: isExpanded ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setIsExpanded(!isExpanded)}>
+      <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={20} style={{ color: 'var(--success)' }} /> Verify What Pharmacy Gave You</span>
+        <ChevronDown size={20} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: '0.3s' }} />
+      </h2>
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginTop: '1.5rem' }} onClick={(e) => e.stopPropagation()}>
         {!imagePreview && !showCamera && (
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
             <button
@@ -256,7 +253,9 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -62,7 +62,6 @@ import ExplanationLevelSelector from './components/ExplanationLevelSelector';
 import MedicineTimeline from './components/MedicineTimeline';
 import ImagePreProcessor from './components/ImagePreProcessor';
 import PillVerification from './components/PillVerification';
-import ConfidenceVerification from './components/ConfidenceVerification';
 import './index.css';
 import i18n from './i18n';
 import html2pdf from 'html2pdf.js';
@@ -493,7 +492,8 @@ function App() {
         setError(raw._warning);
       }
       
-      setDraftResult(raw.data);
+      // Directly analyze without asking for confirmation
+      handleAnalyzeConfirm(raw.data);
 
     } catch (err) {
       console.error("API Error:", err);
@@ -1111,8 +1111,6 @@ function App() {
                   <div className="spinner" style={{margin:'0 auto 1rem'}}></div>
                   <p>{loadingStatus}</p>
                 </div>
-              ) : draftResult ? (
-                <ConfidenceVerification draftResult={draftResult} onConfirm={handleAnalyzeConfirm} />
               ) : result ? (
                 <motion.div className="result-container" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
                   {/* Section 1: Summary */}
