@@ -203,53 +203,45 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-3"
+              className="space-y-4 mt-6"
             >
-              {['drug', 'strength', 'quantity'].map((fieldKey) => {
-                const fieldData = result[fieldKey];
-                if (!fieldData) return null;
-                const config = getStatusConfig(fieldData.status);
-                
-                return (
-                  <div key={fieldKey} className={`p-4 rounded-xl border flex items-start gap-4 ${config.bg} ${config.border}`}>
-                    <div className="mt-1">{config.icon}</div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          {fieldKey === 'drug' ? 'Drug Name' : fieldKey}
-                        </span>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${config.text} bg-white/60`}>
-                          {config.label}
+              {/* Section 1: Scanned Drug / Bottle Name */}
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">1. Scanned Drug / Bottle Name</div>
+                <div className="font-bold text-slate-800 text-lg">{result.drug?.bottle_value || 'Not Found'}</div>
+              </div>
+
+              {/* Section 2: Salts Present */}
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">2. Salts Present</div>
+                <div className="font-medium text-slate-700">{result.salts || 'No salts extracted from label.'}</div>
+              </div>
+
+              {/* Section 3: Is it the same prescribed drug? */}
+              {(() => {
+                  const statusInfo = getStatusConfig(result.drug?.status || 'not-found');
+                  return (
+                    <div className={`p-4 rounded-xl border ${statusInfo.bg} ${statusInfo.border}`}>
+                      <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">3. Is it the same prescribed drug?</div>
+                      <div className="flex items-center gap-2 mb-3">
+                        {statusInfo.icon}
+                        <span className={`text-sm font-bold tracking-wider ${statusInfo.text}`}>
+                          {statusInfo.label === 'MATCH' ? 'Yes, it matches your prescription.' : statusInfo.label === 'MISMATCH' ? 'No, this does NOT match your prescription.' : 'Unable to verify match.'}
                         </span>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Prescribed</p>
-                          <p className="font-medium text-slate-800">{fieldData.prescribed_value || 'N/A'}</p>
+                      <div className="space-y-1 text-sm bg-white p-3 rounded-lg border border-slate-100">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Prescription says:</span>
+                          <span className="font-medium text-slate-800 text-right">{result.drug?.prescribed_value || '—'}</span>
                         </div>
-                        <div>
-                          <p className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">On Bottle</p>
-                          <p className={`font-medium ${fieldData.status === 'mismatch' ? 'text-red-700' : 'text-slate-800'}`}>
-                            {fieldData.bottle_value || 'Not listed'}
-                          </p>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Pharmacy gave:</span>
+                          <span className="font-medium text-slate-800 text-right">{result.drug?.bottle_value || '—'}</span>
                         </div>
                       </div>
-                      
-                      {fieldData.status === 'not-found' && (
-                        <p className="text-xs text-slate-500 mt-2">
-                          * Couldn't verify this from the label. Often normal for quantities.
-                        </p>
-                      )}
-                      {fieldData.status === 'mismatch' && (
-                        <p className="text-xs font-bold text-red-600 mt-2">
-                          ⚠ Mismatch: prescription says {fieldData.prescribed_value}, bottle says {fieldData.bottle_value}
-                        </p>
-                      )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+              })()}
             </motion.div>
           )}
         </AnimatePresence>
