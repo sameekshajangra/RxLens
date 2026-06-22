@@ -1916,9 +1916,9 @@ function App() {
                                 </a>
                               </div>
                             ))}
-                            {fhirResult.fhir_url && (
-                              <a href={fhirResult.fhir_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.82rem', color: 'var(--primary)', textDecoration: 'underline', display: 'block', marginTop: '8px' }}>
-                                View Bundle on HAPI FHIR Server →
+                            {fhirResult.patient_url && (
+                              <a href={fhirResult.patient_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.82rem', color: 'var(--primary)', textDecoration: 'underline', display: 'block', marginTop: '8px' }}>
+                                View Patient on HAPI FHIR Server →
                               </a>
                             )}
                           </>

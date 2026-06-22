@@ -865,11 +865,19 @@ async def export_fhir(prescription_data: str = Form(...)):
                         resource_ids.append(f"{parts[0]}/{parts[1]}")
 
             bundle_id = resp_bundle.get("id", "")
+            # Find the Patient resource ID to use as the primary link
+            # (Transaction bundles are not stored as Bundle resources on HAPI)
+            patient_url = None
+            for rid in resource_ids:
+                if rid.startswith("Patient/"):
+                    patient_url = f"{hapi_url}/{rid}"
+                    break
             return {
                 "success": True,
                 "bundle_id": bundle_id,
                 "resource_ids": resource_ids,
-                "fhir_url": f"{hapi_url}/Bundle/{bundle_id}" if bundle_id else None,
+                "patient_url": patient_url,  # Direct link to Patient resource (retrievable)
+                "hapi_base": hapi_url,
                 "drug_count": len(med_entries)
             }
         else:
