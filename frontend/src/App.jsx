@@ -1209,6 +1209,11 @@ function App() {
                       <AnimatePresence>
                         {expandedSection === 'savings' && (
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginTop: '1.5rem' }}>
+                            {/* Safety Disclaimer */}
+                            <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.3)', marginBottom: '1rem', fontSize: '0.82rem', color: 'var(--text-muted)', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                              <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
+                              <span><strong style={{ color: '#b45309' }}>Important Disclaimer:</strong> These are <em>informational</em> price comparisons only. Prices are indicative and may vary. <strong>Never substitute any medication without consulting your doctor or pharmacist first.</strong> Generic substitution is only appropriate when your doctor agrees.</span>
+                            </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                               {safeArray(result.data.drugs_list)
                                 .filter(d => d.generic_substitution)

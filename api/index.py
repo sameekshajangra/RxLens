@@ -474,34 +474,52 @@ async def extract_prescription(
         _validate_drug_confidence(parsed)
         # --- Generic Substitution / Jan Aushadhi Logic ---
         for i, drug_obj in enumerate(parsed.get("drugs_list", [])):
-            if isinstance(drug_obj, dict):
-                drug_name = drug_obj.get("drug", "").lower()
-                generic_match = None
+            # Handle both string and dict entries
+            if isinstance(drug_obj, str):
+                drug_name = drug_obj.lower().strip()
+                drug_display = drug_obj
+            elif isinstance(drug_obj, dict):
+                drug_name = (drug_obj.get("drug") or drug_obj.get("value") or "").lower().strip()
+                drug_display = drug_obj.get("drug") or drug_obj.get("value") or ""
+            else:
+                continue
                 
-                # Check if it's a known brand
-                for brand, generic in BRAND_TO_GENERIC.items():
-                    if brand in drug_name:
-                        generic_match = generic
+            if not drug_name:
+                continue
+                
+            generic_match = None
+            matched_brand = None
+            
+            # Step 1: Check if it's a known brand name
+            for brand, generic in BRAND_TO_GENERIC.items():
+                if brand in drug_name or drug_name in brand:
+                    generic_match = generic
+                    matched_brand = brand
+                    break
+            
+            # Step 2: If not a brand, check if it's already a generic name in our DB
+            if not generic_match:
+                for gen_key in JAN_AUSHADHI_DB.keys():
+                    if gen_key.lower() in drug_name or drug_name in gen_key.lower():
+                        generic_match = gen_key
                         break
-                
-                # If we couldn't find it in the brand map, maybe it's already generic
-                if not generic_match:
-                    for gen_key in JAN_AUSHADHI_DB.keys():
-                        if gen_key.lower() in drug_name:
-                            generic_match = gen_key
-                            break
-                            
-                if generic_match and generic_match in JAN_AUSHADHI_DB:
-                    ja_info = JAN_AUSHADHI_DB[generic_match]
-                    brand_price_est = BRAND_PRICES_DB.get(drug_name, ja_info["price"] * 4) # Estimate if unknown
-                    parsed["drugs_list"][i]["generic_substitution"] = {
-                        "active_molecule": generic_match,
-                        "indicative_branded_price": brand_price_est,
-                        "jan_aushadhi_price": ja_info["price"],
-                        "savings": max(0, brand_price_est - ja_info["price"]),
-                        "unit": ja_info["unit"],
-                        "available_jan_aushadhi": True
-                    }
+                        
+            if generic_match and generic_match in JAN_AUSHADHI_DB:
+                ja_info = JAN_AUSHADHI_DB[generic_match]
+                brand_price_est = BRAND_PRICES_DB.get(matched_brand or drug_name, ja_info["price"] * 4)
+                sub_data = {
+                    "active_molecule": generic_match,
+                    "indicative_branded_price": brand_price_est,
+                    "jan_aushadhi_price": ja_info["price"],
+                    "savings": max(0, brand_price_est - ja_info["price"]),
+                    "unit": ja_info["unit"],
+                    "available_jan_aushadhi": True
+                }
+                if isinstance(drug_obj, dict):
+                    parsed["drugs_list"][i]["generic_substitution"] = sub_data
+                else:
+                    # Convert string to dict with generic_substitution
+                    parsed["drugs_list"][i] = {"drug": drug_display, "generic_substitution": sub_data}
 
         return {"success": True, "data": parsed}
 
