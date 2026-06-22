@@ -107,14 +107,6 @@ graph LR
     <td align="center" style="border: none;"><b>Extracted Medication Cards</b><br><br><img src="assets/treatment_schedule.png" width="100%" /></td>
     <td align="center" style="border: none;"><b>Safety Alerts</b><br><br><img src="assets/safety_alerts.png" width="100%" /></td>
   </tr>
-  <tr>
-    <td align="center" style="border: none;"><b>Patient Adherence Dashboard</b><br><br><img src="assets/adherence_dashboard.png" width="100%" /></td>
-    <td align="center" style="border: none;"><b>Generated PDF Report</b><br><br><img src="assets/pdf_report.png" width="100%" /></td>
-  </tr>
-  <tr>
-    <td align="center" style="border: none;"><b>Patient History (Dark Mode)</b><br><br><img src="assets/history_dark_mode.png" width="100%" /></td>
-    <td align="center" style="border: none;"><b>Audio Guide & Warnings</b><br><br><img src="assets/audio_consultation.png" width="100%" /></td>
-  </tr>
 </table>
 
 ---
