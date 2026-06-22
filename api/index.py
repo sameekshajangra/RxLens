@@ -764,3 +764,120 @@ Return EXACTLY THIS JSON (no extra text, no markdown block). If a field is missi
     except Exception as e:
         logger.error(f"Pill verification failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# ── FHIR R4 Export ───────────────────────────────────────────────────────────
+
+@app.post("/api/export_fhir")
+async def export_fhir(prescription_data: str = Form(...)):
+    """
+    Convert parsed prescription data to a FHIR R4 Bundle and POST it to the
+    public HAPI FHIR test server. Returns the server-assigned resource IDs.
+    """
+    try:
+        import uuid
+        import requests as http_requests
+
+        presc = json.loads(prescription_data)
+        drugs_list = presc.get("drugs_list", [])
+        patient_name = presc.get("patient_name", "") or "Anonymous Patient"
+
+        # ── Build FHIR R4 Bundle ───────────────────────────────────────────
+        patient_id = str(uuid.uuid4())
+
+        patient_entry = {
+            "fullUrl": f"urn:uuid:{patient_id}",
+            "resource": {
+                "resourceType": "Patient",
+                "id": patient_id,
+                "meta": {"profile": ["http://hl7.org/fhir/StructureDefinition/Patient"]},
+                "name": [{"use": "anonymous", "text": patient_name}],
+                "active": True
+            },
+            "request": {"method": "POST", "url": "Patient"}
+        }
+
+        med_entries = []
+        for drug_obj in drugs_list:
+            if isinstance(drug_obj, dict):
+                drug_name = (drug_obj.get("drug") or drug_obj.get("value") or "Unknown Drug").strip()
+                dosage_text = str(drug_obj.get("dosage") or "")
+                freq_text   = str(drug_obj.get("frequency") or "")
+                dur_text    = str(drug_obj.get("duration") or "")
+            else:
+                drug_name = str(drug_obj).strip()
+                dosage_text = freq_text = dur_text = ""
+
+            if not drug_name:
+                continue
+
+            med_req_id = str(uuid.uuid4())
+            dose_instr = f"{dosage_text} {freq_text} {dur_text}".strip() or "As directed"
+            
+            med_entry = {
+                "fullUrl": f"urn:uuid:{med_req_id}",
+                "resource": {
+                    "resourceType": "MedicationRequest",
+                    "id": med_req_id,
+                    "meta": {"profile": ["http://hl7.org/fhir/StructureDefinition/MedicationRequest"]},
+                    "status": "active",
+                    "intent": "order",
+                    "subject": {"reference": f"urn:uuid:{patient_id}"},
+                    "medicationCodeableConcept": {
+                        "text": drug_name,
+                        "coding": [{
+                            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                            "display": drug_name
+                        }]
+                    },
+                    "dosageInstruction": [{"text": dose_instr}]
+                },
+                "request": {"method": "POST", "url": "MedicationRequest"}
+            }
+            med_entries.append(med_entry)
+
+        bundle = {
+            "resourceType": "Bundle",
+            "type": "transaction",
+            "entry": [patient_entry] + med_entries
+        }
+
+        # ── POST to HAPI FHIR public test server ──────────────────────────
+        hapi_url = "https://hapi.fhir.org/baseR4"
+        hapi_res = http_requests.post(
+            hapi_url,
+            json=bundle,
+            headers={
+                "Content-Type": "application/fhir+json",
+                "Accept": "application/fhir+json"
+            },
+            timeout=30
+        )
+
+        if hapi_res.status_code in [200, 201]:
+            resp_bundle = hapi_res.json()
+            resource_ids = []
+            for entry in resp_bundle.get("entry", []):
+                loc = entry.get("response", {}).get("location", "")
+                if loc:
+                    # location looks like "Patient/123/_history/1" — keep first two segments
+                    parts = loc.split("/")
+                    if len(parts) >= 2:
+                        resource_ids.append(f"{parts[0]}/{parts[1]}")
+
+            bundle_id = resp_bundle.get("id", "")
+            return {
+                "success": True,
+                "bundle_id": bundle_id,
+                "resource_ids": resource_ids,
+                "fhir_url": f"{hapi_url}/Bundle/{bundle_id}" if bundle_id else None,
+                "drug_count": len(med_entries)
+            }
+        else:
+            return {
+                "success": False,
+                "error": f"HAPI server returned HTTP {hapi_res.status_code}. Please try again."
+            }
+
+    except Exception as e:
+        logger.error(f"FHIR export failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

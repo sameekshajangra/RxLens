@@ -186,6 +186,8 @@ function App() {
   const [result, setResult] = useState(null);
   const [draftResult, setDraftResult] = useState(null);
   const [error, setError] = useState('');
+  const [fhirResult, setFhirResult] = useState(null);
+  const [fhirLoading, setFhirLoading] = useState(false);
 
   const [showCamera, setShowCamera] = useState(false);
   const [comprehensionStatus, setComprehensionStatus] = useState(null);
@@ -439,15 +441,17 @@ function App() {
     setRetryCountdown(0);
   };
 
-  const processImage = useCallback(async () => {
-    if (!imageFile) return;
+  const processImage = useCallback(async (fileOverride = null) => {
+    const file = fileOverride || imageFile;
+    if (!file) return;
     setLoading(true);
     setComprehensionStatus(null);
     setError('');
+    setFhirResult(null);
     setLoadingStatus(t.loading_status || 'Fast-tracking VLM Engine...');
     
     // GUARANTEE the file is under 4.5MB before sending to Vercel
-    let payloadFile = imageFile;
+    let payloadFile = file;
     if (payloadFile.size > 1.5 * 1024 * 1024) {
       setLoadingStatus("Optimizing payload size...");
       try {
@@ -514,6 +518,23 @@ function App() {
       setLoading(false);
     }
   }, [imageFile, language, patientProfile, explanationLevel]);
+
+  const handleExportFhir = async () => {
+    if (!result?.data) return;
+    setFhirLoading(true);
+    setFhirResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('prescription_data', JSON.stringify(result.data));
+      const res = await axios.post('/api/export_fhir', formData, { timeout: 30000 });
+      setFhirResult(res.data);
+    } catch (err) {
+      setFhirResult({ success: false, error: err.response?.data?.detail || err.message || 'FHIR export failed.' });
+    } finally {
+      setFhirLoading(false);
+    }
+  };
+
 
   const handleAnalyzeConfirm = async (finalizedData) => {
     setLoadingStatus('Running clinical safety checks...');
@@ -1066,6 +1087,8 @@ function App() {
                       setImageFile(croppedFile);
                       setImagePreview(URL.createObjectURL(croppedFile));
                       setPendingImage(null);
+                      // Auto-trigger scan immediately — no need to click Digitise
+                      processImage(croppedFile);
                     }}
                     onCancel={() => {
                       setPendingImage(null);
@@ -1862,6 +1885,48 @@ function App() {
                         <MessageCircle size={16} /> {t.chat_assistant || "Chat Assistant"}
                       </button>
                     </div>
+                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderColor: '#6366f1', color: '#6366f1' }}
+                        onClick={handleExportFhir}
+                        disabled={fhirLoading}
+                      >
+                        {fhirLoading ? <Loader2 size={16} className="spin" /> : <Activity size={16} />}
+                        {fhirLoading ? 'Exporting...' : 'Export to FHIR R4'}
+                      </button>
+                    </div>
+                    
+                    {/* FHIR Export Result Card */}
+                    {fhirResult && (
+                      <div style={{ padding: '16px', borderRadius: '12px', marginTop: '8px', border: fhirResult.success ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)', background: fhirResult.success ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)' }}>
+                        {fhirResult.success ? (
+                          <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                              <CheckCircle2 size={18} color="var(--success)" />
+                              <strong style={{ color: 'var(--success)', fontSize: '0.95rem' }}>Exported to FHIR R4 Server</strong>
+                            </div>
+                            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                              {fhirResult.drug_count} MedicationRequest(s) + 1 Patient resource created
+                            </div>
+                            {fhirResult.resource_ids && fhirResult.resource_ids.map((id, i) => (
+                              <div key={i} style={{ fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--primary)', marginBottom: '4px' }}>
+                                <a href={`https://hapi.fhir.org/baseR4/${id}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>
+                                  🔗 {id}
+                                </a>
+                              </div>
+                            ))}
+                            {fhirResult.fhir_url && (
+                              <a href={fhirResult.fhir_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.82rem', color: 'var(--primary)', textDecoration: 'underline', display: 'block', marginTop: '8px' }}>
+                                View Bundle on HAPI FHIR Server →
+                              </a>
+                            )}
+                          </>
+                        ) : (
+                          <div style={{ color: 'var(--danger)', fontSize: '0.85rem' }}>❌ {fhirResult.error}</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   {(userMode === 'patient' && !isSimpleMode) && (
