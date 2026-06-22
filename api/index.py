@@ -177,28 +177,48 @@ def _normalize(data: dict) -> dict:
 
 
 def _make_summary(data: dict, lang: str = "English") -> str:
-    drug = data.get("drug", "Unknown medication" if lang == "English" else "अज्ञात दवा" if lang == "Hindi" else "Medicamento desconocido")
-    dosage = data.get("dosage", "")
-    freq = data.get("frequency", "")
-    instructions = data.get("instructions", "")
-    
+    drugs = data.get("drugs_list", [])
+    if not drugs:
+        # Fallback for legacy single-drug schemas
+        d_name = data.get("drug", "Unknown medication" if lang == "English" else "अज्ञात दवा" if lang == "Hindi" else "Medicamento desconocido")
+        d_dosage = data.get("dosage", "")
+        d_freq = data.get("frequency", "")
+        drugs = [{"drug": d_name, "dosage": d_dosage, "frequency": d_freq}]
+        
     parts = []
     
     if lang.lower() == "hindi":
-        parts.append(f"दवा: {drug}")
-        if dosage: parts.append(f"खुराक: {dosage}")
-        if freq: parts.append(f"समय: {freq}")
-        if instructions: parts.append(f"निर्देश: {instructions}")
-    elif lang.lower() == "spanish":
-        parts.append(f"Medicamento: {drug}")
-        if dosage: parts.append(f"Dosis: {dosage}")
-        if freq: parts.append(f"Frecuencia: {freq}")
-        if instructions: parts.append(f"Instrucciones: {instructions}")
+        parts.append("आपकी दवाइयां इस प्रकार हैं:")
+        for d in drugs:
+            d_name = d.get("drug") or d.get("value") or "अज्ञात दवा"
+            d_dosage = d.get("dosage", "")
+            d_freq = d.get("frequency", "")
+            
+            drug_str = f"{d_name}"
+            if d_dosage: drug_str += f", खुराक: {d_dosage}"
+            if d_freq: drug_str += f", समय: {d_freq}"
+            parts.append(drug_str)
+            
+        instructions = data.get("instructions", "")
+        if instructions: parts.append(f"महत्वपूर्ण निर्देश: {instructions}")
+        notes = data.get("notes", "")
+        if notes: parts.append(f"डॉक्टर के नोट्स: {notes}")
     else:
-        parts.append(f"Medication: {drug}")
-        if dosage: parts.append(f"Dosage: {dosage}")
-        if freq: parts.append(f"Frequency: {freq}")
-        if instructions: parts.append(f"Instructions: {instructions}")
+        parts.append("Your medications are as follows:")
+        for d in drugs:
+            d_name = d.get("drug") or d.get("value") or "Unknown medication"
+            d_dosage = d.get("dosage", "")
+            d_freq = d.get("frequency", "")
+            
+            drug_str = f"{d_name}"
+            if d_dosage: drug_str += f", dosage: {d_dosage}"
+            if d_freq: drug_str += f", frequency: {d_freq}"
+            parts.append(drug_str)
+            
+        instructions = data.get("instructions", "")
+        if instructions: parts.append(f"Important instructions: {instructions}")
+        notes = data.get("notes", "")
+        if notes: parts.append(f"Doctor's notes: {notes}")
         
     return ". ".join(parts) + "."
 

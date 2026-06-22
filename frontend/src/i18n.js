@@ -96,10 +96,19 @@ const i18n = {
     clinical_profile: "Clinical Profile",
     reset_profile: "Reset Profile",
     weight: "Weight",
-    weight_placeholder: "kg",
     guard_active: "AI Safety Guard Active",
     cost_saving_generic_alts: "Cost Savings & Generic Alternatives",
-    verify_pharmacy_gave: "Verify What Pharmacy Gave You"
+    verify_pharmacy_gave: "Verify What Pharmacy Gave You",
+    instructions_warnings: "Instructions & Warnings",
+    important_instructions: "Important Instructions",
+    intake_instructions_came_from: "Intake instructions came from:",
+    how_easy_understand: "How Easy Is This To Understand?",
+    misunderstand_timing: "Patients unfamiliar with medical abbreviations may misunderstand medication timing or dosage instructions.",
+    export_fhir: "Export to FHIR R4",
+    exporting: "Exporting...",
+    exported_fhir: "Exported to FHIR R4 Server",
+    fhir_resources_created: "MedicationRequest(s) + 1 Patient resource created",
+    view_patient_fhir: "View Patient on HAPI FHIR Server →"
   },
   Hindi: {
     header_title: "प्रिस्क्रिप्शन को समझने योग्य बनाना",
@@ -201,7 +210,17 @@ const i18n = {
     weight_placeholder: "किग्रा",
     guard_active: "एआई सुरक्षा गार्ड सक्रिय",
     cost_saving_generic_alts: "लागत बचत और जेनेरिक विकल्प",
-    verify_pharmacy_gave: "सत्यापित करें कि फार्मेसी ने आपको क्या दिया"
+    verify_pharmacy_gave: "सत्यापित करें कि फार्मेसी ने आपको क्या दिया",
+    instructions_warnings: "निर्देश और चेतावनियाँ",
+    important_instructions: "महत्वपूर्ण निर्देश",
+    intake_instructions_came_from: "दवा लेने के निर्देश यहाँ से आए हैं:",
+    how_easy_understand: "इसे समझना कितना आसान है?",
+    misunderstand_timing: "मेडिकल शब्दों से अपरिचित मरीज दवा के समय या खुराक के निर्देशों को गलत समझ सकते हैं।",
+    export_fhir: "FHIR R4 में निर्यात करें",
+    exporting: "निर्यात हो रहा है...",
+    exported_fhir: "FHIR R4 सर्वर पर निर्यात किया गया",
+    fhir_resources_created: "MedicationRequest(s) + 1 Patient संसाधन बनाया गया",
+    view_patient_fhir: "HAPI FHIR सर्वर पर मरीज देखें →"
   }
 };
 

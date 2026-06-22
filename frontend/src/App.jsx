@@ -1484,7 +1484,7 @@ function App() {
                     <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <ShieldAlert size={20} style={{ color: safeArray(result.data.safety_alerts).length > 0 ? 'var(--danger)' : 'var(--warning)' }} /> 
-                        Instructions & Warnings
+                        {t.instructions_warnings || "Instructions & Warnings"}
                       </span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {safeArray(result.data.safety_alerts).length > 0 && (
@@ -1501,7 +1501,7 @@ function App() {
                           {/* Instructions box */}
                           {result.data.instructions && (
                             <div style={{ padding: '16px', background: 'rgba(13, 148, 136, 0.05)', borderRadius: '12px', borderLeft: '4px solid var(--primary)', marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: '1.6' }}>
-                              <h4 style={{ margin: '0 0 8px 0', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><Info size={16} /> Important Instructions</h4>
+                              <h4 style={{ margin: '0 0 8px 0', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><Info size={16} /> {t.important_instructions || "Important Instructions"}</h4>
                               {result.data.instructions}
                             </div>
                           )}
@@ -1605,7 +1605,7 @@ function App() {
                                 {result.data.explainability_sources.instructions && (
                                   <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                                     <span>💡</span>
-                                    <span>Intake instructions came from: <strong>{result.data.explainability_sources.instructions}</strong></span>
+                                    <span>{t.intake_instructions_came_from || "Intake instructions came from:"} <strong>{result.data.explainability_sources.instructions}</strong></span>
                                   </div>
                                 )}
                                 {safeArray(result.data.explainability_sources.side_effects).length > 0 && (
@@ -1632,7 +1632,7 @@ function App() {
                   {userMode === 'patient' && explanationLevel !== 'simple' && (
                     <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'accessibility' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'accessibility' ? '' : 'accessibility')}>
                       <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Gauge size={20} style={{ color: 'var(--info)' }} /> How Easy Is This To Understand?</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Gauge size={20} style={{ color: 'var(--info)' }} /> {t.how_easy_understand || "How Easy Is This To Understand?"}</span>
                         {expandedSection === 'accessibility' ? <span style={{fontSize:'0.8rem'}}>▼</span> : <span style={{fontSize:'0.8rem'}}>▶</span>}
                       </h2>
                       
@@ -1660,7 +1660,7 @@ function App() {
                                   </div>
                                   <div style={{ display: 'flex', gap: '8px', marginTop: '4px', background: '#fffbeb', color: '#b45309', padding: '10px', borderRadius: '8px', fontSize: '0.8rem' }}>
                                     <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-                                    <span>Patients unfamiliar with medical abbreviations may misunderstand medication timing or dosage instructions.</span>
+                                    <span>{t.misunderstand_timing || "Patients unfamiliar with medical abbreviations may misunderstand medication timing or dosage instructions."}</span>
                                   </div>
                                 </div>
                               </div>
@@ -1768,7 +1768,7 @@ function App() {
                                   {result.data.explainability_sources.instructions && (
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                                       <span>💡</span>
-                                      <span>Intake instructions came from: <strong>{result.data.explainability_sources.instructions}</strong></span>
+                                      <span>{t.intake_instructions_came_from || "Intake instructions came from:"} <strong>{result.data.explainability_sources.instructions}</strong></span>
                                     </div>
                                   )}
                                   {safeArray(result.data.explainability_sources.side_effects).length > 0 && (
@@ -1907,7 +1907,7 @@ function App() {
                         disabled={fhirLoading}
                       >
                         {fhirLoading ? <Loader2 size={16} className="spin" /> : <Activity size={16} />}
-                        {fhirLoading ? 'Exporting...' : 'Export to FHIR R4'}
+                        {fhirLoading ? (t.exporting || 'Exporting...') : (t.export_fhir || 'Export to FHIR R4')}
                       </button>
                     </div>
                     
@@ -1918,10 +1918,10 @@ function App() {
                           <>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                               <CheckCircle2 size={18} color="var(--success)" />
-                              <strong style={{ color: 'var(--success)', fontSize: '0.95rem' }}>Exported to FHIR R4 Server</strong>
+                              <strong style={{ color: 'var(--success)', fontSize: '0.95rem' }}>{t.exported_fhir || "Exported to FHIR R4 Server"}</strong>
                             </div>
                             <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                              {fhirResult.drug_count} MedicationRequest(s) + 1 Patient resource created
+                              {fhirResult.drug_count} {t.fhir_resources_created || "MedicationRequest(s) + 1 Patient resource created"}
                             </div>
                             {fhirResult.resource_ids && fhirResult.resource_ids.map((id, i) => (
                               <div key={i} style={{ fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--primary)', marginBottom: '4px' }}>
@@ -1932,7 +1932,7 @@ function App() {
                             ))}
                             {fhirResult.patient_url && (
                               <a href={fhirResult.patient_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.82rem', color: 'var(--primary)', textDecoration: 'underline', display: 'block', marginTop: '8px' }}>
-                                View Patient on HAPI FHIR Server →
+                                {t.view_patient_fhir || "View Patient on HAPI FHIR Server →"}
                               </a>
                             )}
                           </>
