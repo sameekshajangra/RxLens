@@ -501,8 +501,9 @@ function App() {
         setError(raw._warning);
       }
       
-      // Directly analyze without asking for confirmation
-      handleAnalyzeConfirm(raw.data);
+      // Await analyze so loading stays active until results are ready
+      await handleAnalyzeConfirm(raw.data);
+      return; // handleAnalyzeConfirm manages setLoading(false) itself
 
     } catch (err) {
       console.error("API Error:", err);
@@ -519,8 +520,7 @@ function App() {
       } else {
         setError(err.response?.data?.detail || err.message || 'Failed to parse prescription.');
       }
-    } finally {
-      setLoading(false);
+      setLoading(false); // only reach here on extract-level error
     }
   };
 
