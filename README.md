@@ -41,7 +41,9 @@ Medication misinterpretation and poor adherence remain major contributors to pre
 |---|---|
 | 🔍 **Zero-Shot VLM Engine** | Replaces brittle OCR with Gemini 2.0 Flash to simultaneously transcribe and structure messy handwriting into strict JSON. |
 | 🛡️ **Polypharmacy Assistant** | Generates clinician-facing "De-prescribing Notes", flagging excessive medication burdens, duplicate therapies, and dangerous sedative loads in elderly patients. |
-| 🌍 **Green Pharmacy Score** | Calculates the environmental footprint of the prescription (e.g., flagging inhalers for greenhouse gases or endocrine disruptors) and provides eco-disposal instructions. |
+| 🏥 **FHIR R4 Interoperability** | Converts extracted prescriptions into HL7 FHIR R4 Bundle format and pushes them to public HAPI FHIR test servers to demonstrate global EHR integration standards. |
+| 💰 **PMBJP Cost Savings** | Maps prescribed branded medications to Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP) generic alternatives, showing potential cost savings and linking to nearby stores. |
+| 💊 **Pill-Bottle Verification** | Allows patients to photograph their dispensed physical pill bottle and cross-reference it against the AI-extracted prescription to detect critical dispensing errors. |
 | 🗓️ **Adherence Tracking** | Auto-generates a visual treatment timeline. Logs taken/missed doses locally to calculate an ongoing "Adherence Score." |
 | 🚨 **Hallucination Safeguards** | Explicitly warns users of AI involvement. Triggers "Pharmacist Consultation" alerts for any uncertain OCR extractions. |
 | 🎙️ **Bilingual Accessibility** | Generates professional Text-to-Speech audio summaries in English and Hindi for illiterate or visually impaired patients. |
