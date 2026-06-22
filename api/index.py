@@ -610,7 +610,8 @@ async def verify_pill(
         client = genai.Client(api_key=key)
         
         prompt = """
-Extract drug name, salts present (active ingredients), strength, quantity, and manufacturer from this medication label. 
+You are an expert pharmacist. Extract the exact drug name, ALL salts present (active ingredients) with their exact dosages, strength, quantity, and manufacturer from this medication label image. 
+If there are multiple salts/active ingredients, list ALL of them separated by commas (e.g. "Thiamine Mononitrate (B1) 10 mg, Riboflavin (B2) 10 mg"). Be extremely precise.
 Return EXACTLY THIS JSON (no extra text, no markdown block). If a field is missing, return null for that field.
 {
   "drug_name": "...",

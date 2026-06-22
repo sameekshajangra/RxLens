@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Camera, Upload, CheckCircle2, AlertTriangle, Pill, Loader2, X, HelpCircle, ChevronDown } from 'lucide-react';
+import { Camera, Upload, CheckCircle2, AlertTriangle, Pill, Loader2, X, HelpCircle } from 'lucide-react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
 import imageCompression from 'browser-image-compression';
@@ -100,7 +100,7 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
     <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: isExpanded ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setIsExpanded(!isExpanded)}>
       <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={20} style={{ color: 'var(--success)' }} /> Verify What Pharmacy Gave You</span>
-        <ChevronDown size={20} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: '0.3s' }} />
+        {isExpanded ? <span style={{fontSize:'0.8rem'}}>▼</span> : <span style={{fontSize:'0.8rem'}}>▶</span>}
       </h2>
       <AnimatePresence>
         {isExpanded && (
