@@ -16,6 +16,11 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
   const fileInputRef = useRef(null);
   const webcamRef = useRef(null);
 
+  const resetState = () => {
+    setResult(null);
+    setError('');
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -42,10 +47,7 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
     }
   }, [webcamRef]);
 
-  const resetState = () => {
-    setResult(null);
-    setError('');
-  };
+
 
   const verifyPill = async () => {
     if (!imageFile || !prescriptionData) return;
