@@ -442,14 +442,16 @@ function App() {
     setRetryCountdown(0);
   };
 
+  const processImage = useCallback(async (fileOverride = null) => {
+
+
   useEffect(() => {
     if (autoScanTriggered && imageFile && !loading && !result) {
       setAutoScanTriggered(false);
-      processImage();
+      // Pass the fresh imageFile directly to bypass any stale closures
+      processImage(imageFile);
     }
-  }, [autoScanTriggered, imageFile, loading, result]);
-
-  const processImage = useCallback(async (fileOverride = null) => {
+  }, [autoScanTriggered, imageFile, loading, result, processImage]);
     // If called from an onClick handler, fileOverride is a React SyntheticEvent. Ignore it.
     const isEvent = fileOverride && typeof fileOverride === 'object' && ('nativeEvent' in fileOverride || 'preventDefault' in fileOverride);
     const actualFileOverride = isEvent ? null : fileOverride;
