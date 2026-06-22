@@ -442,7 +442,11 @@ function App() {
   };
 
   const processImage = useCallback(async (fileOverride = null) => {
-    const file = fileOverride || imageFile;
+    // If called from an onClick handler, fileOverride is a React SyntheticEvent. Ignore it.
+    const isEvent = fileOverride && typeof fileOverride === 'object' && ('nativeEvent' in fileOverride || 'preventDefault' in fileOverride);
+    const actualFileOverride = isEvent ? null : fileOverride;
+    
+    const file = actualFileOverride || imageFile;
     if (!file) return;
     setLoading(true);
     setComprehensionStatus(null);
@@ -1120,7 +1124,7 @@ function App() {
                     </div>
                     <div style={{display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '25px'}}>
                       <button className="btn btn-secondary" onClick={() => { setImagePreview(null); setImageFile(null); resetState(); }}>{t.clear}</button>
-                      <button className="btn" onClick={processImage} disabled={loading}>{loading ? t.analyzing : t.digitize}</button>
+                      <button className="btn" onClick={() => processImage()} disabled={loading}>{loading ? t.analyzing : t.digitize}</button>
                     </div>
                   </div>
                 )}
