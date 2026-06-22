@@ -62,6 +62,7 @@ import ExplanationLevelSelector from './components/ExplanationLevelSelector';
 import MedicineTimeline from './components/MedicineTimeline';
 import ImagePreProcessor from './components/ImagePreProcessor';
 import PillVerification from './components/PillVerification';
+import Benchmarks from './components/Benchmarks';
 import './index.css';
 import i18n from './i18n';
 import html2pdf from 'html2pdf.js';
@@ -2277,6 +2278,10 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
                   );
                 })}
             </div>
+
+            {/* ── Benchmarks Section ── */}
+            <Benchmarks />
+
           </motion.div>
         )}
 
