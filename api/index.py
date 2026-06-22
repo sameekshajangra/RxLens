@@ -626,7 +626,23 @@ Return EXACTLY THIS JSON (no extra text, no markdown block). If a field is missi
             prompt
         ]
         
-        response = client.models.generate_content(model="gemini-2.5-flash", contents=model_contents)
+        model_candidates = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-1.5-pro"]
+        response = None
+        last_error = None
+        
+        for model_name in model_candidates:
+            try:
+                response = client.models.generate_content(model=model_name, contents=model_contents)
+                if response and response.text:
+                    break
+            except Exception as e:
+                last_error = e
+                print(f"Model {model_name} failed in verify_pill: {e}")
+                continue
+                
+        if not response or not response.text:
+            raise HTTPException(status_code=503, detail=f"All models failed due to high demand. Last error: {str(last_error)}")
+            
         res_json = _extract_json(response.text)
         
         # Now do deterministic comparison
