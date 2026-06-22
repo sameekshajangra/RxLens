@@ -75,9 +75,8 @@ const STRINGS = {
     rubricMax: 'Max = 8',
     limitsTitle: 'Limitations',
     limits: [
-      'Small N (20). Adequate for arXiv preprint and scholarship applications; synthetic extension planned for journal version.',
-      'Single annotator (the author). Inter-rater agreement not yet computed.',
-      'Per-field scoring is coarse-grained. Fine-grained edit-distance analysis is planned.',
+      'Small N (20). Synthetic extension planned for journal version.',
+      'Single annotator (the author).',
       'August AI was tested via screenshots (no API). Some output may have been truncated.',
       'Prescriptions are from one geographic region (North India). Generalisability across regions not yet established.',
     ],
@@ -137,9 +136,8 @@ const STRINGS = {
     rubricMax: 'अधिकतम = 8',
     limitsTitle: 'सीमाएं',
     limits: [
-      'छोटा N (20)। arXiv प्रीप्रिंट और छात्रवृत्ति आवेदनों के लिए पर्याप्त; जर्नल संस्करण के लिए कृत्रिम विस्तार की योजना है।',
-      'एकल एनोटेटर (लेखक)। अंतर-रेटर समझौता अभी तक नहीं किया गया।',
-      'प्रति-क्षेत्र स्कोरिंग मोटे अनाज वाली है। सूक्ष्म संपादन-दूरी विश्लेषण की योजना है।',
+      'छोटा N (20)। जर्नल संस्करण के लिए कृत्रिम विस्तार की योजना है।',
+      'एकल एनोटेटर (लेखक)।',
       'August AI का परीक्षण स्क्रीनशॉट (API नहीं) के माध्यम से किया गया। कुछ आउटपुट छोटा हो सकता था।',
       'नुस्खे एक भौगोलिक क्षेत्र (उत्तर भारत) से हैं। क्षेत्रों में सामान्यीकरण अभी तक स्थापित नहीं हुआ।',
     ],
