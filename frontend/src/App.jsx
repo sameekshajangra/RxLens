@@ -1253,7 +1253,7 @@ function App() {
                                       
                                       {gen.available_jan_aushadhi && (
                                         <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'flex-end' }}>
-                                          Available at <a href="http://janaushadhi.gov.in/KendraDetails.aspx" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', marginLeft: '4px', textDecoration: 'underline' }}>PMBJP Stores</a>
+                                          Available at <a href="https://janaushadhi.gov.in/" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', marginLeft: '4px', textDecoration: 'underline' }}>Jan Aushadhi Kendras</a> · Find nearest store on <a href="https://www.google.com/maps/search/jan+aushadhi+kendra+near+me" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', marginLeft: '4px', textDecoration: 'underline' }}>Google Maps</a>
                                         </div>
                                       )}
                                     </div>
