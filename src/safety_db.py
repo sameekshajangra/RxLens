@@ -529,3 +529,43 @@ ENVIRONMENTAL_IMPACT = {
         "disposal": "Complete the full course. Return unused medication to pharmacy."
     }
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# JAN AUSHADHI (GENERIC) & BRANDED INDICATIVE PRICES DB
+# Format: Prices are in INR (₹). These are estimated indicative prices used to 
+# demonstrate generic substitution savings.
+# ──────────────────────────────────────────────────────────────────────────────
+JAN_AUSHADHI_DB = {
+    "Paracetamol": {"price": 10, "unit": "10 tablets"},
+    "Ibuprofen": {"price": 18, "unit": "10 tablets"},
+    "Amoxicillin": {"price": 35, "unit": "10 capsules"},
+    "Azithromycin": {"price": 45, "unit": "3 tablets"},
+    "Pantoprazole": {"price": 15, "unit": "10 tablets"},
+    "Atorvastatin": {"price": 12, "unit": "10 tablets"},
+    "Rosuvastatin": {"price": 20, "unit": "10 tablets"},
+    "Diclofenac": {"price": 12, "unit": "10 tablets"},
+    "Metoprolol": {"price": 15, "unit": "10 tablets"},
+    "Ciprofloxacin": {"price": 30, "unit": "10 tablets"},
+    "Levofloxacin": {"price": 40, "unit": "10 tablets"},
+    "Rabeprazole": {"price": 18, "unit": "10 tablets"},
+}
+
+BRAND_PRICES_DB = {
+    "dolo": 35,
+    "dolo 650": 35,
+    "crocin": 30,
+    "combiflam": 45,
+    "augmentin": 200,
+    "mox": 120,
+    "azee": 130,
+    "pan-d": 150,
+    "pantop": 140,
+    "razo": 180,
+    "atorva": 110,
+    "rozavel": 160,
+    "voveran": 90,
+    "betaloc": 80,
+    "ciplox": 85,
+    "taxim": 120,
+}
+

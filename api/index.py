@@ -16,9 +16,7 @@ import re
 import logging
 import base64
 import difflib
-try:
-    from src.safety_db import BRAND_TO_GENERIC, DRUG_CLASSES, CONTRAINDICATIONS
-except ImportError:
+from src.safety_db import BRAND_TO_GENERIC, DRUG_CLASSES, CONTRAINDICATIONS, JAN_AUSHADHI_DB, BRAND_PRICES_DB
     BRAND_TO_GENERIC = {}
     DRUG_CLASSES = {}
     CONTRAINDICATIONS = {}
@@ -476,7 +474,37 @@ async def extract_prescription(
 
         # Validate drugs confidence
         _validate_drug_confidence(parsed)
-        
+        # --- Generic Substitution / Jan Aushadhi Logic ---
+        for i, drug_obj in enumerate(parsed.get("drugs_list", [])):
+            if isinstance(drug_obj, dict):
+                drug_name = drug_obj.get("drug", "").lower()
+                generic_match = None
+                
+                # Check if it's a known brand
+                for brand, generic in BRAND_TO_GENERIC.items():
+                    if brand in drug_name:
+                        generic_match = generic
+                        break
+                
+                # If we couldn't find it in the brand map, maybe it's already generic
+                if not generic_match:
+                    for gen_key in JAN_AUSHADHI_DB.keys():
+                        if gen_key.lower() in drug_name:
+                            generic_match = gen_key
+                            break
+                            
+                if generic_match and generic_match in JAN_AUSHADHI_DB:
+                    ja_info = JAN_AUSHADHI_DB[generic_match]
+                    brand_price_est = BRAND_PRICES_DB.get(drug_name, ja_info["price"] * 4) # Estimate if unknown
+                    parsed["drugs_list"][i]["generic_substitution"] = {
+                        "active_molecule": generic_match,
+                        "indicative_branded_price": brand_price_est,
+                        "jan_aushadhi_price": ja_info["price"],
+                        "savings": max(0, brand_price_est - ja_info["price"]),
+                        "unit": ja_info["unit"],
+                        "available_jan_aushadhi": True
+                    }
+
         return {"success": True, "data": parsed}
 
     except HTTPException:

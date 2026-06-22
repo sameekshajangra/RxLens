@@ -55,7 +55,7 @@ import {
   Upload, Camera, FileText, Activity, ShieldCheck, ShieldAlert,
   Download, PlayCircle, Loader2, AlertTriangle, Info,
   CheckCircle2, Settings, Key, Globe, History, 
-  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle, Play, Pause, Printer, Volume2, HelpCircle, ChevronDown, Copy
+  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle, Play, Pause, Printer, Volume2, HelpCircle, ChevronDown, Copy, IndianRupee
 } from 'lucide-react';
 import UploadCard from './components/UploadCard';
 import ExplanationLevelSelector from './components/ExplanationLevelSelector';
@@ -1194,6 +1194,72 @@ function App() {
                       )}
                     </AnimatePresence>
                   </div>
+
+                  {/* Section 1.5: Cost Savings & Jan Aushadhi */}
+                  {safeArray(result.data?.drugs_list).some(d => d.generic_substitution) && (
+                    <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'savings' ? '1px solid var(--success)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'savings' ? '' : 'savings')}>
+                      <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <IndianRupee size={20} style={{ color: 'var(--success)' }} /> 
+                          Cost Savings & Generic Alternatives
+                        </span>
+                        {expandedSection === 'savings' ? <span style={{fontSize:'0.8rem'}}>▼</span> : <span style={{fontSize:'0.8rem'}}>▶</span>}
+                      </h2>
+                      
+                      <AnimatePresence>
+                        {expandedSection === 'savings' && (
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginTop: '1.5rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                              {safeArray(result.data.drugs_list)
+                                .filter(d => d.generic_substitution)
+                                .map((drug, i) => {
+                                  const gen = drug.generic_substitution;
+                                  return (
+                                    <div key={i} style={{ padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--surface-50)' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                                        <div>
+                                          <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', color: 'var(--text-main)' }}>{drug.drug}</h4>
+                                          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                            Active Molecule: <strong style={{ color: 'var(--primary)' }}>{gen.active_molecule}</strong>
+                                          </div>
+                                        </div>
+                                        {gen.savings > 0 && (
+                                          <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            Save ₹{gen.savings}
+                                          </div>
+                                        )}
+                                      </div>
+                                      
+                                      <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+                                        <div style={{ padding: '12px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Indicative Branded Price</div>
+                                          <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-main)' }}>₹{gen.indicative_branded_price}</div>
+                                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>per {gen.unit}</div>
+                                        </div>
+                                        
+                                        <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Leaf size={12} color="var(--success)" /> Jan Aushadhi Price
+                                          </div>
+                                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--success)' }}>₹{gen.jan_aushadhi_price}</div>
+                                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>per {gen.unit}</div>
+                                        </div>
+                                      </div>
+                                      
+                                      {gen.available_jan_aushadhi && (
+                                        <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'flex-end' }}>
+                                          Available at <a href="http://janaushadhi.gov.in/KendraDetails.aspx" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', marginLeft: '4px', textDecoration: 'underline' }}>PMBJP Stores</a>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
 
                   {/* Section 2: Schedule & Timing */}
                   <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'schedule' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection(expandedSection === 'schedule' ? '' : 'schedule')}>
