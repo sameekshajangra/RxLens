@@ -291,6 +291,8 @@ function App() {
               audio_base64: res.data.audio_base64
             }));
             if (res.data.audio_base64) {
+              setAudioPlaying(false);
+              setAudioCurrentTime(0);
               setAudioUrl(`data:audio/mpeg;base64,${res.data.audio_base64}`);
             }
           }

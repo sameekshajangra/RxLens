@@ -179,48 +179,45 @@ def _normalize(data: dict) -> dict:
 def _make_summary(data: dict, lang: str = "English") -> str:
     drugs = data.get("drugs_list", [])
     if not drugs:
-        # Fallback for legacy single-drug schemas
-        d_name = data.get("drug", "Unknown medication" if lang == "English" else "अज्ञात दवा" if lang == "Hindi" else "Medicamento desconocido")
+        d_name = data.get("drug", "Unknown medication")
         d_dosage = data.get("dosage", "")
         d_freq = data.get("frequency", "")
         drugs = [{"drug": d_name, "dosage": d_dosage, "frequency": d_freq}]
         
-    parts = []
-    
-    if lang.lower() == "hindi":
-        parts.append("आपकी दवाइयां इस प्रकार हैं:")
-        for d in drugs:
-            d_name = d.get("drug") or d.get("value") or "अज्ञात दवा"
-            d_dosage = d.get("dosage", "")
-            d_freq = d.get("frequency", "")
-            
-            drug_str = f"{d_name}"
-            if d_dosage: drug_str += f", खुराक: {d_dosage}"
-            if d_freq: drug_str += f", समय: {d_freq}"
-            parts.append(drug_str)
-            
-        instructions = data.get("instructions", "")
-        if instructions: parts.append(f"महत्वपूर्ण निर्देश: {instructions}")
-        notes = data.get("notes", "")
-        if notes: parts.append(f"डॉक्टर के नोट्स: {notes}")
-    else:
-        parts.append("Your medications are as follows:")
-        for d in drugs:
-            d_name = d.get("drug") or d.get("value") or "Unknown medication"
-            d_dosage = d.get("dosage", "")
-            d_freq = d.get("frequency", "")
-            
-            drug_str = f"{d_name}"
-            if d_dosage: drug_str += f", dosage: {d_dosage}"
-            if d_freq: drug_str += f", frequency: {d_freq}"
-            parts.append(drug_str)
-            
-        instructions = data.get("instructions", "")
-        if instructions: parts.append(f"Important instructions: {instructions}")
-        notes = data.get("notes", "")
-        if notes: parts.append(f"Doctor's notes: {notes}")
+    parts = ["Your medications are as follows:"]
+    for d in drugs:
+        d_name = d.get("drug") or d.get("value") or "Unknown medication"
+        d_dosage = d.get("dosage", "")
+        d_freq = d.get("frequency", "")
         
-    return ". ".join(parts) + "."
+        drug_str = f"{d_name}"
+        if d_dosage: drug_str += f", dosage: {d_dosage}"
+        if d_freq: drug_str += f", frequency: {d_freq}"
+        parts.append(drug_str)
+        
+    instructions = data.get("instructions", "")
+    if instructions: parts.append(f"Important instructions: {instructions}")
+    notes = data.get("notes", "")
+    if notes: parts.append(f"Doctor's notes: {notes}")
+    
+    eng_summary = ". ".join(parts) + "."
+    
+    if lang.lower() != "english":
+        try:
+            from google import genai
+            import os
+            key = os.getenv("GEMINI_API_KEY")
+            if key:
+                client = genai.Client(api_key=key)
+                prompt = f"Translate the following clinical medication summary into fluent, natural {lang}. ONLY output the translation, nothing else. Do not add conversational filler.\n\nSummary: {eng_summary}"
+                res = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+                if res.text:
+                    return res.text.strip()
+        except Exception as e:
+            logger.warning(f"Translation failed: {e}")
+            pass # fallback to english
+            
+    return eng_summary
 
 def _generate_audio_base64(text: str, lang: str) -> str:
     from gtts import gTTS
