@@ -1769,6 +1769,12 @@ function App() {
                     </div>
                   )}
 
+                  <PillVerification 
+                    prescriptionData={result.data}
+                    language={language}
+                    apiKey={apiKey}
+                  />
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }} className="hide-on-print">
                     <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
                       <button className="btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary)' }} onClick={() => downloadPDF()}>
@@ -1800,11 +1806,7 @@ function App() {
                     }} />
                   )}
                   
-                  <PillVerification 
-                    prescriptionData={result.data}
-                    language={language}
-                    apiKey={apiKey}
-                  />
+
                   
                 </motion.div>
               ) : error ? (
