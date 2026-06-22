@@ -40,22 +40,22 @@ Medication misinterpretation and poor adherence remain major contributors to pre
 | Feature | Description |
 |---|---|
 | 🔍 **Zero-Shot VLM Engine** | Replaces brittle OCR with Gemini 2.0 Flash to simultaneously transcribe and structure messy handwriting into strict JSON. |
-| 🛡️ **Polypharmacy Assistant** | Generates clinician-facing "De-prescribing Notes", flagging excessive medication burdens, duplicate therapies, and dangerous sedative loads in elderly patients. |
-| 🏥 **FHIR R4 Interoperability** | Converts extracted prescriptions into HL7 FHIR R4 Bundle format and pushes them to public HAPI FHIR test servers to demonstrate global EHR integration standards. |
-| 💰 **PMBJP Cost Savings** | Maps prescribed branded medications to Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP) generic alternatives, showing potential cost savings and linking to nearby stores. |
-| 💊 **Pill-Bottle Verification** | Allows patients to photograph their dispensed physical pill bottle and cross-reference it against the AI-extracted prescription to detect critical dispensing errors. |
-| 🗓️ **Adherence Tracking** | Auto-generates a visual treatment timeline. Logs taken/missed doses locally to calculate an ongoing "Adherence Score." |
+| 🛡️ **Polypharmacy Assistant** | Flags medication-burden patterns for clinician review — duplicate therapies, high anticholinergic/sedative load in elderly patients — surfacing them as notes for a clinician to decide on, not automated deprescribing advice. |
+| 🏥 **FHIR R4 Interoperability** | Converts extracted prescriptions into HL7 FHIR R4 Bundle format and pushes them to public HAPI FHIR test servers to demonstrate EHR integration standards. |
+| 💰 **PMBJP Cost Savings** | Maps prescribed branded medications to PMBJP (Janaushadhi) generic alternatives, showing indicative cost savings and linking to nearby stores. |
+| 💊 **Pill-Bottle Verification** | Lets patients photograph their dispensed pill bottle and cross-references it against the AI-extracted prescription to detect dispensing errors. |
+| 🗓️ **Adherence Tracking** | Auto-generates a visual treatment timeline. Logs taken/missed doses locally to calculate an ongoing Adherence Score. |
 | 🚨 **Hallucination Safeguards** | Explicitly warns users of AI involvement. Triggers "Pharmacist Consultation" alerts for any uncertain OCR extractions. |
-| 🎙️ **Bilingual Accessibility** | Generates professional Text-to-Speech audio summaries in English and Hindi for illiterate or visually impaired patients. |
-| ♿ **Elderly A+ Mode** | A dedicated UI toggle that increases global typography size, enforces high-contrast borders, and simplifies the user interface for visually impaired users. |
-| 🤖 **Clinical Chatbot** | "Ask RxLens" context-aware chatbot allows patients to ask follow-up questions about their specific medications. |
-| 📊 **Insights Analytics** | Interactive Recharts dashboard visualizing the frequency of specific drug classes over the patient's history. |
-| 📄 **PDF Export Engine** | Generates highly structured, clinic-ready tabular reports containing all AI intelligence and safety alerts. |
-| 👤 **Interactive Clinical Profile** | Allows patients to define conditions, allergies, age, gender, and weight to check for direct cross-reactivity and customize AI translation details. |
-| 🛡️ **AI Safety Profile & Guard** | Combines a static, deterministic clinical interaction database (e.g., Aspirin + Warfarin) with patient profile checking to eliminate critical safety hallucination risks. |
-| ⚡ **Tailored Explanation Depths** | Supports custom explanation modes (Simple, Standard, Detailed) for different patient reading comprehensions, as well as specialized Healthcare Worker workflows. |
-| 🤖 **VLM Model Cascading** | Employs built-in backend model cascades (Gemini 2.5 Flash -> Gemini 2.0 Flash -> Gemini Flash Latest) to bypass rate limits and maximize uptime automatically. |
-| 💬 **Comprehension Verification** | Prompts patient feedback loops ("Did you understand when to take this medicine?") to reinforce high-fidelity treatment adherence. |
+| 🎙️ **Bilingual Accessibility** | Generates Text-to-Speech audio summaries in English and Hindi for low-literacy or low-vision patients. |
+| ♿ **Elderly A+ Mode** | A UI toggle that increases typography size, enforces high-contrast borders, and simplifies the interface for low-vision and elderly users. |
+| 🤖 **Clinical Chatbot** | "Ask RxLens" — a context-aware assistant scoped to the patient's extracted medications, with a visible "not medical advice, confirm with a pharmacist" guardrail. |
+| 📊 **Insights Analytics** | Interactive Recharts dashboard visualizing drug-class frequency across the patient's history. |
+| 📄 **PDF Export Engine** | Generates structured, clinic-ready tabular reports containing all extracted intelligence and safety alerts. |
+| 👤 **Interactive Clinical Profile** | Lets patients define conditions, allergies, age, gender, and weight to check for cross-reactivity and tailor explanations. |
+| 🛡️ **AI Safety Profile & Guard** | Combines a static, deterministic clinical interaction database (e.g., Aspirin + Warfarin) with patient-profile checking to reduce critical safety-hallucination risk. |
+| ⚡ **Tailored Explanation Depths** | Custom explanation modes (Simple, Standard, Detailed) plus specialized healthcare-worker workflows. |
+| 🤖 **VLM Model Cascading** | Backend model cascade (Gemini 2.5 Flash → 2.0 Flash → Flash Latest) to bypass rate limits and maximize uptime. |
+| 💬 **Comprehension Verification** | Patient feedback loops ("Did you understand when to take this medicine?") to reinforce adherence. |
 
 ---
 
