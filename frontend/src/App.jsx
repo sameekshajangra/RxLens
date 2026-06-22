@@ -442,16 +442,7 @@ function App() {
     setRetryCountdown(0);
   };
 
-  const processImage = useCallback(async (fileOverride = null) => {
-
-
-  useEffect(() => {
-    if (autoScanTriggered && imageFile && !loading && !result) {
-      setAutoScanTriggered(false);
-      // Pass the fresh imageFile directly to bypass any stale closures
-      processImage(imageFile);
-    }
-  }, [autoScanTriggered, imageFile, loading, result, processImage]);
+  const processImage = async (fileOverride = null) => {
     // If called from an onClick handler, fileOverride is a React SyntheticEvent. Ignore it.
     const isEvent = fileOverride && typeof fileOverride === 'object' && ('nativeEvent' in fileOverride || 'preventDefault' in fileOverride);
     const actualFileOverride = isEvent ? null : fileOverride;
@@ -635,6 +626,14 @@ function App() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (autoScanTriggered && imageFile && !loading && !result) {
+      setAutoScanTriggered(false);
+      // Pass the fresh imageFile directly to bypass any stale closures
+      processImage(imageFile);
+    }
+  }, [autoScanTriggered, imageFile, loading, result]);
 
   const handleChatSend = useCallback(async (overrideMsg = null) => {
     const msgToSend = overrideMsg || chatMessage;
