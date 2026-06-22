@@ -576,6 +576,19 @@ async def analyze_prescription(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/translate_summary")
+async def translate_summary(
+    data: str = Form(...),
+    lang: str = Form("English")
+):
+    try:
+        parsed = json.loads(data)
+        summary = _make_summary(parsed, lang)
+        audio_b64 = _generate_audio_base64(summary, lang)
+        return {"success": True, "summary": summary, "audio_base64": audio_b64}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/chat")
 async def chat(question: str=Form(...), context: str=Form(""), lang: str=Form("English"), api_key: str=Form(None)):
     try:

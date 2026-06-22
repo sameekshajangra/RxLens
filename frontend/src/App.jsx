@@ -299,6 +299,30 @@ function App() {
     }
   }, [retryCountdown]);
 
+  // Regenerate audio and summary when language changes
+  useEffect(() => {
+    if (result && result.data) {
+      const translateSummary = async () => {
+        try {
+          const formData = new FormData();
+          formData.append('data', JSON.stringify(result.data));
+          formData.append('lang', language);
+          const res = await axios.post('/api/translate_summary', formData);
+          if (res.data.success) {
+            setResult(prev => ({
+              ...prev,
+              summary: res.data.summary,
+              audio_base64: res.data.audio_base64
+            }));
+          }
+        } catch (err) {
+          console.error("Translation failed:", err);
+        }
+      };
+      translateSummary();
+    }
+  }, [language]);
+
   // Request Notification permission
   useEffect(() => {
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
