@@ -344,7 +344,7 @@ RETURN EXACTLY THIS JSON (no extra text):
     # We wrap each call in a strict 25s timeout so it NEVER hits Vercel's 60s hard limit.
     # We wrap the entire cascade in a retry loop to absorb 429 Quota errors.
     # A single 15-second sleep fits well within Vercel's 60s limit and often clears rolling 15RPM limits.
-    model_candidates = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-flash-latest"]
+    model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
     last_err = None
     
     for model_name in model_candidates:
