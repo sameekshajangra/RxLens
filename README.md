@@ -104,8 +104,8 @@ graph LR
 
 <table align="center" style="border-collapse: collapse; border: none;">
   <tr>
-    <td align="center" style="border: none;"><b>Extracted Medication Cards</b><br><br><img src="assets/treatment_schedule.png" width="100%" /></td>
-    <td align="center" style="border: none;"><b>Safety Alerts</b><br><br><img src="assets/safety_alerts.png" width="100%" /></td>
+    <td align="center" style="border: none;"><b>Extracted Medication Cards</b><br><br><img src="assets/treatment_schedule_v2.png" width="100%" /></td>
+    <td align="center" style="border: none;"><b>Safety Alerts</b><br><br><img src="assets/safety_alerts_v2.png" width="100%" /></td>
   </tr>
   <tr>
     <td align="center" style="border: none;"><b>Patient Adherence Dashboard</b><br><br><img src="assets/adherence_dashboard.png" width="100%" /></td>
