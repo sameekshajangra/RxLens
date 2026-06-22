@@ -142,6 +142,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(localStorage.getItem('darkMode') === 'true');
   const [elderlyMode, setElderlyMode] = useState(localStorage.getItem('rxlens_elderly_mode') === 'true');
   const [language, setLanguage] = useState('English');
+  const [isTranslating, setIsTranslating] = useState(false);
   const [expandedSection, setExpandedSection] = useState('summary'); // 'summary', 'schedule', 'instructions', 'accessibility', 'advanced'
   const [userMode, setUserMode] = useState('patient'); // 'patient' | 'worker'
 
@@ -277,13 +278,18 @@ function App() {
 
   // Regenerate audio and summary when language changes
   useEffect(() => {
+    let isSubscribed = true;
     if (result && result.data) {
       const translateSummary = async () => {
+        setIsTranslating(true);
         try {
           const formData = new FormData();
           formData.append('data', JSON.stringify(result.data));
           formData.append('lang', language);
           const res = await axios.post('/api/translate_summary', formData);
+          
+          if (!isSubscribed) return;
+          
           if (res.data.success) {
             setResult(prev => ({
               ...prev,
@@ -297,11 +303,15 @@ function App() {
             }
           }
         } catch (err) {
+          if (!isSubscribed) return;
           console.error("Translation failed:", err);
+        } finally {
+          if (isSubscribed) setIsTranslating(false);
         }
       };
       translateSummary();
     }
+    return () => { isSubscribed = false; };
   }, [language]);
 
   // Request Notification permission
@@ -1168,10 +1178,17 @@ function App() {
                       {expandedSection === 'summary' && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginTop: '1.5rem' }}>
                           <p style={{ lineHeight: '1.6', color: 'var(--text-main)', fontSize: explanationLevel === 'simple' ? '1.15rem' : '1.05rem', fontWeight: 500, margin: 0 }}>
-                            {result.summary}
+                            {isTranslating ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
+                                <Loader2 size={18} className="spin" />
+                                {language === 'Hindi' ? 'अनुवाद हो रहा है...' : 'Translating...'}
+                              </span>
+                            ) : (
+                              result.summary
+                            )}
                           </p>
                           
-                          {audioUrl && (
+                          {!isTranslating && audioUrl && (
                             <div className="premium-audio-player" style={{ marginTop: '20px', padding: '15px', background: 'rgba(13, 148, 136, 0.05)', borderRadius: '16px', border: '1px solid rgba(13, 148, 136, 0.2)' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                 <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: '0', display: 'flex', alignItems: 'center', gap: '8px' }}>
