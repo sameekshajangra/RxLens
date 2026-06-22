@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
-import { Upload, Camera, Timer } from 'lucide-react';
+import React, { useRef, useState, useCallback } from 'react';
+import { Upload, Camera, Timer, X } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
+import Webcam from 'react-webcam';
 
 export default function UploadCard({ 
   onImageCapture, 
@@ -9,7 +10,24 @@ export default function UploadCard({
   t 
 }) {
   const fileInputRef = useRef(null);
+  const webcamRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+
+  const capturePhoto = useCallback(() => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (imageSrc) {
+        fetch(imageSrc)
+          .then(res => res.blob())
+          .then(blob => {
+            const file = new File([blob], "scan_capture.jpg", { type: "image/jpeg" });
+            processAndCompressImage(file);
+            setShowCamera(false);
+          });
+      }
+    }
+  }, [webcamRef]);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -149,32 +167,52 @@ export default function UploadCard({
           </p>
         </div>
 
-        {/* Action buttons — increased gap between rows and columns */}
-        <div className="flex flex-col sm:flex-row gap-8 justify-center mb-16">
-          {/* Mobile Camera Input */}
-          <label className="cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-semibold py-4 px-10 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-95 text-lg">
-            <Camera size={22} />
-            <span>{t.take_photo || "Take Photo"}</span>
-            <input 
-              type="file" 
-              accept="image/*" 
-              capture="environment" 
-              className="hidden"
-              onChange={handleChange}
+        {/* Action buttons */}
+        {!showCamera ? (
+          <div className="flex flex-col sm:flex-row gap-8 justify-center mb-16">
+            <button 
+              onClick={() => setShowCamera(true)}
               disabled={loading}
+              className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-4 px-10 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-95 text-lg"
+            >
+              <Camera size={22} />
+              <span>{t.take_photo || "Take Photo"}</span>
+            </button>
+            
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              className="bg-white border-2 border-slate-200 hover:border-teal-600 hover:bg-slate-50 text-slate-700 hover:text-teal-700 font-semibold py-4 px-10 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95 text-lg"
+            >
+              <Upload size={22} />
+              <span>{t.upload_file || "Upload File"}</span>
+            </button>
+          </div>
+        ) : (
+          <div className="relative rounded-xl overflow-hidden bg-black mb-16 max-w-md mx-auto">
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              videoConstraints={{ facingMode: "environment" }}
+              className="w-full h-auto max-h-[400px] object-cover"
             />
-          </label>
-          
-          {/* Standard File Upload */}
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
-            className="bg-white border-2 border-slate-200 hover:border-teal-600 hover:bg-slate-50 text-slate-700 hover:text-teal-700 font-semibold py-4 px-10 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95 text-lg"
-          >
-            <Upload size={22} />
-            <span>{t.upload_file || "Upload File"}</span>
-          </button>
-        </div>
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
+              <button 
+                onClick={capturePhoto} 
+                className="bg-white text-black rounded-full p-4 shadow-lg hover:scale-105 transition-transform"
+              >
+                <Camera className="w-6 h-6" />
+              </button>
+              <button 
+                onClick={() => setShowCamera(false)} 
+                className="bg-slate-800 text-white rounded-full p-4 shadow-lg hover:scale-105 transition-transform opacity-80"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Trust Indicators — more vertical spacing between rows */}
         <div className="flex flex-col gap-4 items-center justify-center text-xs md:text-sm text-slate-400 font-medium pt-8 border-t border-slate-100">
