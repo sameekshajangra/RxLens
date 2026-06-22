@@ -685,17 +685,18 @@ Return EXACTLY THIS JSON (no extra text, no markdown block). If a field is missi
         if drugs_list:
             # use the first drug as primary target for now
             first_drug = drugs_list[0]
-            presc_drug = first_drug.get("value", first_drug) if isinstance(first_drug, dict) else str(first_drug)
+            presc_drug = first_drug.get("drug", first_drug.get("value", str(first_drug))) if isinstance(first_drug, dict) else str(first_drug)
+            if isinstance(presc_drug, dict): presc_drug = str(presc_drug)
             
             # get strength from dosage
             dosage_dict = presc.get("drugs_dosage", {})
-            dose_val = dosage_dict.get(presc_drug) or dosage_dict.get(first_drug)
+            dose_val = dosage_dict.get(presc_drug)
             if dose_val:
                 presc_strength = dose_val.get("value", dose_val) if isinstance(dose_val, dict) else str(dose_val)
                 
             # get quantity from duration * frequency (approximate, or just use duration)
             duration_dict = presc.get("drugs_duration", {})
-            dur_val = duration_dict.get(presc_drug) or duration_dict.get(first_drug)
+            dur_val = duration_dict.get(presc_drug)
             if dur_val:
                 presc_qty = dur_val.get("value", dur_val) if isinstance(dur_val, dict) else str(dur_val)
         
@@ -705,7 +706,9 @@ Return EXACTLY THIS JSON (no extra text, no markdown block). If a field is missi
         matched_presc_strength = presc_strength
         
         for d in drugs_list:
-            d_val = d.get("value", d) if isinstance(d, dict) else str(d)
+            d_val = d.get("drug", d.get("value", str(d))) if isinstance(d, dict) else str(d)
+            if isinstance(d_val, dict): d_val = str(d_val)
+            
             if _get_status(bottle_drug, d_val) == "match":
                 drug_status = "match"
                 matched_presc_drug = d_val
