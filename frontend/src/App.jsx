@@ -1111,8 +1111,9 @@ function App() {
                   <div className="spinner" style={{margin:'0 auto 1rem'}}></div>
                   <p>{loadingStatus}</p>
                 </div>
+              ) : draftResult ? (
+                <ConfidenceVerification draftResult={draftResult} onConfirm={handleAnalyzeConfirm} />
               ) : result ? (
-                
                 <motion.div className="result-container" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
                   {/* Section 1: Summary */}
                   <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'summary' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection('summary')}>
