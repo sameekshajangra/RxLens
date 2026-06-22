@@ -917,7 +917,7 @@ function App() {
             <HelpCircle size={20} /> {t.faq || "FAQ"}
           </button>
           <button className={`sidebar-item ${activeTab === 'benchmarks' ? 'active' : ''}`} onClick={() => setActiveTab('benchmarks')}>
-            <FlaskConical size={20} /> Benchmarks
+            <FlaskConical size={20} /> {t.benchmarks || "Benchmarks"}
           </button>
         </div>
       </div>

@@ -127,7 +127,8 @@ const i18n = {
     med_burden: "Medication Burden:",
     high_confidence: "HIGH",
     medium_confidence: "MED",
-    low_confidence: "LOW"
+    low_confidence: "LOW",
+    benchmarks: "Benchmarks"
   },
   Hindi: {
     header_title: "प्रिस्क्रिप्शन को समझने योग्य बनाना",
@@ -258,7 +259,8 @@ const i18n = {
     med_burden: "दवाइयों का बोझ:",
     high_confidence: "उच्च",
     medium_confidence: "मध्यम",
-    low_confidence: "निम्न"
+    low_confidence: "निम्न",
+    benchmarks: "बेंचमार्क"
   }
 };
 
