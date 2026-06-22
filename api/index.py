@@ -780,6 +780,9 @@ async def export_fhir(prescription_data: str = Form(...)):
         presc = json.loads(prescription_data)
         drugs_list = presc.get("drugs_list", [])
         patient_name = presc.get("patient_name", "") or "Anonymous Patient"
+        # HAPI FHIR aggressively deduplicates Patients by name and throws 412.
+        # We append a random short string to ensure the demo always succeeds.
+        safe_patient_name = f"{patient_name} [{str(uuid.uuid4())[:6]}]"
 
         # ── Build FHIR R4 Bundle ───────────────────────────────────────────
         patient_id = str(uuid.uuid4())
@@ -788,9 +791,8 @@ async def export_fhir(prescription_data: str = Form(...)):
             "fullUrl": f"urn:uuid:{patient_id}",
             "resource": {
                 "resourceType": "Patient",
-                "id": patient_id,
                 "meta": {"profile": ["http://hl7.org/fhir/StructureDefinition/Patient"]},
-                "name": [{"use": "anonymous", "text": patient_name}],
+                "name": [{"use": "anonymous", "text": safe_patient_name}],
                 "active": True
             },
             "request": {"method": "POST", "url": "Patient"}
@@ -817,7 +819,6 @@ async def export_fhir(prescription_data: str = Form(...)):
                 "fullUrl": f"urn:uuid:{med_req_id}",
                 "resource": {
                     "resourceType": "MedicationRequest",
-                    "id": med_req_id,
                     "meta": {"profile": ["http://hl7.org/fhir/StructureDefinition/MedicationRequest"]},
                     "status": "active",
                     "intent": "order",
