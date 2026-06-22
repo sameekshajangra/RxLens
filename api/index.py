@@ -779,6 +779,7 @@ Return EXACTLY THIS JSON (no extra text, no markdown block). If a field is missi
                 "prescribed_value": matched_presc_drug,
                 "status": drug_status
             },
+            "salts": res_json.get("salts"),
             "strength": {
                 "bottle_value": bottle_strength,
                 "prescribed_value": matched_presc_strength,
