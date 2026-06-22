@@ -97,7 +97,9 @@ const i18n = {
     reset_profile: "Reset Profile",
     weight: "Weight",
     weight_placeholder: "kg",
-    guard_active: "AI Safety Guard Active"
+    guard_active: "AI Safety Guard Active",
+    cost_saving_generic_alts: "Cost Savings & Generic Alternatives",
+    verify_pharmacy_gave: "Verify What Pharmacy Gave You"
   },
   Hindi: {
     header_title: "प्रिस्क्रिप्शन को समझने योग्य बनाना",
@@ -197,7 +199,9 @@ const i18n = {
     reset_profile: "प्रोफ़ाइल रीसेट करें",
     weight: "वजन",
     weight_placeholder: "किग्रा",
-    guard_active: "एआई सुरक्षा गार्ड सक्रिय"
+    guard_active: "एआई सुरक्षा गार्ड सक्रिय",
+    cost_saving_generic_alts: "लागत बचत और जेनेरिक विकल्प",
+    verify_pharmacy_gave: "सत्यापित करें कि फार्मेसी ने आपको क्या दिया"
   }
 };
 

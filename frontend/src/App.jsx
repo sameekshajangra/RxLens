@@ -1238,7 +1238,7 @@ function App() {
                       <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <IndianRupee size={20} style={{ color: 'var(--success)' }} /> 
-                          Cost Savings & Generic Alternatives
+                          {t.cost_saving_generic_alts || "Cost Savings & Generic Alternatives"}
                         </span>
                         {expandedSection === 'savings' ? <span style={{fontSize:'0.8rem'}}>▼</span> : <span style={{fontSize:'0.8rem'}}>▶</span>}
                       </h2>

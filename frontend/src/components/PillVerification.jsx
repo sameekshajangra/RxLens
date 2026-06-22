@@ -4,6 +4,7 @@ import Webcam from 'react-webcam';
 import axios from 'axios';
 import imageCompression from 'browser-image-compression';
 import { motion, AnimatePresence } from 'framer-motion';
+import i18n from '../i18n';
 
 const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' }) => {
   const [imageFile, setImageFile] = useState(null);
@@ -13,6 +14,7 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const t = i18n[language] || i18n['English'];
 
   const fileInputRef = useRef(null);
   const webcamRef = useRef(null);
@@ -99,7 +101,7 @@ const PillVerification = ({ prescriptionData, language = 'English', apiKey = '' 
   return (
     <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: isExpanded ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setIsExpanded(!isExpanded)}>
       <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={20} style={{ color: 'var(--success)' }} /> Verify What Pharmacy Gave You</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={20} style={{ color: 'var(--success)' }} /> {t.verify_pharmacy_gave || "Verify What Pharmacy Gave You"}</span>
         {isExpanded ? <span style={{fontSize:'0.8rem'}}>▼</span> : <span style={{fontSize:'0.8rem'}}>▶</span>}
       </h2>
       <AnimatePresence>
