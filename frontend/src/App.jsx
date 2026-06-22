@@ -183,6 +183,7 @@ function App() {
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('Analyzing...');
+  const [autoScanTriggered, setAutoScanTriggered] = useState(false);
   const [result, setResult] = useState(null);
   const [draftResult, setDraftResult] = useState(null);
   const [error, setError] = useState('');
@@ -440,6 +441,13 @@ function App() {
     setShowCamera(false);
     setRetryCountdown(0);
   };
+
+  useEffect(() => {
+    if (autoScanTriggered && imageFile && !loading && !result) {
+      setAutoScanTriggered(false);
+      processImage();
+    }
+  }, [autoScanTriggered, imageFile, loading, result]);
 
   const processImage = useCallback(async (fileOverride = null) => {
     // If called from an onClick handler, fileOverride is a React SyntheticEvent. Ignore it.
@@ -1091,8 +1099,8 @@ function App() {
                       setImageFile(croppedFile);
                       setImagePreview(URL.createObjectURL(croppedFile));
                       setPendingImage(null);
-                      // Auto-trigger scan immediately — no need to click Digitise
-                      processImage(croppedFile);
+                      // Use state-based auto trigger to guarantee React captures it on the next render frame
+                      setAutoScanTriggered(true);
                     }}
                     onCancel={() => {
                       setPendingImage(null);
