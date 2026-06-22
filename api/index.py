@@ -16,16 +16,14 @@ import re
 import logging
 import base64
 import difflib
-from src.safety_db import BRAND_TO_GENERIC, DRUG_CLASSES, CONTRAINDICATIONS, JAN_AUSHADHI_DB, BRAND_PRICES_DB
-    BRAND_TO_GENERIC = {}
-    DRUG_CLASSES = {}
-    CONTRAINDICATIONS = {}
-import difflib
 try:
-    from src.safety_db import BRAND_TO_GENERIC, DRUG_CLASSES, CONTRAINDICATIONS
+    from src.safety_db import BRAND_TO_GENERIC, DRUG_CLASSES, CONTRAINDICATIONS, JAN_AUSHADHI_DB, BRAND_PRICES_DB
 except ImportError:
     BRAND_TO_GENERIC = {}
     DRUG_CLASSES = {}
+    CONTRAINDICATIONS = {}
+    JAN_AUSHADHI_DB = {}
+    BRAND_PRICES_DB = {}
     CONTRAINDICATIONS = {}
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
