@@ -55,7 +55,7 @@ import {
   Upload, Camera, FileText, Activity, ShieldCheck, ShieldAlert,
   Download, PlayCircle, Loader2, AlertTriangle, Info,
   CheckCircle2, Settings, Key, Globe, History, 
-  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle, Play, Pause, Printer, Volume2, HelpCircle, ChevronDown, Copy, IndianRupee
+  LayoutDashboard, Trash2, Calendar, Pill, Moon, Sun, TrendingUp, Share2, MessageCircle, Send, X, Languages, Timer, User, Clock, CalendarCheck, HeartPulse, Stethoscope, Eye, EyeOff, Gauge, Bell, BellRing, Save, Check, Target, BriefcaseMedical, Leaf, Recycle, Play, Pause, Printer, Volume2, HelpCircle, ChevronDown, Copy, IndianRupee, FlaskConical
 } from 'lucide-react';
 import UploadCard from './components/UploadCard';
 import ExplanationLevelSelector from './components/ExplanationLevelSelector';
@@ -915,6 +915,9 @@ function App() {
           </button>
           <button className={`sidebar-item ${activeTab === 'faq' ? 'active' : ''}`} onClick={() => setActiveTab('faq')}>
             <HelpCircle size={20} /> {t.faq || "FAQ"}
+          </button>
+          <button className={`sidebar-item ${activeTab === 'benchmarks' ? 'active' : ''}`} onClick={() => setActiveTab('benchmarks')}>
+            <FlaskConical size={20} /> Benchmarks
           </button>
         </div>
       </div>
@@ -2279,9 +2282,22 @@ ${t.share_msg_gen}: ${new Date().toLocaleString()}`;
                 })}
             </div>
 
-            {/* ── Benchmarks Section ── */}
-            <Benchmarks />
+          </motion.div>
+        )}
 
+        {/* ── Benchmarks Tab ── */}
+        {activeTab === 'benchmarks' && (
+          <motion.div key="benchmarks" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <div className="glass-card" style={{ padding: '2.5rem', marginBottom: '2rem', textAlign: 'center', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', marginBottom: '1rem' }}>
+                <FlaskConical size={28} />
+              </div>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.75rem' }}>Benchmarks</h2>
+              <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.5 }}>
+                Pilot evaluation of RxLens vs. August AI, GPT-5.5 &amp; Gemini (direct) on N=20 real, anonymized Indian handwritten prescriptions.
+              </p>
+            </div>
+            <Benchmarks />
           </motion.div>
         )}
 
