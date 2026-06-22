@@ -133,14 +133,12 @@ Developing AI for healthcare requires immense responsibility. RxLens is designed
 ### 1-Click Live Deployment
 
 <p>
-  <a href="https://vercel.com/new/clone?repository-url=https://github.com/sameekshajangra/RxLens/tree/main/frontend"><img src="https://vercel.com/button" alt="Deploy with Vercel"/></a>
-  &nbsp;&nbsp;
-  <a href="https://render.com/deploy?repo=https://github.com/sameekshajangra/RxLens"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render"/></a>
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/sameekshajangra/RxLens/tree/main"><img src="https://vercel.com/button" alt="Deploy with Vercel"/></a>
 </p>
 
-- **Frontend (Primary):** Automatically deploy to Vercel via `vercel.json` routing (proxies `/api` to Render).
-- **Frontend (Alternative):** Configured for Firebase Hosting via `firebase.json` (`npm run deploy`).
-- **Backend:** Automatically deploy to Render via `render.yaml`.
+- **Production:** A single Vercel monorepo deployment. 
+- **Frontend:** React 18 built with Vite.
+- **Backend:** FastAPI compiled into Vercel Serverless Functions via `vercel.json`.
 
 ---
 
@@ -149,10 +147,12 @@ Developing AI for healthcare requires immense responsibility. RxLens is designed
 git clone https://github.com/your-username/RxLens.git
 cd RxLens
 
-# Backend Setup
+# Local Development Setup
 echo "GEMINI_API_KEY=your_key_here" > .env
 pip install -r requirements.txt
-cd backend && python -m uvicorn main:app --reload
+
+# Terminal 1: Run Backend (FastAPI)
+cd api && python -m uvicorn index:app --reload --port 8000
 
 # Frontend Setup
 cd ../frontend
