@@ -394,8 +394,8 @@ RETURN EXACTLY THIS JSON (no extra text):
                 is_retriable = any(k in err_msg for k in retriable_keywords)
                 if is_retriable:
                     if attempt == 0:
-                        # Short pause before retry on same model
-                        await asyncio.sleep(2)
+                        # Wait 6 seconds before retry — stays safely within 10 RPM limit
+                        await asyncio.sleep(6)
                         continue
                     else:
                         break  # move to next model
@@ -453,33 +453,39 @@ async def extract_prescription(
             try: profile_data = json.loads(patient_profile)
             except: pass
 
-        # Determine which API key to use
-        user_key = api_key or os.getenv("GEMINI_API_KEY")
+        # Key strategy: SERVER key (dedicated quota) is always tried first.
+        # User-supplied key is secondary fallback. This ensures 15+ scans/day work reliably.
         server_key = os.getenv("SERVER_GEMINI_API_KEY")
-        if not user_key or user_key == "DEMO_MODE":
+        user_key = api_key or os.getenv("GEMINI_API_KEY")
+
+        # Server key is preferred (dedicated quota, not shared with user's personal key)
+        primary_key = server_key or user_key
+        secondary_key = user_key if (server_key and user_key and user_key != server_key) else None
+
+        if not primary_key or primary_key == "DEMO_MODE":
             summ = _make_summary(DEMO_DATA, lang)
             return {"success": True, "data": dict(DEMO_DATA), "summary": summ, "audio_base64": _generate_audio_base64(summ, lang)}
 
 
-        # LLM Processing with Cascading (now uses corrected keys and retry logic)
+        # LLM Processing with Cascading (server key first, user key as backup)
 
         try:
             img_bytes = _compress_image_for_vision(img)
             try:
-                parsed = await _call_gemini_cascading(img_bytes, user_key, lang, explanation_level, profile_data)
+                parsed = await _call_gemini_cascading(img_bytes, primary_key, lang, explanation_level, profile_data)
             except Exception as e:
                 err_msg = str(e)
-                logger.error(f"First AI attempt failed: {err_msg}")
+                logger.error(f"Primary key cascade failed: {err_msg}")
                 is_quota = any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"])
                 is_503 = any(k in err_msg for k in ["503", "UNAVAILABLE"])
-                
-                if (is_quota or is_503) and server_key and user_key != server_key:
-                    logger.info("Primary key exhausted/overloaded – retrying full cascade with server backup key.")
+
+                if (is_quota or is_503) and secondary_key:
+                    logger.info("Primary key exhausted/overloaded – retrying full cascade with secondary key.")
                     try:
-                        parsed = await _call_gemini_cascading(img_bytes, server_key, lang, explanation_level, profile_data)
+                        parsed = await _call_gemini_cascading(img_bytes, secondary_key, lang, explanation_level, profile_data)
                     except Exception as fallback_e:
                         fallback_err = str(fallback_e)
-                        logger.warning(f"Server backup key also failed: {fallback_err}. Falling back to demo data.")
+                        logger.warning(f"Secondary key also failed: {fallback_err}. Falling back to demo data.")
                         parsed = dict(DEMO_DATA)
                         parsed["is_demo_fallback"] = True
                 elif is_quota or is_503:
