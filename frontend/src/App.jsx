@@ -1104,6 +1104,27 @@ function App() {
                     <input type="text" className="input-field" placeholder={t.conditions_placeholder} value={patientProfile.conditions} onChange={(e)=>setPatientProfile({...patientProfile, conditions: e.target.value})} />
                   </div>
                 </div>
+
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Your Gemini API Key (Bypass Server Limits)</label>
+                  <div className="profile-input-wrapper" style={{ border: '1px solid var(--primary)' }}>
+                    <Key className="input-icon" size={18} color="var(--primary)" />
+                    <input 
+                      type="password" 
+                      className="input-field" 
+                      placeholder="Paste your Gemini API Key here to bypass rate limits" 
+                      value={apiKey} 
+                      onChange={(e) => {
+                        setApiKey(e.target.value);
+                        if (e.target.value) {
+                          localStorage.setItem('gemini_api_key', e.target.value);
+                        } else {
+                          localStorage.removeItem('gemini_api_key');
+                        }
+                      }} 
+                    />
+                  </div>
+                </div>
               </div>
 
               <div style={{ marginTop: '20px', padding: '12px 20px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.1)', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
