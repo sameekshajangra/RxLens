@@ -357,16 +357,13 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Resilient cascade: try multiple models with per-model retry + short backoff.
-    # On 429 (quota) or 503 (overload), immediately try the next model variant.
-    # Each model gets up to 2 attempts (with a 3s pause between) before moving on.
+    # Resilient cascade: only models confirmed available on the google-genai SDK v1beta.
+    # gemini-1.5-flash and gemini-1.5-flash-8b return 404 NOT_FOUND — removed.
     model_candidates = [
         "gemini-2.5-flash",
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
         "gemini-flash-latest",
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-8b",
     ]
     last_err = None
     retriable_keywords = ["429", "RESOURCE_EXHAUSTED", "quota", "503", "UNAVAILABLE", "overloaded"]
@@ -392,6 +389,7 @@ RETURN EXACTLY THIS JSON (no extra text):
                 logger.warning(f"{model_name} attempt {attempt+1} failed: {err_msg}")
                 last_err = e
                 is_retriable = any(k in err_msg for k in retriable_keywords)
+                is_model_not_found = any(k in err_msg for k in ["404", "NOT_FOUND", "not found", "not supported"])
                 if is_retriable:
                     if attempt == 0:
                         # Wait 6 seconds before retry — stays safely within 10 RPM limit
@@ -399,8 +397,12 @@ RETURN EXACTLY THIS JSON (no extra text):
                         continue
                     else:
                         break  # move to next model
+                elif is_model_not_found:
+                    # Model doesn't exist on this API version — skip to next model silently
+                    logger.warning(f"{model_name} not available, skipping to next model.")
+                    break
                 else:
-                    # Non-retriable (e.g. bad request) — skip all models
+                    # Non-retriable (e.g. bad request / auth error) — stop cascade
                     raise e
 
     raise last_err
