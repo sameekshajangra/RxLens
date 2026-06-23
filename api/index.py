@@ -443,14 +443,19 @@ async def extract_prescription(
             try: profile_data = json.loads(patient_profile)
             except: pass
 
-        # Key strategy: SERVER key (dedicated quota) is always tried first.
-        # User-supplied key is secondary fallback. This ensures 15+ scans/day work reliably.
+        # Key strategy: User-provided key ALWAYS first.
+        # Then SERVER key (dedicated quota). Then general GEMINI_API_KEY.
         server_key = os.getenv("SERVER_GEMINI_API_KEY")
-        user_key = api_key or os.getenv("GEMINI_API_KEY")
+        env_key = os.getenv("GEMINI_API_KEY")
 
-        # Server key is preferred (dedicated quota, not shared with user's personal key)
-        primary_key = server_key or user_key
-        secondary_key = user_key if (server_key and user_key and user_key != server_key) else None
+        primary_key = api_key or server_key or env_key
+        
+        if api_key and server_key and api_key != server_key:
+            secondary_key = server_key
+        elif primary_key != env_key and env_key:
+            secondary_key = env_key
+        else:
+            secondary_key = None
 
         if not primary_key or primary_key == "DEMO_MODE":
             summ = _make_summary(DEMO_DATA, lang)
