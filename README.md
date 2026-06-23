@@ -61,6 +61,10 @@ Medication misinterpretation and poor adherence remain major contributors to pre
 
 ## 🏗️ System Architecture
 
+![System Architecture](assets/architecture.png)
+
+## 🔄 Workflow
+
 *A simplified view of how data flows safely from the patient's camera through the AI and Safety validation layers.*
 
 ```mermaid
