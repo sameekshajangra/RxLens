@@ -1188,6 +1188,15 @@ function App() {
                 </div>
               ) : result ? (
                 <motion.div className="result-container" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}}>
+                  {/* Demo Fallback Notice */}
+                  {result?.data?.is_demo_fallback && (
+                    <div style={{ marginBottom: '1rem', padding: '12px 16px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.4)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>⚡</span>
+                      <span style={{ fontSize: '0.85rem', color: '#b45309', fontWeight: 600 }}>
+                        AI models are currently at high capacity — showing demo results. Your actual scan will work once the service recovers. Try scanning again in 30 seconds.
+                      </span>
+                    </div>
+                  )}
                   {/* Section 1: Summary */}
                   <div className="glass-card accordion-section" style={{ marginBottom: '1.5rem', cursor: 'pointer', border: expandedSection === 'summary' ? '1px solid var(--primary)' : '1px solid var(--border)' }} onClick={() => setExpandedSection('summary')}>
                     <h2 className="card-title" style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

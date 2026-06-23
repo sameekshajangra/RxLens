@@ -479,13 +479,13 @@ async def extract_prescription(
                         parsed = await _call_gemini_cascading(img_bytes, server_key, lang, explanation_level, profile_data)
                     except Exception as fallback_e:
                         fallback_err = str(fallback_e)
-                        if any(k in fallback_err for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
-                            raise HTTPException(status_code=503, detail="All AI models are currently at capacity. Please wait 30-60 seconds and try again.")
-                        raise HTTPException(status_code=503, detail=f"AI processing failed after all fallbacks. Please try again shortly. (Error: {fallback_err})")
-                elif is_quota:
-                    raise HTTPException(status_code=503, detail="Gemini API rate limit reached. Please wait 30-60 seconds and try again.")
-                elif is_503:
-                    raise HTTPException(status_code=503, detail="AI models are currently overloaded. Please try again in a few seconds.")
+                        logger.warning(f"Server backup key also failed: {fallback_err}. Falling back to demo data.")
+                        parsed = dict(DEMO_DATA)
+                        parsed["is_demo_fallback"] = True
+                elif is_quota or is_503:
+                    logger.warning(f"All models exhausted. Falling back to demo data.")
+                    parsed = dict(DEMO_DATA)
+                    parsed["is_demo_fallback"] = True
                 elif "too complex" in err_msg.lower():
                     raise HTTPException(status_code=503, detail="Image is too complex or contains too many prescriptions. Please try scanning 1-2 prescriptions at a time.")
                 else:
