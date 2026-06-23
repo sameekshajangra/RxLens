@@ -357,41 +357,51 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Try a cascade of Gemini models in case the primary is throttled or unavailable.
-    # We wrap each call in a strict 25s timeout so it NEVER hits Vercel's 60s hard limit.
-    # We wrap the entire cascade in a retry loop to absorb 429 Quota errors.
-    # A single 15-second sleep fits well within Vercel's 60s limit and often clears rolling 15RPM limits.
-    model_candidates = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
+    # Resilient cascade: try multiple models with per-model retry + short backoff.
+    # On 429 (quota) or 503 (overload), immediately try the next model variant.
+    # Each model gets up to 2 attempts (with a 3s pause between) before moving on.
+    model_candidates = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-flash-latest",
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-8b",
+    ]
     last_err = None
-    
+    retriable_keywords = ["429", "RESOURCE_EXHAUSTED", "quota", "503", "UNAVAILABLE", "overloaded"]
+
     for model_name in model_candidates:
-        try:
-            logger.info(f"Attempting {model_name}...")
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(model=model_name, contents=contents),
-                timeout=290.0
-            )
-            if response.text:
-                res_json = _extract_json(response.text)
-                res_json["_pipeline"] = f"vision_{model_name}"
-                return res_json
-        except asyncio.TimeoutError:
-            err_msg = "Image is too complex or contains too many prescriptions. Please try scanning 1-2 prescriptions at a time."
-            logger.warning(err_msg)
-            raise Exception(err_msg)
-        except Exception as e:
-            err_msg = str(e)
-            logger.warning(f"{model_name} failed: {err_msg}")
-            last_err = e
-            # If it's a quota error (429), we SHOULD try the next model because quotas are per-model.
-            if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
-                continue
-            # If it's a 503 UNAVAILABLE, we can try the next model immediately.
-            if any(k in err_msg for k in ["503", "UNAVAILABLE"]):
-                continue
-            
-            # For any other error (like 400 Bad Request), break out.
-            break
+        for attempt in range(2):  # up to 2 tries per model
+            try:
+                logger.info(f"Attempting {model_name} (attempt {attempt+1})...")
+                response = await asyncio.wait_for(
+                    client.aio.models.generate_content(model=model_name, contents=contents),
+                    timeout=50.0
+                )
+                if response.text:
+                    res_json = _extract_json(response.text)
+                    res_json["_pipeline"] = f"vision_{model_name}"
+                    return res_json
+            except asyncio.TimeoutError:
+                logger.warning(f"{model_name} timed out — trying next model")
+                last_err = Exception("Model timed out")
+                break  # move to next model
+            except Exception as e:
+                err_msg = str(e)
+                logger.warning(f"{model_name} attempt {attempt+1} failed: {err_msg}")
+                last_err = e
+                is_retriable = any(k in err_msg for k in retriable_keywords)
+                if is_retriable:
+                    if attempt == 0:
+                        # Short pause before retry on same model
+                        await asyncio.sleep(2)
+                        continue
+                    else:
+                        break  # move to next model
+                else:
+                    # Non-retriable (e.g. bad request) — skip all models
+                    raise e
 
     raise last_err
 
@@ -463,19 +473,19 @@ async def extract_prescription(
                 is_quota = any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"])
                 is_503 = any(k in err_msg for k in ["503", "UNAVAILABLE"])
                 
-                if is_quota and server_key and user_key != server_key:
-                    logger.info("User quota exhausted – instantly retrying with server backup key.")
+                if (is_quota or is_503) and server_key and user_key != server_key:
+                    logger.info("Primary key exhausted/overloaded – retrying full cascade with server backup key.")
                     try:
                         parsed = await _call_gemini_cascading(img_bytes, server_key, lang, explanation_level, profile_data)
                     except Exception as fallback_e:
                         fallback_err = str(fallback_e)
                         if any(k in fallback_err for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
-                            raise HTTPException(status_code=503, detail="Gemini API rate limit reached. Please wait 30-60 seconds and try again.")
-                        raise HTTPException(status_code=503, detail=fallback_err)
+                            raise HTTPException(status_code=503, detail="All AI models are currently at capacity. Please wait 30-60 seconds and try again.")
+                        raise HTTPException(status_code=503, detail=f"AI processing failed after all fallbacks. Please try again shortly. (Error: {fallback_err})")
                 elif is_quota:
                     raise HTTPException(status_code=503, detail="Gemini API rate limit reached. Please wait 30-60 seconds and try again.")
                 elif is_503:
-                    raise HTTPException(status_code=503, detail="503 UNAVAILABLE: The AI model is currently experiencing high demand. Please try again.")
+                    raise HTTPException(status_code=503, detail="AI models are currently overloaded. Please try again in a few seconds.")
                 elif "too complex" in err_msg.lower():
                     raise HTTPException(status_code=503, detail="Image is too complex or contains too many prescriptions. Please try scanning 1-2 prescriptions at a time.")
                 else:
