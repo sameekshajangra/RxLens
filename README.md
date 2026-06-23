@@ -12,7 +12,7 @@
   ### 🌐 [Live Demo → rxlens-app.vercel.app](https://rxlens-app.vercel.app)
   
   <br />
-  <a href="https://drive.google.com/file/d/1WJ83sfL-2bHJNv6N9bmv9Z0eUpWknvhq/view?usp=sharing" target="_blank">View Demo Video</a>
+  <a href="https://drive.google.com/file/d/15ZxGW_VSoJzCDmppLh2dEGuPxUqcV50D/view?usp=sharing" target="_blank">View Demo Video</a>
 </div>
 
 
@@ -99,7 +99,7 @@ graph LR
 ## 📸 Screenshots & Demo
 
 <p align="center">
-  <a href="https://drive.google.com/file/d/1WJ83sfL-2bHJNv6N9bmv9Z0eUpWknvhq/view?usp=sharing" target="_blank">
+  <a href="https://drive.google.com/file/d/15ZxGW_VSoJzCDmppLh2dEGuPxUqcV50D/view?usp=sharing" target="_blank">
     <img src="https://img.shields.io/badge/View%20Demo-Google%20Drive-blue?style=for-the-badge&logo=googledrive" alt="View Demo Video" />
   </a>
 </p>
