@@ -357,13 +357,11 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Resilient cascade: only models confirmed available on the google-genai SDK v1beta.
-    # gemini-1.5-flash and gemini-1.5-flash-8b return 404 NOT_FOUND — removed.
+    # Only use confirmed working model names — any 404/NOT_FOUND model is skipped gracefully.
     model_candidates = [
         "gemini-2.5-flash",
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
-        "gemini-flash-latest",
     ]
     last_err = None
     retriable_keywords = ["429", "RESOURCE_EXHAUSTED", "quota", "503", "UNAVAILABLE", "overloaded"]
@@ -487,13 +485,10 @@ async def extract_prescription(
                         parsed = await _call_gemini_cascading(img_bytes, secondary_key, lang, explanation_level, profile_data)
                     except Exception as fallback_e:
                         fallback_err = str(fallback_e)
-                        logger.warning(f"Secondary key also failed: {fallback_err}. Falling back to demo data.")
-                        parsed = dict(DEMO_DATA)
-                        parsed["is_demo_fallback"] = True
+                        logger.warning(f"Secondary key also failed: {fallback_err}.")
+                        raise HTTPException(status_code=503, detail="AI models are temporarily overloaded. Please wait 15-30 seconds and try scanning again.")
                 elif is_quota or is_503:
-                    logger.warning(f"All models exhausted. Falling back to demo data.")
-                    parsed = dict(DEMO_DATA)
-                    parsed["is_demo_fallback"] = True
+                    raise HTTPException(status_code=503, detail="AI models are temporarily overloaded. Please wait 15-30 seconds and try scanning again.")
                 elif "too complex" in err_msg.lower():
                     raise HTTPException(status_code=503, detail="Image is too complex or contains too many prescriptions. Please try scanning 1-2 prescriptions at a time.")
                 else:
