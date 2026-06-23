@@ -383,12 +383,15 @@ RETURN EXACTLY THIS JSON (no extra text):
             err_msg = str(e)
             logger.warning(f"{model_name} failed: {err_msg}")
             last_err = e
-            # If it's a quota error (429), break immediately so we can fallback to the server key
+            # If it's a quota error (429), we SHOULD try the next model because quotas are per-model.
             if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota"]):
-                break
+                continue
             # If it's a 503 UNAVAILABLE, we can try the next model immediately.
-            if not any(k in err_msg for k in ["503", "UNAVAILABLE"]):
-                break
+            if any(k in err_msg for k in ["503", "UNAVAILABLE"]):
+                continue
+            
+            # For any other error (like 400 Bad Request), break out.
+            break
 
     raise last_err
 
