@@ -357,51 +357,41 @@ RETURN EXACTLY THIS JSON (no extra text):
         prompt
     ]
 
-    # Only use confirmed working model names — any 404/NOT_FOUND model is skipped gracefully.
+    # Simple fast cascade — 1 attempt per model, no sleeps.
+    # Moving immediately to the next model IS the retry mechanism.
+    # 3 models × 25s timeout = max 75s, well within Vercel limits.
     model_candidates = [
         "gemini-2.5-flash",
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
     ]
     last_err = None
-    retriable_keywords = ["429", "RESOURCE_EXHAUSTED", "quota", "503", "UNAVAILABLE", "overloaded"]
+    skip_keywords = ["429", "RESOURCE_EXHAUSTED", "quota", "503", "UNAVAILABLE", "overloaded", "404", "NOT_FOUND", "not found", "not supported"]
 
     for model_name in model_candidates:
-        for attempt in range(2):  # up to 2 tries per model
-            try:
-                logger.info(f"Attempting {model_name} (attempt {attempt+1})...")
-                response = await asyncio.wait_for(
-                    client.aio.models.generate_content(model=model_name, contents=contents),
-                    timeout=50.0
-                )
-                if response.text:
-                    res_json = _extract_json(response.text)
-                    res_json["_pipeline"] = f"vision_{model_name}"
-                    return res_json
-            except asyncio.TimeoutError:
-                logger.warning(f"{model_name} timed out — trying next model")
-                last_err = Exception("Model timed out")
-                break  # move to next model
-            except Exception as e:
-                err_msg = str(e)
-                logger.warning(f"{model_name} attempt {attempt+1} failed: {err_msg}")
-                last_err = e
-                is_retriable = any(k in err_msg for k in retriable_keywords)
-                is_model_not_found = any(k in err_msg for k in ["404", "NOT_FOUND", "not found", "not supported"])
-                if is_retriable:
-                    if attempt == 0:
-                        # Wait 6 seconds before retry — stays safely within 10 RPM limit
-                        await asyncio.sleep(6)
-                        continue
-                    else:
-                        break  # move to next model
-                elif is_model_not_found:
-                    # Model doesn't exist on this API version — skip to next model silently
-                    logger.warning(f"{model_name} not available, skipping to next model.")
-                    break
-                else:
-                    # Non-retriable (e.g. bad request / auth error) — stop cascade
-                    raise e
+        try:
+            logger.info(f"Attempting {model_name}...")
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(model=model_name, contents=contents),
+                timeout=25.0
+            )
+            if response.text:
+                res_json = _extract_json(response.text)
+                res_json["_pipeline"] = f"vision_{model_name}"
+                return res_json
+        except asyncio.TimeoutError:
+            logger.warning(f"{model_name} timed out — trying next model")
+            last_err = Exception("Model timed out")
+        except Exception as e:
+            err_msg = str(e)
+            logger.warning(f"{model_name} failed: {err_msg}")
+            last_err = e
+            if any(k in err_msg for k in skip_keywords):
+                # Retriable or unavailable — try next model immediately
+                continue
+            else:
+                # Non-retriable auth/bad-request error — stop immediately
+                raise e
 
     raise last_err
 
