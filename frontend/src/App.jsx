@@ -276,25 +276,45 @@ function App() {
     }
   }, [retryCountdown]);
 
-  // Regenerate audio and summary when language changes
+  // Keep a ref to always access the latest result inside the language effect (avoids stale closure / double-click issue)
+  const resultRef = useRef(result);
+  useEffect(() => { resultRef.current = result; }, [result]);
+
+  // Regenerate audio, summary, AND all clinical data fields when language changes
   useEffect(() => {
     let isSubscribed = true;
-    if (result && result.data) {
+    const currentResult = resultRef.current;
+    if (currentResult && currentResult.data) {
       const translateSummary = async () => {
         setIsTranslating(true);
         try {
           const formData = new FormData();
-          formData.append('data', JSON.stringify(result.data));
+          formData.append('data', JSON.stringify(currentResult.data));
           formData.append('lang', language);
           const res = await axios.post('/api/translate_summary', formData);
           
           if (!isSubscribed) return;
           
           if (res.data.success) {
+            const translatedData = res.data.translated_data || {};
             setResult(prev => ({
               ...prev,
               summary: res.data.summary,
-              audio_base64: res.data.audio_base64
+              audio_base64: res.data.audio_base64,
+              // Merge translated fields back into result.data so clinical notes, instructions etc. update
+              data: {
+                ...prev.data,
+                ...(translatedData.instructions !== undefined ? { instructions: translatedData.instructions } : {}),
+                ...(translatedData.notes !== undefined ? { notes: translatedData.notes } : {}),
+                ...(translatedData.side_effects !== undefined ? { side_effects: translatedData.side_effects } : {}),
+                ...(translatedData.precautions !== undefined ? { precautions: translatedData.precautions } : {}),
+                ...(translatedData.clinical_notes ? {
+                  clinical_notes: {
+                    ...prev.data.clinical_notes,
+                    ...translatedData.clinical_notes
+                  }
+                } : {})
+              }
             }));
             if (res.data.audio_base64) {
               setAudioPlaying(false);

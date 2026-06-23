@@ -585,7 +585,58 @@ async def translate_summary(
         parsed = json.loads(data)
         summary = _make_summary(parsed, lang)
         audio_b64 = _generate_audio_base64(summary, lang)
-        return {"success": True, "summary": summary, "audio_base64": audio_b64}
+
+        translated_data = {}
+        if lang.lower() != "english":
+            try:
+                from google import genai as _genai
+                _key = os.getenv("GEMINI_API_KEY")
+                if _key:
+                    _client = _genai.Client(api_key=_key)
+
+                    # Build a single batch translation request for all text fields
+                    fields_to_translate = {}
+                    cn = parsed.get("clinical_notes", {})
+                    if isinstance(cn, dict):
+                        if cn.get("complaints"): fields_to_translate["clinical_notes.complaints"] = cn["complaints"]
+                        if cn.get("diagnosis_impression"): fields_to_translate["clinical_notes.diagnosis_impression"] = cn["diagnosis_impression"]
+                        if cn.get("vitals_examination"): fields_to_translate["clinical_notes.vitals_examination"] = cn["vitals_examination"]
+                    if parsed.get("instructions"): fields_to_translate["instructions"] = parsed["instructions"]
+                    if parsed.get("notes"): fields_to_translate["notes"] = parsed["notes"]
+
+                    # Translate list fields
+                    se = parsed.get("side_effects", [])
+                    if se: fields_to_translate["side_effects"] = " | ".join([s if isinstance(s, str) else str(s) for s in se])
+                    pr = parsed.get("precautions", [])
+                    if pr: fields_to_translate["precautions"] = " | ".join([p if isinstance(p, str) else str(p) for p in pr])
+
+                    if fields_to_translate:
+                        field_lines = "\n".join([f'[{k}]: {v}' for k, v in fields_to_translate.items()])
+                        _prompt = (
+                            f"Translate each of the following labeled clinical fields into fluent, natural {lang}. "
+                            f"Return ONLY the translated fields in the EXACT same format '[key]: translated text'. "
+                            f"Do NOT add any extra explanation.\n\n{field_lines}"
+                        )
+                        _res = _client.models.generate_content(model="gemini-2.5-flash", contents=_prompt)
+                        if _res.text:
+                            for line in _res.text.strip().split("\n"):
+                                if "]: " in line:
+                                    k, v = line.split("]: ", 1)
+                                    k = k.lstrip("[").strip()
+                                    v = v.strip()
+                                    if k == "instructions": translated_data["instructions"] = v
+                                    elif k == "notes": translated_data["notes"] = v
+                                    elif k == "side_effects": translated_data["side_effects"] = [x.strip() for x in v.split("|")]
+                                    elif k == "precautions": translated_data["precautions"] = [x.strip() for x in v.split("|")]
+                                    elif k.startswith("clinical_notes."):
+                                        sub = k.split(".", 1)[1]
+                                        if "clinical_notes" not in translated_data:
+                                            translated_data["clinical_notes"] = {}
+                                        translated_data["clinical_notes"][sub] = v
+            except Exception as te:
+                logger.warning(f"Field translation failed: {te}")
+
+        return {"success": True, "summary": summary, "audio_base64": audio_b64, "translated_data": translated_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
