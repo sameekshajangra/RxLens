@@ -96,6 +96,23 @@ graph LR
 
 ---
 
+## 📊 Pilot Evaluation (N = 20)
+
+20 real, anonymised Indian handwritten prescriptions, collected with verbal informed consent; all identifying details were redacted before analysis. Each system was scored per prescription on drug name, dose, frequency and duration (0 = wrong/absent, 1 = partial, 2 = complete), minus 2 for a critical failure (wrong drug, refusal or dangerous error). Maximum score: 8.
+
+| Metric (avg) | RxLens | Gemini (direct) | GPT-5.5 | Commercial reader |
+|---|---|---|---|---|
+| Drug name (/2) | 1.90 | 1.75 | 1.30 | 1.25 |
+| Dose (/2) | 1.65 | 0.75 | 0.95 | 0.00 |
+| Frequency (/2) | 1.70 | 1.60 | 0.85 | 0.60 |
+| Duration (/2) | 1.50 | 1.15 | 0.75 | 0.10 |
+| Critical failures (count) | 0 | 0 | 0 | 3 |
+| **Total (/8)** | **6.75** | **5.25** | **3.85** | **1.65** |
+
+**Example failure:** the commercial reader read an elderly patient's antibiotic (Rovcef, cefpodoxime) as Rovex (rosuvastatin, a cholesterol statin). Both are real, marketed drugs, so nothing signals the error to the user.
+
+**Limitations:** small pilot (N = 20); single annotator (the author), with no inter-rater agreement yet; prescriptions from one region (North India); the commercial tool was tested via screenshots; illegible fields were scored conservatively for all systems. A pharmacist-verified, larger benchmark is planned.
+
 ## 📸 Screenshots & Demo
 
 <p align="center">
