@@ -111,7 +111,7 @@ graph LR
 
 **Example failure:** the commercial reader read an elderly patient's antibiotic (Rovcef, cefpodoxime) as Rovex (rosuvastatin, a cholesterol statin). Both are real, marketed drugs, so nothing signals the error to the user.
 
-**Limitations:** small pilot (N = 20); single annotator (the author), with no inter-rater agreement yet; prescriptions from one region (North India); the commercial tool was tested via screenshots; illegible fields were scored conservatively for all systems. A pharmacist-verified, larger benchmark is planned.
+**Limitations:** small pilot (N = 20); ground-truth readings were annotated by the author and verified by a pharmacist; no formal inter-rater agreement has been computed yet; prescriptions from one region (North India); the commercial tool was tested via screenshots; illegible fields were scored conservatively for all systems. A larger, multi-region benchmark with independent annotation by multiple pharmacists is planned.
 
 ## 📸 Screenshots & Demo
 
@@ -184,7 +184,7 @@ npm install && npm run dev
 
 ## 🗺️ Future Roadmap
 
-- **Larger Pharmacist-Validated Benchmark:** Expanding the current N=20 pilot evaluation into a comprehensive, multi-region journal study with fine-grained edit-distance metrics.
+- **Larger Multi-Region Benchmark:** Expanding the current N=20 pilot evaluation into a comprehensive, multi-region journal study with fine-grained edit-distance metrics.
 - **Persistent Encrypted Accounts:** Secure cloud synchronization for patient profiles, allowing historical tracking across multiple devices.
 - **Multi-Language Support & ABDM Integration:** Adding support for more regional languages and integrating with India's Ayushman Bharat Digital Mission (ABDM) via ABHA ID.
 
